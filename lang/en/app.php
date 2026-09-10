@@ -4,6 +4,7 @@ return [
     'name' => 'BrickCollector',
 
     'nav' => [
+        'collection' => 'Collection',
         'catalog' => 'Catalog',
         'sets' => 'Sets',
         'parts' => 'Parts',
@@ -56,6 +57,22 @@ return [
         'alternate_hint' => 'An alternative to another lot; only one of them is present.',
         'counterpart' => 'Counterpart',
         'counterpart_hint' => 'Paired with another lot; not counted separately.',
+    ],
+
+    'collection' => [
+        'title' => 'Collection',
+        'add' => 'Add to collection',
+        'added' => ':name added to the collection.',
+        'removed' => 'Removed from the collection.',
+        'remove' => 'Remove from the collection',
+        'remove_confirm' => 'Remove :name from the collection? Its contents go with it.',
+        'entries' => 'Items owned',
+        'sets' => 'Sets',
+        'lost' => 'Missing',
+        'empty' => 'Nothing here yet.',
+        'empty_hint' => 'Find something in the catalog.',
+        'parts_badge' => '{0} no parts|{1} :count part|[2,*] :count parts',
+        'figures_badge' => '{0} no minifigures|{1} :count minifigure|[2,*] :count minifigures',
     ],
 
     'settings' => [

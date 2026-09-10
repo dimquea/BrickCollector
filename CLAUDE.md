@@ -177,8 +177,13 @@ request path reads the cache and records what is missing.
 
 ## Accounting rules (the costliest place to get wrong)
 
-- Positions flagged `is_extra`, `is_alternate` or `is_counterpart` **do not count toward quantity** —
-  that is what the generated `counts` column is for.
+- Positions flagged `is_extra`, `is_alternate` or `is_counterpart` **do not count toward quantity**,
+  and **neither does anything inside them**. `counts` is written by the code that builds the tree
+  rather than generated from the row's own flags, because only that code knows the ancestry. A
+  "random packet" set lists all twelve possibilities as alternates of one another; counting the
+  minifigure inside each one turned a box of 36 packets into 432 minifigures.
+- **Quantities multiply down the tree.** A box of 36 packets holding 3 parts each is 108 parts, so
+  part counting stays a plain `SUM(qty)` and never walks back up for ancestors.
 - Part accounting always filters by `item_type = 'P'`.
 - **Assembled parts (`P` inside `P`) are never expanded** into the collection. A torso is one part,
   not a pair of arms. Show its composition on the part's own page instead.

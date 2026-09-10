@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\ItemImageController;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Http\Request;
@@ -20,6 +21,10 @@ Route::get('/images/{type}/{id}/{color}', [ItemImageController::class, 'show'])
     ->where('type', '[A-Z]')
     ->where('color', '[0-9]+')
     ->name('item.image');
+
+Route::get('/collection', [CollectionController::class, 'index'])->name('collection.index');
+Route::post('/collection', [CollectionController::class, 'store'])->name('collection.store');
+Route::delete('/collection/{entry}', [CollectionController::class, 'destroy'])->name('collection.destroy');
 
 Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings');
 

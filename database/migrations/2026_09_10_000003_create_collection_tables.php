@@ -60,12 +60,15 @@ return new class extends Migration
             match_id       INTEGER NOT NULL DEFAULT 0,
             is_counterpart INTEGER NOT NULL DEFAULT 0,
 
-            -- Spares, alternates and counterparts are attached to the instance
-            -- but must not be counted. One generated column instead of
-            -- repeating three conditions in every query.
-            counts INTEGER GENERATED ALWAYS AS (
-                CASE WHEN is_extra OR is_alternate OR is_counterpart THEN 0 ELSE 1 END
-            ) STORED,
+            -- Whether this row counts toward the collection totals.
+            --
+            -- Not a generated column over the three flags: a flag on a parent
+            -- has to reach its children. A "random packet" set lists all
+            -- twelve possibilities as alternates of each other, and counting
+            -- the minifigure inside each of them turned a box of 36 packets
+            -- into 432 minifigures. Written by the code that builds the tree,
+            -- which is the only thing that knows the ancestry.
+            counts INTEGER NOT NULL DEFAULT 1,
 
             -- Type of the immediate parent, NULL at the root of an instance.
             -- Denormalised so listings can tell "in sets" from "in minifigures"

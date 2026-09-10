@@ -145,6 +145,11 @@ class ItemInventory
      * count: an alternate is a second way to build the same lot, and counting
      * both would inflate every set that has one.
      *
+     * The exclusion reaches the whole subtree. A "random packet" set lists all
+     * twelve possibilities as alternates of one another; counting the
+     * minifigure inside each of them turns a box of 36 packets into 432
+     * minifigures.
+     *
      * @param  array<int, array<string, mixed>>  $nodes
      * @return array{parts: int, lots: int, minifigures: int, subsets: int, extras: int}
      */
@@ -152,28 +157,33 @@ class ItemInventory
     {
         $totals = ['parts' => 0, 'lots' => 0, 'minifigures' => 0, 'subsets' => 0, 'extras' => 0];
 
-        $walk = function (array $nodes) use (&$walk, &$totals): void {
+        $walk = function (array $nodes, bool $parentCounts, int $multiplier) use (&$walk, &$totals): void {
             foreach ($nodes as $node) {
-                if ($node['is_extra']) {
-                    $totals['extras'] += $node['qty'];
+                $qty = $node['qty'] * $multiplier;
+
+                if ($node['is_extra'] && $parentCounts) {
+                    $totals['extras'] += $qty;
                 }
 
-                $counts = ! $node['is_extra'] && ! $node['is_alternate'] && ! $node['is_counterpart'];
+                $counts = $parentCounts
+                    && ! $node['is_extra']
+                    && ! $node['is_alternate']
+                    && ! $node['is_counterpart'];
 
                 if ($counts) {
                     match ($node['type']) {
-                        'P' => [$totals['parts'] += $node['qty'], $totals['lots']++],
-                        'M' => $totals['minifigures'] += $node['qty'],
-                        'S' => $totals['subsets'] += $node['qty'],
+                        'P' => [$totals['parts'] += $qty, $totals['lots']++],
+                        'M' => $totals['minifigures'] += $qty,
+                        'S' => $totals['subsets'] += $qty,
                         default => null,
                     };
                 }
 
-                $walk($node['children']);
+                $walk($node['children'], $counts, $qty);
             }
         };
 
-        $walk($nodes);
+        $walk($nodes, true, 1);
 
         return $totals;
     }

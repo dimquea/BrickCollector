@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
@@ -14,6 +14,17 @@ const props = defineProps({
     totals: { type: Object, default: () => ({}) },
     elementCodes: { type: Array, default: () => [] },
 });
+
+const adding = ref(false);
+
+function addToCollection() {
+    adding.value = true;
+    router.post(
+        '/collection',
+        { type: props.item.type, id: props.item.id },
+        { onFinish: () => (adding.value = false) },
+    );
+}
 
 const nested = computed(() => props.inventory.filter((lot) => lot.type !== 'P'));
 const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'));
@@ -44,6 +55,18 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                         :alt="item.name"
                         class="card-img-top p-3"
                     />
+
+                    <div class="card-body">
+                        <button
+                            type="button"
+                            class="btn btn-primary w-100"
+                            :disabled="adding"
+                            @click="addToCollection"
+                        >
+                            <i class="mdi mdi-plus"></i>
+                            {{ t('collection.add') }}
+                        </button>
+                    </div>
 
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between gap-2">
