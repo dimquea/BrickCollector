@@ -117,6 +117,7 @@ return [
         'tags_hint' => 'Free labels. A tag marked "show in list" appears on the card.',
         'statuses' => 'Statuses',
         'statuses_hint' => 'Condition and completeness. Box and Instructions ship with the service and cannot be removed.',
+        'statuses_note' => '"Incomplete" and "Missing figures" are not in this list and cannot be added: they are worked out from the copy itself. A copy counts as incomplete once anything that counts toward its contents is marked missing — a spare does not, since it was never required. "Missing figures" appears when one of its minifigures is. Both are recalculated on every change and can be filtered on like any other status.',
         'new' => 'New entry',
         'remove' => 'Delete',
         'remove_confirm' => 'Delete :name?',

@@ -42,7 +42,7 @@ const sections = [
     { key: 'sources', kind: 'sources', hasActive: true },
     { key: 'storages', kind: 'storages', hasActive: true },
     { key: 'tags', kind: 'tags', hasColor: true, hasVisibility: true },
-    { key: 'statuses', kind: 'statuses' },
+    { key: 'statuses', kind: 'statuses', note: 'dictionaries.statuses_note' },
 ];
 </script>
 
@@ -131,6 +131,14 @@ const sections = [
                                 :has-visibility="!!section.hasVisibility"
                                 :has-active="!!section.hasActive"
                             />
+
+                            <div
+                                v-if="section.note"
+                                class="alert alert-light border small d-flex gap-2 mb-0"
+                            >
+                                <i class="mdi mdi-information-outline flex-shrink-0"></i>
+                                <span>{{ t(section.note) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
