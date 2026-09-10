@@ -1,6 +1,8 @@
 <script setup>
+import { url } from '@/support/base';
 import { computed, ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
@@ -20,7 +22,7 @@ const adding = ref(false);
 function addToCollection() {
     adding.value = true;
     router.post(
-        `/catalog/${props.item.type}/${encodeURIComponent(props.item.id)}/add`,
+        url(`/catalog/${props.item.type}/${encodeURIComponent(props.item.id)}/add`),
         {},
         { onFinish: () => (adding.value = false) },
     );

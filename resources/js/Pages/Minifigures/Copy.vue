@@ -1,6 +1,8 @@
 <script setup>
+import { url } from '@/support/base';
 import { computed } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
@@ -35,7 +37,7 @@ const flash = computed(() => page.props.flash);
 
 function remove() {
     if (window.confirm(t('collection.remove_confirm', { name: props.entry.name }))) {
-        router.delete(`/minifigures/copy/${props.entry.id}`);
+        router.delete(url(`/minifigures/copy/${props.entry.id}`));
     }
 }
 </script>

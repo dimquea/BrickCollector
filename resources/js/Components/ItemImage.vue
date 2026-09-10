@@ -1,4 +1,5 @@
 <script setup>
+import { url } from '@/support/base';
 import { computed, ref, watch } from 'vue';
 
 /**
@@ -29,7 +30,7 @@ watch(
 );
 
 const src = computed(
-    () => `/images/${props.type}/${encodeURIComponent(props.id)}/${props.colorId ?? 0}`,
+    () => url(`/images/${props.type}/${encodeURIComponent(props.id)}/${props.colorId ?? 0}`),
 );
 
 const showImage = computed(() => props.hasImage !== false && !failed.value);

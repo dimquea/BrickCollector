@@ -1,6 +1,8 @@
 <script setup>
+import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import ItemImage from '@/Components/ItemImage.vue';
@@ -33,7 +35,7 @@ const form = reactive({
 });
 
 function submit() {
-    router.get('/sets', clean(), { preserveState: true, preserveScroll: true, replace: true });
+    router.get(url('/sets'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
 
 /** Empty filters stay out of the URL so a bare /sets is a clean link. */

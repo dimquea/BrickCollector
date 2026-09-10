@@ -1,6 +1,8 @@
 <script setup>
+import { url } from '@/support/base';
 import { reactive, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import { debounce } from '@/support/debounce';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
@@ -24,7 +26,7 @@ const form = reactive({
 });
 
 function submit() {
-    router.get('/catalog', clean(), { preserveState: true, preserveScroll: true, replace: true });
+    router.get(url('/catalog'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
 
 /** Empty filters stay out of the URL so a bare /catalog is a clean link. */

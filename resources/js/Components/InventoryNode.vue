@@ -1,5 +1,5 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import LotBadges from '@/Components/LotBadges.vue';
 import PartsTable from '@/Components/PartsTable.vue';

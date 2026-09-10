@@ -1,4 +1,5 @@
 <script setup>
+import { url } from '@/support/base';
 import { ref } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -24,13 +25,13 @@ function switchLocale(event) {
     if (next !== locale.value) {
         // A language change swaps every string on the page, so this one does
         // go through the router.
-        router.post('/locale', { locale: next }, { preserveScroll: true });
+        router.post(url('/locale'), { locale: next }, { preserveScroll: true });
     }
 }
 
 async function saveCurrency() {
     try {
-        const { data } = await axios.patch('/settings', { currency: currency.value });
+        const { data } = await axios.patch(url('/settings'), { currency: currency.value });
         notify(data.message, 'success', 2000);
     } catch (error) {
         currency.value = props.currency;

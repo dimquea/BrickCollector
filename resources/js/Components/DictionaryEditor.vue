@@ -1,4 +1,5 @@
 <script setup>
+import { url } from '@/support/base';
 import { reactive, ref } from 'vue';
 import axios from 'axios';
 import { notify } from '@/support/toasts';
@@ -55,7 +56,7 @@ async function add() {
     busy.value = 'new';
 
     try {
-        const { data } = await axios.post(`/settings/dictionary/${props.kind}`, payload(draft));
+        const { data } = await axios.post(url(`/settings/dictionary/${props.kind}`), payload(draft));
         items.push(data.row);
         Object.assign(draft, { name: '', color: 'secondary', show_in_list: false, is_active: true });
     } catch (error) {
@@ -70,7 +71,7 @@ async function save(row, index) {
     busy.value = row.id;
 
     try {
-        const { data } = await axios.patch(`/settings/dictionary/${props.kind}/${row.id}`, payload(row));
+        const { data } = await axios.patch(url(`/settings/dictionary/${props.kind}/${row.id}`), payload(row));
         Object.assign(items[index], data.row);
     } catch (error) {
         // Put the row back the way the server has it.
@@ -89,7 +90,7 @@ async function remove(row, index) {
     busy.value = row.id;
 
     try {
-        await axios.delete(`/settings/dictionary/${props.kind}/${row.id}`);
+        await axios.delete(url(`/settings/dictionary/${props.kind}/${row.id}`));
         items.splice(index, 1);
     } catch (error) {
         fail(error);

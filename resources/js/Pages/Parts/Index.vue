@@ -1,6 +1,8 @@
 <script setup>
+import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
@@ -21,7 +23,7 @@ const form = reactive({
 });
 
 function submit() {
-    router.get('/parts', clean(), { preserveState: true, preserveScroll: true, replace: true });
+    router.get(url('/parts'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function clean() {

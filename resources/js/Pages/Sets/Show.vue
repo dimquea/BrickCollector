@@ -1,6 +1,8 @@
 <script setup>
+import { url } from '@/support/base';
 import { computed, reactive, ref } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
@@ -84,7 +86,7 @@ const groups = computed(() => {
 
 function remove() {
     if (window.confirm(t('collection.remove_confirm', { name: props.entry.name }))) {
-        router.delete(`/sets/${props.entry.id}`);
+        router.delete(url(`/sets/${props.entry.id}`));
     }
 }
 </script>

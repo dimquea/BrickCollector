@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import { patchField } from '@/support/save';
 import { notify } from '@/support/toasts';

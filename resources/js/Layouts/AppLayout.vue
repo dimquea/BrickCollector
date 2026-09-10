@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import ToastHost from '@/Components/ToastHost.vue';
 import { t } from '@/i18n';
 

@@ -18,6 +18,14 @@ export default defineConfig({
             },
         }),
     ],
+    experimental: {
+        // Шрифты и картинки, на которые ссылается CSS, адресуем относительно
+        // самого файла стилей. Абсолютный /build/... ломается, когда приложение
+        // живёт под префиксом — например, под Ingress в аддоне Home Assistant.
+        renderBuiltUrl(filename, { hostType }) {
+            return hostType === 'css' ? { relative: true } : { relative: false };
+        },
+    },
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./resources/js', import.meta.url)),

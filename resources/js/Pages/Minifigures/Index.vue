@@ -1,6 +1,8 @@
 <script setup>
+import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
@@ -24,7 +26,7 @@ const form = reactive({
 });
 
 function submit() {
-    router.get('/minifigures', clean(), { preserveState: true, preserveScroll: true, replace: true });
+    router.get(url('/minifigures'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
 
 function clean() {

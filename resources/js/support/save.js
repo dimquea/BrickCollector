@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { notify } from '@/support/toasts';
 import { t } from '@/i18n';
+import { url as absolute } from '@/support/base';
 
 /**
  * Saves one field without re-rendering the page.
@@ -20,7 +21,9 @@ import { t } from '@/i18n';
  */
 export async function patchField(url, data, { onRevert } = {}) {
     try {
-        const response = await axios.patch(url, data);
+        // Путь приходит от вызывающего в виде /lots/12 — префикс, под которым
+        // приложение видно браузеру, добавляем здесь, а не в каждом вызове.
+        const response = await axios.patch(absolute(url), data);
 
         return response.data ?? {};
     } catch (error) {
