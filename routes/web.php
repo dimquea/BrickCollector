@@ -4,6 +4,7 @@ use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\ItemImageController;
 use App\Http\Controllers\LotController;
+use App\Http\Controllers\MinifiguresController;
 use App\Http\Controllers\PartsController;
 use App\Http\Controllers\SetsController;
 use App\Http\Controllers\SettingsController;
@@ -56,6 +57,19 @@ Route::get('/parts', [PartsController::class, 'index'])->name('parts.index');
 Route::get('/parts/{id}/{color}', [PartsController::class, 'show'])
     ->where('color', '[0-9]+')
     ->name('parts.show');
+
+/*
+ * Minifigures are collapsed to one entry per figure in the list, because "do I
+ * have this one" is the question. A standalone copy still keeps a page of its
+ * own: what was paid for it and when belongs to the copy, not to the figure.
+ *
+ * The copy route is declared first, or "copy" would be read as a figure id.
+ */
+Route::get('/minifigures', [MinifiguresController::class, 'index'])->name('minifigures.index');
+Route::get('/minifigures/copy/{entry}', [MinifiguresController::class, 'copy'])->name('minifigures.copy');
+Route::patch('/minifigures/copy/{entry}', [MinifiguresController::class, 'update'])->name('minifigures.update');
+Route::delete('/minifigures/copy/{entry}', [MinifiguresController::class, 'destroy'])->name('minifigures.destroy');
+Route::get('/minifigures/{id}', [MinifiguresController::class, 'show'])->name('minifigures.show');
 
 // A lot belongs to a copy of anything, so it sits outside the sections.
 Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.lost');

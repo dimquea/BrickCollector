@@ -38,8 +38,12 @@ export function t(key, replacements = {}) {
 
 /**
  * Pluralised translation, mirroring Laravel's trans_choice format.
- * Plural rules come from the browser, never hand-written: Russian has three
- * forms and getting them right by hand is a classic source of bugs.
+ *
+ * A segment may name an exact count ({0}) or a range ([2,4]); everything else
+ * is a plain form, and the browser says which of those a count takes. Plural
+ * rules are never hand-written: Russian has three forms, and spelling them as
+ * ranges gets 21 and 41 wrong — [5,*] swallowed them and produced
+ * "41 минифигурок" where the language wants "41 минифигурка".
  */
 export function tChoice(key, count, replacements = {}) {
     const line = lookup(key);
@@ -48,12 +52,15 @@ export function tChoice(key, count, replacements = {}) {
         return key;
     }
 
-    const segments = line.split('|');
+    const plain = [];
 
-    for (const segment of segments) {
+    for (const segment of line.split('|')) {
         const exact = segment.match(/^\s*\{(\d+)\}\s*/);
-        if (exact && Number(exact[1]) === count) {
-            return interpolate(segment.slice(exact[0].length), { count, ...replacements });
+        if (exact) {
+            if (Number(exact[1]) === count) {
+                return interpolate(segment.slice(exact[0].length), { count, ...replacements });
+            }
+            continue;
         }
 
         const range = segment.match(/^\s*\[(\d+),\s*(\d+|\*)\]\s*/);
@@ -62,12 +69,23 @@ export function tChoice(key, count, replacements = {}) {
             if (count >= Number(from) && (to === '*' || count <= Number(to))) {
                 return interpolate(segment.slice(range[0].length), { count, ...replacements });
             }
+            continue;
         }
+
+        plain.push(segment);
     }
 
-    const category = new Intl.PluralRules(locale.value).select(count);
-    const order = ['zero', 'one', 'two', 'few', 'many', 'other'];
-    const index = Math.min(order.indexOf(category), segments.length - 1);
+    if (plain.length === 0) {
+        return interpolate(line.split('|').at(-1), { count, ...replacements });
+    }
 
-    return interpolate(segments[Math.max(index, 0)] ?? segments.at(-1), { count, ...replacements });
+    // Canonical order, so a language's forms line up with the order they are
+    // written in: one, few, many for Russian; one, other for English. "other"
+    // covers fractions in Russian and falls onto the last form written.
+    const rules = new Intl.PluralRules(locale.value);
+    const categories = ['zero', 'one', 'two', 'few', 'many', 'other']
+        .filter((name) => rules.resolvedOptions().pluralCategories.includes(name));
+    const index = Math.min(Math.max(categories.indexOf(rules.select(count)), 0), plain.length - 1);
+
+    return interpolate(plain[index], { count, ...replacements });
 }

@@ -114,9 +114,16 @@ class CatalogController extends Controller
 
         $flash = ['message' => __('app.collection.added', ['name' => $item->name])];
 
-        return in_array($item->type, SetsController::TYPES, true)
-            ? to_route('sets.show', $entry)->with('flash', $flash)
-            : back()->with('flash', $flash);
+        // Each kind of thing has a place it now lives; go there rather than
+        // leaving the person on the catalog page wondering where it went.
+        $destination = match (true) {
+            in_array($item->type, SetsController::TYPES, true) => to_route('sets.show', $entry),
+            $item->type === 'M' => to_route('minifigures.copy', $entry),
+            $item->type === 'P' => to_route('parts.show', [$entry->item_id, $entry->color_id ?? 0]),
+            default => back(),
+        };
+
+        return $destination->with('flash', $flash);
     }
 
     /**

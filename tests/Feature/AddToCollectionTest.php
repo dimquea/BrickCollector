@@ -191,7 +191,7 @@ class AddToCollectionTest extends TestCase
         $this->assertSame(0, DB::table('collection_items')->count());
     }
 
-/** Adding lands on the copy just created, in the section it belongs to. */
+    /** Adding lands on the copy just created, in the section it belongs to. */
     public function test_the_route_adds_and_redirects_to_the_new_entry(): void
     {
         $this->post('/catalog/S/packet-a/add')
@@ -201,15 +201,12 @@ class AddToCollectionTest extends TestCase
         $this->assertSame(1, Entry::count());
     }
 
-    /**
-     * Parts and minifigures have no section yet, so adding one stays put and
-     * says so rather than redirecting to a page that does not exist.
-     */
-    public function test_adding_a_minifigure_stays_where_it_was(): void
+    /** A minifigure copy has a page of its own; adding one lands on it. */
+    public function test_adding_a_minifigure_lands_on_the_new_copy(): void
     {
         $this->from('/catalog/M/fig-a')
             ->post('/catalog/M/fig-a/add')
-            ->assertRedirect('/catalog/M/fig-a')
+            ->assertRedirect('/minifigures/copy/'.Entry::first()->id)
             ->assertSessionHas('flash');
 
         $this->assertSame(1, Entry::count());

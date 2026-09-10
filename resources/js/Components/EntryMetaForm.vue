@@ -11,6 +11,9 @@ import { locale, t } from '@/i18n';
  */
 const props = defineProps({
     entryId: { type: Number, required: true },
+    // Each section owns its copies, so the form is told where to save rather
+    // than assuming one.
+    endpoint: { type: String, default: null },
     meta: { type: Object, required: true },
     dictionaries: { type: Object, required: true },
     currency: { type: String, default: 'RUB' },
@@ -55,7 +58,7 @@ async function save() {
     const attempted = snapshot();
 
     const result = await patchField(
-        `/sets/${props.entryId}`,
+        props.endpoint ?? `/sets/${props.entryId}`,
         {
             acquired_at: form.acquired_at || null,
             // The one place that knows about decimals. Everything below this
@@ -166,7 +169,9 @@ const hasDictionary = (name) => props.dictionaries[name].length > 0;
                         </p>
                     </div>
 
-                    <div class="col-12">
+                    <!-- A minifigure has no box and no instructions, so a
+                         section may offer no statuses at all. -->
+                    <div v-if="dictionaries.statuses.length" class="col-12">
                         <span class="form-label d-block">{{ t('collection.statuses') }}</span>
                         <div class="d-flex flex-wrap gap-3">
                             <div v-for="status in dictionaries.statuses" :key="status.id" class="form-check">

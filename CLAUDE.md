@@ -263,7 +263,10 @@ in settings and is switched under Settings.
   props, and a small `t()` helper resolves them client-side. Do not add `vue-i18n`; it would
   duplicate a mechanism that already exists.
 - **Plural forms.** Russian has three. Do not hand-write the rules: use `trans_choice` on the server
-  and the browser's built-in `Intl.PluralRules` on the client.
+  and the browser's built-in `Intl.PluralRules` on the client. Write the **forms**, not number ranges:
+  `:count минифигурка|:count минифигурки|:count минифигурок`. A range like `[5,*]` looks like a rule
+  and is not one — it swallowed 21, 31 and 41 and produced "41 минифигурок" where the language wants
+  "41 минифигурка". An explicit `{0}` stays: "nothing here" is a different sentence, not a plural form.
 - **Count labels are written in the nominative plural** — "Детали", not "Деталей" — so one key can
   serve both a label beside a number and a heading above a list. Russian would otherwise need the
   genitive after a numeral and the nominative in a heading, which cannot be the same string.

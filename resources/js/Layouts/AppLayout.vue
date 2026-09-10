@@ -12,7 +12,7 @@ const links = computed(() => [
     { key: 'catalog', href: '/catalog' },
     { key: 'sets', href: '/sets' },
     { key: 'parts', href: '/parts' },
-    { key: 'minifigures', href: null },
+    { key: 'minifigures', href: '/minifigures' },
     { key: 'analytics', href: null },
     { key: 'settings', href: '/settings' },
 ]);

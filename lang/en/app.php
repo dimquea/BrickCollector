@@ -31,7 +31,7 @@ return [
         'only_with_inventory' => 'Only items with a known inventory',
         'has_inventory' => 'Inventory available',
         'nothing_found' => 'Nothing matched those filters.',
-        'found' => '{0} nothing found|{1} :count item|[2,*] :count items',
+        'found' => '{0} nothing found|:count item|:count items',
     ],
 
     'item' => [
@@ -63,11 +63,11 @@ return [
     ],
 
     'sets' => [
-        'found' => '{0} nothing here|{1} :count item|[2,*] :count items',
+        'found' => '{0} nothing here|:count item|:count items',
     ],
 
     'parts' => [
-        'found' => '{0} nothing here|{1} :count part|[2,*] :count parts',
+        'found' => '{0} nothing here|:count part|:count parts',
         'query_hint' => 'Name or item number',
         'placement' => 'Where it is',
         'total' => 'In collection',
@@ -82,6 +82,21 @@ return [
         'tab_colours' => 'Other colours',
         'tab_missing' => 'Missing from',
         'tab_empty' => 'Nothing to show here.',
+    ],
+
+    'minifigures' => [
+        'found' => '{0} nothing here|:count minifigure|:count minifigures',
+        'placement' => 'Where it is',
+        'in_sets' => 'In sets',
+        'loose' => 'On its own',
+        'in_sets_badge' => 'in :count set|in :count sets',
+        'loose_badge' => ':count on its own|:count on their own',
+        'tag_hint' => 'Tags belong to a copy owned on its own; a figure inside a set does not inherit tags from it.',
+        'tab_parts' => 'Parts',
+        'tab_entries' => 'In sets',
+        'tab_copies' => 'On their own',
+        'tab_missing' => 'Missing from',
+        'copy_untitled' => 'Copy without a date',
     ],
 
     'collection' => [
@@ -113,8 +128,8 @@ return [
         'dictionary_empty' => 'Nothing to choose from yet — add entries in',
         'empty' => 'Nothing here yet.',
         'empty_hint' => 'Find something in the catalog.',
-        'parts_badge' => '{0} no parts|{1} :count part|[2,*] :count parts',
-        'figures_badge' => '{0} no minifigures|{1} :count minifigure|[2,*] :count minifigures',
+        'parts_badge' => '{0} no parts|:count part|:count parts',
+        'figures_badge' => '{0} no minifigures|:count minifigure|:count minifigures',
     ],
 
     'settings' => [
@@ -167,5 +182,5 @@ return [
         'ru' => 'Русский',
     ],
 
-    'parts_counted' => '{0} No parts|{1} :count part|[2,*] :count parts',
+    'parts_counted' => '{0} No parts|:count part|:count parts',
 ];
