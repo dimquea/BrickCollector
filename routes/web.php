@@ -11,6 +11,10 @@ Route::get('/', fn () => Inertia::render('Home'))->name('home');
 
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 
+Route::get('/catalog/{type}/{id}', [CatalogController::class, 'show'])
+    ->where('type', '[A-Z]')
+    ->name('catalog.show');
+
 // Item ids contain dots and slashes, so the id segment takes anything but a slash.
 Route::get('/images/{type}/{id}/{color}', [ItemImageController::class, 'show'])
     ->where('type', '[A-Z]')

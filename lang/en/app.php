@@ -33,6 +33,31 @@ return [
         'found' => '{0} nothing found|{1} :count item|[2,*] :count items',
     ],
 
+    'item' => [
+        'type' => 'Type',
+        'weight' => 'Weight',
+        'grams' => 'g',
+        'parts' => 'Parts',
+        'lots' => 'Lots',
+        'minifigures' => 'Minifigures',
+        'subsets' => 'Subsets',
+        'element_codes' => 'LEGO element numbers',
+        'no_inventory' => 'The catalog has no contents listed for this item.',
+        'open' => 'Open',
+    ],
+
+    'lot' => [
+        'item' => 'Item',
+        'color' => 'Colour',
+        'qty' => 'Qty',
+        'extra' => 'Spare',
+        'extra_hint' => 'A spare included on top; not counted.',
+        'alternate' => 'Alternate',
+        'alternate_hint' => 'An alternative to another lot; only one of them is present.',
+        'counterpart' => 'Counterpart',
+        'counterpart_hint' => 'Paired with another lot; not counted separately.',
+    ],
+
     'settings' => [
         'title' => 'Settings',
         'appearance' => 'Appearance',

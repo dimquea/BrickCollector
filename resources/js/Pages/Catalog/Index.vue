@@ -134,13 +134,15 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                     <span class="text-truncate" :title="item.name">{{ item.name }}</span>
                 </div>
 
-                <ItemImage
-                    :type="item.type"
-                    :id="item.id"
-                    :color-id="item.image_color_id"
-                    :alt="item.name"
-                    class="card-img-top p-2"
-                />
+                <Link :href="`/catalog/${item.type}/${encodeURIComponent(item.id)}`">
+                    <ItemImage
+                        :type="item.type"
+                        :id="item.id"
+                        :color-id="item.image_color_id"
+                        :alt="item.name"
+                        class="card-img-top p-2"
+                    />
+                </Link>
 
                 <div class="card-footer d-flex flex-wrap gap-1 align-items-center">
                     <span v-if="item.year" class="badge text-bg-light">{{ item.year }}</span>
