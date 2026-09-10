@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Catalog\Models\Item as CatalogItem;
-use App\Catalog\Models\ItemType;
-use App\Catalog\Models\Theme;
 use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
@@ -12,6 +10,7 @@ use App\Collection\Models\Status;
 use App\Collection\Models\Storage;
 use App\Collection\Models\Tag;
 use App\Collection\Queries\EntryContents;
+use App\Collection\Queries\EntryFacets;
 use App\Collection\Queries\SearchEntries;
 use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
@@ -46,12 +45,16 @@ class SetsController extends Controller
 
         $entries = $search->filters($filters)->ofTypes(self::TYPES)->paginate();
 
+        // Type, theme and year come from what is owned, not from the catalog:
+        // a filter that can only return nothing is worse than no filter.
+        $facets = (new EntryFacets(self::TYPES))->all();
+
         return Inertia::render('Sets/Index', [
             'filters' => $filters,
             'entries' => $entries->through(fn (Entry $entry) => $this->card($entry)),
-            'itemTypes' => ItemType::whereIn('code', self::TYPES)->get(['code', 'name']),
-            'themes' => Theme::where('depth', 0)->orderBy('path')->get(['id', 'path']),
-            'years' => range((int) date('Y') + 1, 1949),
+            'itemTypes' => $facets['types'],
+            'themes' => $facets['themes'],
+            'years' => $facets['years'],
             'statuses' => $this->statuses(),
             'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),
         ]);

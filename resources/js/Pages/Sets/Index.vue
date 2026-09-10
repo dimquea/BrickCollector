@@ -1,7 +1,6 @@
 <script setup>
-import { reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import ItemImage from '@/Components/ItemImage.vue';
@@ -57,7 +56,14 @@ watch(
     submit,
 );
 
-const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: theme.path }));
+const themeOptions = computed(() => props.themes.map((theme) => ({ value: theme.id, label: theme.path })));
+const yearOptions = computed(() => props.years.map((year) => ({ value: year, label: String(year) })));
+
+/**
+ * A filter with one option cannot narrow anything: owning only sets makes a
+ * type filter offering "Set" pure decoration. Shown from two options up.
+ */
+const shows = (list) => list.length > 1;
 </script>
 
 <template>
@@ -88,7 +94,7 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         />
                     </div>
 
-                    <div class="col-6 col-lg-2">
+                    <div v-if="shows(itemTypes)" class="col-6 col-lg-2">
                         <label for="type" class="form-label">{{ t('catalog.type') }}</label>
                         <select id="type" v-model="form.type" class="form-select">
                             <option :value="null">{{ t('catalog.any') }}</option>
@@ -98,7 +104,7 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         </select>
                     </div>
 
-                    <div class="col-12 col-lg-3">
+                    <div v-if="shows(themes)" class="col-12 col-lg-3">
                         <label for="theme" class="form-label">{{ t('catalog.theme') }}</label>
                         <SearchSelect
                             id="theme"
@@ -108,12 +114,12 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         />
                     </div>
 
-                    <div class="col-6 col-lg-2">
+                    <div v-if="shows(years)" class="col-6 col-lg-2">
                         <label for="year" class="form-label">{{ t('catalog.year') }}</label>
                         <SearchSelect
                             id="year"
                             v-model="form.year"
-                            :options="years.map((y) => ({ value: y, label: String(y) }))"
+                            :options="yearOptions"
                             :placeholder="t('catalog.any')"
                         />
                     </div>
@@ -124,7 +130,7 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         </button>
                     </div>
 
-                    <div class="col-12 col-lg-3">
+                    <div v-if="shows(statuses)" class="col-12 col-lg-3">
                         <label for="status" class="form-label">{{ t('collection.statuses') }}</label>
                         <select id="status" v-model="form.status_id" class="form-select">
                             <option :value="null">{{ t('catalog.any') }}</option>
@@ -134,7 +140,7 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         </select>
                     </div>
 
-                    <div class="col-12 col-lg-3">
+                    <div v-if="tags.length" class="col-12 col-lg-3">
                         <label for="tag" class="form-label">{{ t('collection.tags') }}</label>
                         <select id="tag" v-model="form.tag_id" class="form-select">
                             <option :value="null">{{ t('catalog.any') }}</option>
