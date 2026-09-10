@@ -24,6 +24,14 @@ return [
      */
     'currency' => env('BRICKCOLLECTOR_CURRENCY', 'RUB'),
 
+    /*
+     * Верить ли заголовку X-Ingress-Path. Включает его аддон Home Assistant,
+     * где наружу не выставлено ни одного порта и подделать заголовок некому.
+     * В обычной установке приложение доступно напрямую, и доверять ему нельзя:
+     * им переписывается корень всех ссылок на странице.
+     */
+    'trust_ingress' => env('BRICKCOLLECTOR_TRUST_INGRESS', false),
+
     /* Where catalog releases are fetched from. */
     'release_url' => env(
         'BRICKCOLLECTOR_RELEASE_URL',

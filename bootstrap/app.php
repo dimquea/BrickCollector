@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\HandleIngress;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,6 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Корень ссылок должен быть выставлен раньше, чем что-либо начнёт их
+        // строить.
+        $middleware->web(prepend: [
+            HandleIngress::class,
+        ]);
+
         $middleware->web(append: [
             SetLocale::class,
             HandleInertiaRequests::class,

@@ -6,7 +6,7 @@
     <title inertia>{{ config('app.name', 'BrickCollector') }}</title>
     {{-- Путь, под которым нас видит браузер: пусто в обычной установке,
          префикс Ingress — в аддоне Home Assistant. --}}
-    <script>window.__base = @json(request()->getBaseUrl());</script>
+    <script>window.__base = @json(request()->attributes->get(\App\Http\Middleware\HandleIngress::ATTRIBUTE, ''), JSON_UNESCAPED_SLASHES);</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @inertiaHead
 </head>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
 use Inertia\Middleware;
@@ -22,6 +23,18 @@ class HandleInertiaRequests extends Middleware
      * dictionary in the project: the Laravel language files. See CLAUDE.md,
      * "Internationalisation".
      */
+    /**
+     * Адрес страницы, который Inertia положит в объект страницы.
+     *
+     * Из него берётся история браузера и router.reload(), поэтому под префиксом
+     * он должен быть с префиксом — иначе перезагрузка уйдёт мимо аддона.
+     */
+    public function urlResolver(): ?Closure
+    {
+        return fn (Request $request) => $request->attributes->get(HandleIngress::ATTRIBUTE, '')
+            .$request->getRequestUri();
+    }
+
     public function share(Request $request): array
     {
         $locale = app()->getLocale();
