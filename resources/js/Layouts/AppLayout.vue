@@ -8,6 +8,7 @@ const page = usePage();
 // Only the sections that exist are navigable; the rest stay disabled until
 // their pages land.
 const links = computed(() => [
+    { key: 'catalog', href: '/catalog' },
     { key: 'sets', href: null },
     { key: 'parts', href: null },
     { key: 'minifigures', href: null },

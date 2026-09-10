@@ -1,11 +1,21 @@
 <?php
 
+use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\ItemImageController;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', fn () => Inertia::render('Home'))->name('home');
+
+Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+
+// Item ids contain dots and slashes, so the id segment takes anything but a slash.
+Route::get('/images/{type}/{id}/{color}', [ItemImageController::class, 'show'])
+    ->where('type', '[A-Z]')
+    ->where('color', '[0-9]+')
+    ->name('item.image');
 
 Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings');
 

@@ -72,8 +72,13 @@ return new class extends Migration
         // rowid and bl_items has none. Rebuilding such an index fails with
         // "SQL logic error". Carrying type and item_id unindexed lets a search
         // return the key without joining back.
+        //
+        // ident holds the item number, indexed. People search the catalog by
+        // number at least as often as by name, and having both in one index
+        // means one MATCH, one ranking, and no union of two result sets.
         DB::statement("CREATE VIRTUAL TABLE bl_items_fts USING fts5(
             name,
+            ident,
             type    UNINDEXED,
             item_id UNINDEXED,
             tokenize='unicode61'

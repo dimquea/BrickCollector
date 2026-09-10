@@ -152,6 +152,29 @@ under "Размещение изменяемых данных".
   in `btinvlist.csv` are unusable for this: two thirds of them are empty.
 - Idempotent: re-running against the same release must not change any data.
 
+## Never call out to the network from a web request
+
+Fetching a missing item image inside the request that renders the page made a
+single card take 3.9 s to answer, and a page of 48 cards exhausted Apache's
+workers. Outbound work belongs in an artisan command (`catalog:images`); the
+request path reads the cache and records what is missing.
+
+## Searching the catalog
+
+- Text search goes through `bl_items_fts`, never `LIKE '%...%'`.
+- **The FTS table cannot be aliased.** SQLite resolves `x MATCH ?` against real
+  table names only; an alias fails with `no such column: x`.
+- Names and item numbers sit in one index as separate columns, so a single
+  MATCH covers both and keeps bm25 ranking. Two queries joined by UNION was
+  the first attempt: 1.8 s on a common word, and no ranking left, so
+  "millennium falcon" led with books and keyrings.
+- Everything a person types is quoted before it reaches FTS5, which has its own
+  query syntax. An unquoted `OR`, `*`, `-` or stray quote either changes the
+  query or raises a syntax error.
+- A theme filter matches the subtree by path prefix, not the exact node:
+  picking "Star Wars" finds 1,059 sets rather than the 47 sitting exactly at
+  that node.
+
 ## Accounting rules (the costliest place to get wrong)
 
 - Positions flagged `is_extra`, `is_alternate` or `is_counterpart` **do not count toward quantity** —

@@ -326,7 +326,7 @@ class ImportCatalog
                 'type', 'id', 'name', 'category_id', 'theme_id',
                 'year', 'weight', 'image_color_id', 'has_inventory',
             ]);
-            $search = new BulkInsert('bl_items_fts', ['name', 'type', 'item_id']);
+            $search = new BulkInsert('bl_items_fts', ['name', 'ident', 'type', 'item_id']);
             $altIds = new BulkInsert('bl_item_alt_ids', ['type', 'id', 'alt_id']);
 
             foreach ($this->elements($xml) as $item) {
@@ -345,7 +345,7 @@ class ImportCatalog
                     isset($withInventory[$type.'/'.$id]) ? 1 : 0,
                 ]);
 
-                $search->add([$name, $type, $id]);
+                $search->add([$name, $id, $type, $id]);
 
                 foreach (preg_split('/\s*,\s*/', $item['ALTITEMIDS'] ?? '', -1, PREG_SPLIT_NO_EMPTY) as $alt) {
                     $altIds->add([$type, $id, $alt]);
