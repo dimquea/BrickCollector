@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\DictionaryController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ItemImageController;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Http\Request;
@@ -29,7 +31,15 @@ Route::patch('/collection/{entry}', [CollectionController::class, 'update'])->na
 Route::delete('/collection/{entry}', [CollectionController::class, 'destroy'])->name('collection.destroy');
 Route::patch('/collection/lot/{item}', [CollectionController::class, 'updateLost'])->name('collection.lot.lost');
 
-Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings');
+Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+Route::post('/settings/dictionary/{kind}', [DictionaryController::class, 'store'])
+    ->name('dictionary.store');
+Route::patch('/settings/dictionary/{kind}/{id}', [DictionaryController::class, 'update'])
+    ->name('dictionary.update');
+Route::delete('/settings/dictionary/{kind}/{id}', [DictionaryController::class, 'destroy'])
+    ->name('dictionary.destroy');
 
 Route::post('/locale', function (Request $request) {
     $validated = $request->validate([

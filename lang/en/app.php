@@ -98,10 +98,35 @@ return [
         'appearance' => 'Appearance',
         'appearance_hint' => 'Interface language and display options.',
         'saved' => 'Saved.',
+        'currency' => 'Currency',
+        'currency_hint' => 'Three-letter code, e.g. EUR. Amounts are stored as whole minor units.',
+        'dictionaries' => 'Dictionaries',
+        'catalog' => 'Catalog',
+        'catalog_items' => 'Items in the catalog',
+        'catalog_hint' => 'Imported with the catalog:import command.',
     ],
 
     // Labels of the seeded statuses, looked up by code so they follow the
     // interface language instead of the language used at install time.
+    'dictionaries' => [
+        'sources' => 'Sources',
+        'sources_hint' => 'Where a copy came from: a shop, a fair, a friend.',
+        'storages' => 'Storage',
+        'storages_hint' => 'Where a copy physically lives: a shelf, a box, a drawer.',
+        'tags' => 'Tags',
+        'tags_hint' => 'Free labels. A tag marked "show in list" appears on the card.',
+        'statuses' => 'Statuses',
+        'statuses_hint' => 'Condition and completeness. Box and Instructions ship with the service and cannot be removed.',
+        'new' => 'New entry',
+        'remove' => 'Delete',
+        'remove_confirm' => 'Delete :name?',
+        'show_in_list' => 'Show on card',
+        'active' => 'Active',
+        'system' => 'Part of the service; cannot be deleted.',
+        'system_undeletable' => 'This entry ships with the service and cannot be deleted.',
+        'in_use' => 'Still used by :count item(s) in the collection.',
+    ],
+
     'status' => [
         'box' => 'Box',
         'manual' => 'Instructions',
