@@ -16,6 +16,14 @@ return [
 
     'image_cache_path' => DataPath::imageCache(),
 
+    /*
+     * Currency prices are shown in. Amounts are always stored as integer minor
+     * units; this only decides how they are rendered. The user can change it
+     * in settings, which is where the value actually lives — this is only the
+     * default for a fresh installation.
+     */
+    'currency' => env('BRICKCOLLECTOR_CURRENCY', 'RUB'),
+
     /* Where catalog releases are fetched from. */
     'release_url' => env(
         'BRICKCOLLECTOR_RELEASE_URL',

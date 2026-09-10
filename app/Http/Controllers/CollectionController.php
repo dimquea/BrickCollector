@@ -6,8 +6,14 @@ use App\Catalog\Models\Item as CatalogItem;
 use App\Catalog\Models\ItemType;
 use App\Collection\Actions\AddToCollection;
 use App\Collection\Actions\SetLostQuantity;
+use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\Models\Item as CollectionItem;
+use App\Collection\Models\Source;
+use App\Collection\Models\Status;
+use App\Collection\Models\Storage;
+use App\Collection\Models\Tag;
 use App\Collection\Queries\EntryContents;
+use App\Support\Settings;
 use App\Collection\Models\Entry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,9 +84,54 @@ class CollectionController extends Controller
                 'flag_incomplete' => $entry->flag_incomplete,
                 'flag_missing_figs' => $entry->flag_missing_figs,
             ],
+            'meta' => [
+                'acquired_at' => $entry->acquired_at?->format('Y-m-d'),
+                'price' => $entry->price,
+                'source_id' => $entry->source_id,
+                'storage_id' => $entry->storage_id,
+                'note' => $entry->note,
+                'status_ids' => $entry->statuses()->pluck('ref_statuses.id')->all(),
+                'tag_ids' => $entry->tags()->pluck('ref_tags.id')->all(),
+            ],
+            'dictionaries' => [
+                'sources' => Source::where('is_active', true)->orderBy('sort')->get(['id', 'name']),
+                'storages' => Storage::where('is_active', true)->orderBy('sort')->get(['id', 'name']),
+                'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),
+                // A seeded status shows a translated label: its name column is
+                // only a fallback and would otherwise freeze the language the
+                // installation was set up in.
+                'statuses' => Status::orderBy('sort')->get(['id', 'name', 'code'])
+                    ->map(fn (Status $status) => [
+                        'id' => $status->id,
+                        'name' => $status->code
+                            ? __('app.status.'.$status->code)
+                            : $status->name,
+                    ]),
+            ],
+            'currency' => Settings::currency(),
             'contents' => $contents->tree($entry),
             'totals' => $contents->totals($entry),
         ]);
+    }
+
+    public function update(Request $request, Entry $entry, UpdateEntryMeta $update): RedirectResponse
+    {
+        $validated = $request->validate([
+            'acquired_at' => ['nullable', 'date'],
+            // Minor units, so an integer. The interface converts.
+            'price' => ['nullable', 'integer', 'min:0'],
+            'source_id' => ['nullable', 'integer', 'exists:ref_sources,id'],
+            'storage_id' => ['nullable', 'integer', 'exists:ref_storages,id'],
+            'note' => ['nullable', 'string', 'max:5000'],
+            'status_ids' => ['array'],
+            'status_ids.*' => ['integer', 'exists:ref_statuses,id'],
+            'tag_ids' => ['array'],
+            'tag_ids.*' => ['integer', 'exists:ref_tags,id'],
+        ]);
+
+        $update->handle($entry, $validated);
+
+        return back()->with('flash', ['message' => __('app.collection.saved')]);
     }
 
     public function updateLost(Request $request, CollectionItem $item, SetLostQuantity $setLost): RedirectResponse

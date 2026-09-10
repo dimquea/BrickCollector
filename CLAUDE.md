@@ -262,3 +262,5 @@ in settings and is switched under Settings.
 - **Check the number of requests a page makes, not only that it renders.** The image flood was
   invisible in the markup and only showed up in the network panel, where it was both slow and a
   source of intermittent 500s.
+- **Assert against Inertia props, not markup.** An Inertia page ships its data JSON-encoded, so
+  `assertSee('Коробка')` fails on a page that plainly contains it. Use `assertInertia`.

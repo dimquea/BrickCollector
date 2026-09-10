@@ -76,6 +76,17 @@ return [
         'missing_figs_hint' => 'A minifigure of this set is marked missing.',
         'open_in_catalog' => 'Open in catalog',
         'danger_zone' => 'Danger zone',
+        'manage' => 'Manage',
+        'acquired_at' => 'Acquired on',
+        'price' => 'Price paid',
+        'source' => 'Source',
+        'storage' => 'Storage',
+        'statuses' => 'Status',
+        'tags' => 'Tags',
+        'note' => 'Note',
+        'save' => 'Save',
+        'saved' => 'Saved.',
+        'dictionary_empty' => 'Nothing to choose from yet — add entries in',
         'empty' => 'Nothing here yet.',
         'empty_hint' => 'Find something in the catalog.',
         'parts_badge' => '{0} no parts|{1} :count part|[2,*] :count parts',
@@ -87,6 +98,13 @@ return [
         'appearance' => 'Appearance',
         'appearance_hint' => 'Interface language and display options.',
         'saved' => 'Saved.',
+    ],
+
+    // Labels of the seeded statuses, looked up by code so they follow the
+    // interface language instead of the language used at install time.
+    'status' => [
+        'box' => 'Box',
+        'manual' => 'Instructions',
     ],
 
     'locale' => [

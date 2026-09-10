@@ -5,12 +5,16 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
 import OwnedNode from '@/Components/OwnedNode.vue';
+import EntryMetaForm from '@/Components/EntryMetaForm.vue';
 import { t } from '@/i18n';
 
 const props = defineProps({
     entry: { type: Object, required: true },
     contents: { type: Array, default: () => [] },
     totals: { type: Object, default: () => ({}) },
+    meta: { type: Object, required: true },
+    dictionaries: { type: Object, required: true },
+    currency: { type: String, default: 'RUB' },
 });
 
 const page = usePage();
@@ -93,6 +97,13 @@ function remove() {
                 </div>
 
                 <div class="accordion mt-4">
+                    <EntryMetaForm
+                        :entry-id="entry.id"
+                        :meta="meta"
+                        :dictionaries="dictionaries"
+                        :currency="currency"
+                    />
+
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button
