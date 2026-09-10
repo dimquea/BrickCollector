@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Collection\Models\Entry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -80,13 +82,36 @@ class IngressTest extends TestCase
             ));
     }
 
-    /** Прокси говорит с нами по http, даже когда браузер пришёл по https. */
-    public function test_forwarded_scheme_and_host_are_used(): void
+    /**
+     * Ничего абсолютного.
+     *
+     * Аддон видят по внутреннему http-адресу, а браузер может прийти по https
+     * через внешний прокси — и заголовки, которые Home Assistant нам шлёт,
+     * описывают его собственный слушатель, а не то, что стоит перед ним. Любой
+     * абсолютный адрес здесь — обещание про происхождение, которого мы не
+     * знаем; браузер блокирует его как смешанное содержимое.
+     */
+    public function test_nothing_absolute_is_emitted(): void
     {
-        $this->get('/', $this->headers([
-            'X-Forwarded-Proto' => 'https',
-            'X-Forwarded-Host' => 'ha.example',
-        ]))->assertSee('https://ha.example'.self::PREFIX.'/build/', false);
+        $this->get('/sets', $this->headers([
+            'X-Forwarded-Proto' => 'http',
+            'X-Forwarded-Host' => '192.168.0.10',
+        ]))->assertOk()->assertDontSee('http://192.168.0.10', false);
+    }
+
+    public function test_a_redirect_points_at_a_path_not_an_origin(): void
+    {
+        DB::table('bl_item_types')->insert(['code' => 'S', 'name' => 'Set']);
+
+        $entry = Entry::create(['item_type' => 'S', 'item_id' => 'nothing']);
+
+        $response = $this->delete('/sets/'.$entry->id, [], $this->headers());
+
+        $response->assertRedirect();
+
+        $location = (string) $response->headers->get('Location');
+
+        $this->assertStringStartsWith(self::PREFIX.'/sets', $location, 'Location строится от корня');
     }
 
     /**

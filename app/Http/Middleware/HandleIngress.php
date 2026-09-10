@@ -14,9 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
  * Home Assistant Ingress serves an add-on at /api/hassio_ingress/<token>/ and
  * proxies the request with that prefix already stripped, naming it in the
  * X-Ingress-Path header. Routing therefore sees the paths it expects; only the
- * addresses we hand back need the prefix, and that is exactly what forcing the
- * root URL does — url(), route(), asset() and the pagination links all come out
- * right.
+ * addresses we hand back need the prefix put in front.
+ *
+ * **Every address we emit is relative to the site root** — no scheme, no host.
+ * That is not tidiness, it is the only thing that can work: the add-on is
+ * reached at http://192.168.0.10 from inside the house while the browser may be
+ * on https://home.example, and the forwarded headers describe Home Assistant's
+ * own listener rather than whatever proxy sits in front of it. An absolute URL
+ * built from what we can see is a promise about an origin we do not know, and
+ * the browser refuses it as mixed content. A root-relative one resolves against
+ * the page the visitor is actually on, whichever that is.
  *
  * The obvious-looking alternative, telling the request itself about the prefix
  * through SCRIPT_NAME, breaks the site root once routes are cached: Laravel
@@ -39,24 +46,51 @@ class HandleIngress
 
         $request->attributes->set(self::ATTRIBUTE, $prefix);
 
-        if ($prefix !== '') {
-            // The proxy speaks to us over plain http even when the browser is on
-            // https, and it says so in the forwarded headers. Reading them here
-            // rather than trusting the proxy globally keeps the trust in one
-            // place, next to the decision that put it there.
-            $scheme = $request->header('X-Forwarded-Proto') ?: $request->getScheme();
-            $host = $request->header('X-Forwarded-Host') ?: $request->getHttpHost();
-
-            URL::forceScheme($scheme);
-            URL::forceRootUrl("{$scheme}://{$host}{$prefix}");
-
-            // Постраничка строит ссылки не через url(), а от адреса запроса —
-            // а он к нам приходит без префикса. Отправляем её тем же путём, что
-            // и всё остальное.
-            Paginator::currentPathResolver(fn () => URL::current());
+        if ($prefix === '') {
+            return $next($request);
         }
 
-        return $next($request);
+        // Стили и скрипты: единственное место, где Laravel умеет отдавать
+        // адрес от корня, а не абсолютный.
+        URL::useAssetOrigin($prefix);
+
+        // Постраничка строит ссылки не через url(), а от адреса запроса — а он
+        // приходит к нам без префикса.
+        Paginator::currentPathResolver(fn () => $prefix.$request->getPathInfo());
+
+        return $this->makeRedirectRelative($next($request), $prefix);
+    }
+
+    /**
+     * Переписывает Location редиректа в путь от корня.
+     *
+     * Laravel строит его через url(), то есть абсолютным и от того хоста,
+     * которым нас видит Home Assistant. Браузер за внешним прокси уйдёт по нему
+     * на другое происхождение — в лучшем случае получит смешанное содержимое, в
+     * худшем просто не дойдёт. Относительный Location разрешён и делает ровно
+     * то, что нужно.
+     */
+    private function makeRedirectRelative(Response $response, string $prefix): Response
+    {
+        if (! $response->isRedirection() || ! $response->headers->has('Location')) {
+            return $response;
+        }
+
+        $location = (string) $response->headers->get('Location');
+        $path = parse_url($location, PHP_URL_PATH);
+
+        if ($path === false || $path === null) {
+            return $response;
+        }
+
+        $query = parse_url($location, PHP_URL_QUERY);
+        $fragment = parse_url($location, PHP_URL_FRAGMENT);
+
+        $response->headers->set('Location', $prefix.$path
+            .($query === null ? '' : '?'.$query)
+            .($fragment === null ? '' : '#'.$fragment));
+
+        return $response;
     }
 
     /** The prefix this request arrived under, or an empty string. */
