@@ -193,7 +193,7 @@ function remove() {
                             >
                                 <span>{{ t(`item.${group.key}`) }}</span>
                                 <span class="badge text-bg-secondary">{{ group.count }}</span>
-                                <span v-if="group.extras" class="badge text-bg-warning">
+                                <span v-if="group.extras" class="badge text-bg-light border">
                                     {{ t('item.extras') }}: {{ group.extras }}
                                 </span>
                                 <span v-if="group.lost" class="badge text-bg-warning ms-auto">

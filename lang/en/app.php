@@ -53,6 +53,7 @@ return [
         'color' => 'Colour',
         'qty' => 'Qty',
         'lost' => 'Missing',
+        'lost_inside' => 'Something inside is missing',
         'extra' => 'Spare',
         'extra_hint' => 'A spare included on top; not counted.',
         'alternate' => 'Alternate',

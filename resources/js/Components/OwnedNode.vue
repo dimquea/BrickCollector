@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import ItemImage from '@/Components/ItemImage.vue';
 import LotBadges from '@/Components/LotBadges.vue';
@@ -10,12 +11,31 @@ import { t } from '@/i18n';
  * A minifigure or subset of an owned copy, with its own contents.
  * Recursive: a boxed series holds packets, each holding a minifigure.
  */
-defineProps({
+const props = defineProps({
     lot: { type: Object, required: true },
     domId: { type: String, required: true },
 });
 
 const emit = defineEmits(['saved']);
+
+/**
+ * Anything missing further down.
+ *
+ * Without this the group header says something is missing and every
+ * minifigure below it looks fine, leaving the person to open all eight to
+ * find the one with a part gone. Kept separate from the node's own loss:
+ * "this figure is gone" and "this figure is short a part" are different
+ * things to be told.
+ */
+const lostInside = computed(() => {
+    const walk = (lots) =>
+        lots.reduce(
+            (sum, lot) => sum + (lot.counts ? lot.lost_qty : 0) + walk(lot.children ?? []),
+            0,
+        );
+
+    return walk(props.lot.children ?? []);
+});
 </script>
 
 <template>
@@ -33,8 +53,19 @@ const emit = defineEmits(['saved']);
                 <span class="badge text-bg-secondary flex-shrink-0">{{ lot.item_id }}</span>
                 <span class="text-truncate">{{ lot.name }}</span>
                 <span v-if="lot.qty > 1" class="badge text-bg-light flex-shrink-0">&times;{{ lot.qty }}</span>
-                <span v-if="lot.lost_qty > 0" class="badge text-bg-warning flex-shrink-0">
+                <span
+                    v-if="lot.lost_qty > 0"
+                    class="badge text-bg-warning flex-shrink-0"
+                    :title="t('lot.lost')"
+                >
                     <i class="mdi mdi-alert-outline"></i> {{ lot.lost_qty }}
+                </span>
+                <span
+                    v-if="lostInside > 0"
+                    class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle flex-shrink-0"
+                    :title="t('lot.lost_inside')"
+                >
+                    <i class="mdi mdi-alert-circle-outline"></i> {{ lostInside }}
                 </span>
                 <LotBadges :lot="lot" />
             </button>
