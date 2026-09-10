@@ -9,44 +9,25 @@ Home Assistant add-on.
 
 ## Design documents
 
-The design document and the data-format research live **outside this repository**, on the
-maintainer's machine:
-
-- `disign_doc.md` — requirements, database
-  schema, conventions (written in Russian)
-- `bricklink_catalog_research.md` — data
-  formats, measurements, gotchas
-- `db/downloads.zip` — catalog archive, used as
-  an import fixture
+The design document and the data-format research live **outside this repository**. They are the
+maintainer's working notes, written in Russian, and one of them leans on a 38 MB catalog archive that
+has no business in git. `CLAUDE.local.md` says where they are.
 
 Read them before touching the database schema or the importer: every decision and every measured
 number is recorded there. Change the schema in the design document first, then in code.
 
-## Local environment
+## Running it locally
 
-| | |
-|-|-|
-| URL | http://127.0.0.1:82 (vhost `brickcollector.local`) |
-| DocumentRoot | `<project>/public` |
-| PHP | 8.2.4, Apache 2.4.56 (XAMPP), `php.ini` |
-| CLI | `php`, `composer` 2.5.8, `node` 22.16, `npm` 10.9.2 |
+Any PHP 8.2+ with SQLite and a web server pointed at `public/` will do; the Home Assistant add-on
+image is the reference deployment. Two things are worth knowing whatever the machine:
 
-Xdebug slows the CLI down and floods the output with warnings — run scripts and benchmarks with
-`php -d xdebug.mode=off`.
-
-**Composer needs `COMPOSER_IPRESOLVE=4` on this network.** `repo.packagist.org` publishes an AAAA
-record, IPv6 does not route from here, and Composer hangs through the TLS handshake until it times
-out with a confusing SSL error. Prefix every Composer command:
-`COMPOSER_IPRESOLVE=4 composer require ...`.
-
-Editing `php.ini` or the vhost requires an Apache restart. **The user restarts Apache**, never
-automate it: other local sites share the same instance.
-
-**Do not cache the configuration on this machine.** `php artisan config:cache` makes `RefreshDatabase`
-point at the real database file instead of the `:memory:` one from `phpunit.xml`, and the test suite
-then wipes the imported catalog and the collection. That has happened once already; `tests/TestCase`
-now refuses to run unless the connection is in-memory. Caching is right for the add-on image, where
-it is built once and nothing runs tests.
+- **Xdebug slows the CLI to a crawl and floods the output with warnings.** Run scripts and
+  benchmarks with `php -d xdebug.mode=off`.
+- **Do not cache the configuration where the tests run.** `php artisan config:cache` makes
+  `RefreshDatabase` point at the real database file instead of the `:memory:` one from `phpunit.xml`,
+  and the suite then wipes the imported catalog and the collection. That has happened once already;
+  `tests/TestCase` now refuses to run unless the connection is in-memory. Caching is right for the
+  add-on image, where it is built once and nothing runs tests.
 
 Two things follow from that, and they matter wherever the cache does exist:
 
@@ -58,6 +39,9 @@ Two things follow from that, and they matter wherever the cache does exist:
   application encryption key has been specified". The fix was not to cache the config but to stop
   making the requests: a listing renders 48 cards and each was fetching its own placeholder. Pages
   now ask once, in bulk, and draw the placeholder client-side.
+
+Whatever is true of one machine and not another — its URL, its web server, its network — belongs in
+`CLAUDE.local.md`, which is not committed.
 
 ## Stack and its boundaries
 
@@ -183,7 +167,7 @@ under "Размещение изменяемых данных".
 ## Never call out to the network from a web request
 
 Fetching a missing item image inside the request that renders the page made a
-single card take 3.9 s to answer, and a page of 48 cards exhausted Apache's
+single card take 3.9 s to answer, and a page of 48 cards exhausted the web server's
 workers. Outbound work belongs in an artisan command (`catalog:images`); the
 request path reads the cache and records what is missing.
 
@@ -297,8 +281,8 @@ in settings and is switched under Settings.
 - Tests use plain PHPUnit, not Pest. The importer and the accounting rules must be covered: that is
   where a mistake costs the most and is least visible by eye.
 - The import fixture is the `downloads.zip` referenced above; do not copy it into the repository.
-- Before claiming something works, open http://127.0.0.1:82 and check. Code that looks right is not
-  evidence.
+- Before claiming something works, open the application in a browser and check. Code that looks
+  right is not evidence.
 - **Check the number of requests a page makes, not only that it renders.** The image flood was
   invisible in the markup and only showed up in the network panel, where it was both slow and a
   source of intermittent 500s.

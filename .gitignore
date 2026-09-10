@@ -32,3 +32,7 @@ yarn-error.log
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+
+# Machine-specific notes for the coding agent: paths, local URLs, this network.
+# CLAUDE.md holds what is true for everyone.
+CLAUDE.local.md
