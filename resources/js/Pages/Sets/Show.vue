@@ -107,9 +107,10 @@ function remove() {
         <div class="row g-4">
             <div class="col-12 col-lg-4">
                 <div class="card shadow-sm">
-                    <div class="card-header d-flex align-items-center gap-2">
-                        <span class="badge text-bg-secondary">{{ entry.item_id }}</span>
-                        <span class="text-truncate" :title="entry.name">{{ entry.name }}</span>
+                    <div class="card-header d-flex align-items-start gap-2">
+                        <span class="badge text-bg-secondary flex-shrink-0 mt-1">{{ entry.item_id }}</span>
+                        <!-- A detail page has room; the name is not cut here. -->
+                        <span>{{ entry.name }}</span>
                     </div>
 
                     <ItemImage

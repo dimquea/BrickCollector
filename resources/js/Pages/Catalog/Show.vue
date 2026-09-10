@@ -43,9 +43,10 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
         <div class="row g-4">
             <div class="col-12 col-lg-4">
                 <div class="card shadow-sm">
-                    <div class="card-header d-flex align-items-center gap-2">
-                        <span class="badge text-bg-secondary">{{ item.id }}</span>
-                        <span class="text-truncate" :title="item.name">{{ item.name }}</span>
+                    <div class="card-header d-flex align-items-start gap-2">
+                        <span class="badge text-bg-secondary flex-shrink-0 mt-1">{{ item.id }}</span>
+                        <!-- A detail page has room; the name is not cut here. -->
+                        <span>{{ item.name }}</span>
                     </div>
 
                     <ItemImage

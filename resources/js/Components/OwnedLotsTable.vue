@@ -29,10 +29,10 @@ const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
             <thead>
                 <tr>
                     <th style="width: 4rem"></th>
-                    <th>{{ t('lot.item') }}</th>
-                    <th>{{ t('lot.color') }}</th>
-                    <th class="text-end">{{ t('lot.qty') }}</th>
-                    <th class="text-end" style="width: 7rem">{{ t('lot.lost') }}</th>
+                    <th class="text-nowrap">{{ t('lot.item') }}</th>
+                    <th class="text-nowrap">{{ t('lot.color') }}</th>
+                    <th class="text-nowrap text-end">{{ t('lot.qty') }}</th>
+                    <th class="text-nowrap text-end" style="width: 7rem">{{ t('lot.lost') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -48,7 +48,7 @@ const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
                     </td>
                     <td>
                         <Link :href="`/catalog/P/${encodeURIComponent(lot.item_id)}`" class="text-decoration-none">
-                            {{ lot.name }}
+                            <span class="line-clamp-2" :title="lot.name">{{ lot.name }}</span>
                         </Link>
                         <div class="d-flex align-items-center gap-1 mt-1">
                             <span class="badge text-bg-light">{{ lot.item_id }}</span>

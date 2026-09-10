@@ -123,13 +123,13 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                     <thead>
                         <tr>
                             <th style="width: 4rem"></th>
-                            <th>{{ t('lot.item') }}</th>
-                            <th>{{ t('lot.color') }}</th>
-                            <th class="text-end">{{ t('parts.total') }}</th>
-                            <th class="text-end">{{ t('parts.in_sets') }}</th>
-                            <th class="text-end">{{ t('parts.in_minifigures') }}</th>
-                            <th class="text-end">{{ t('item.extras') }}</th>
-                            <th class="text-end">{{ t('collection.lost') }}</th>
+                            <th class="text-nowrap">{{ t('lot.item') }}</th>
+                            <th class="text-nowrap">{{ t('lot.color') }}</th>
+                            <th class="text-nowrap text-end">{{ t('parts.total') }}</th>
+                            <th class="text-nowrap text-end">{{ t('parts.in_sets') }}</th>
+                            <th class="text-nowrap text-end">{{ t('parts.in_minifigures') }}</th>
+                            <th class="text-nowrap text-end">{{ t('item.extras') }}</th>
+                            <th class="text-nowrap text-end">{{ t('collection.lost') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -150,7 +150,13 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             </td>
 
                             <td>
-                                <Link :href="href(part)" class="text-decoration-none">{{ part.name }}</Link>
+                                <Link
+                                    :href="href(part)"
+                                    class="text-decoration-none line-clamp-2"
+                                    :title="part.name"
+                                >
+                                    {{ part.name }}
+                                </Link>
                                 <div class="d-flex align-items-center gap-1 mt-1">
                                     <button
                                         type="button"

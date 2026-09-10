@@ -16,14 +16,16 @@ const props = defineProps({
 
 // A part is not something one owns a copy of, so there is nothing to edit
 // here — no purchase date, no source, no note. Only where it is.
+// An empty tab is not information: it invites a click that shows nothing.
+// Only the ones with something behind them are offered.
 const tabs = [
     { key: 'entries', label: 'parts.tab_entries', count: props.inEntries.length },
     { key: 'minifigures', label: 'parts.tab_minifigures', count: props.inMinifigures.length },
     { key: 'colours', label: 'parts.tab_colours', count: props.otherColours.length },
     { key: 'missing', label: 'parts.tab_missing', count: props.missingIn.length },
-];
+].filter((tab) => tab.count > 0);
 
-const active = ref(tabs.find((tab) => tab.count > 0)?.key ?? 'entries');
+const active = ref(tabs[0]?.key ?? null);
 
 const entryHref = (row) => `/sets/${row.entry_id}`;
 const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.color_id}`;
@@ -42,9 +44,10 @@ const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.col
         <div class="row g-4">
             <div class="col-12 col-lg-4">
                 <div class="card shadow-sm">
-                    <div class="card-header d-flex align-items-center gap-2">
-                        <span class="badge text-bg-secondary">{{ part.item_id }}</span>
-                        <span class="text-truncate" :title="part.name">{{ part.name }}</span>
+                    <div class="card-header d-flex align-items-start gap-2">
+                        <span class="badge text-bg-secondary flex-shrink-0 mt-1">{{ part.item_id }}</span>
+                        <!-- A detail page has room; the name is not cut here. -->
+                        <span>{{ part.name }}</span>
                     </div>
 
                     <Link :href="`/catalog/P/${encodeURIComponent(part.item_id)}`">
@@ -99,7 +102,7 @@ const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.col
             </div>
 
             <div class="col-12 col-lg-8">
-                <ul class="nav nav-tabs">
+                <ul v-if="tabs.length" class="nav nav-tabs">
                     <li v-for="tab in tabs" :key="tab.key" class="nav-item">
                         <button
                             type="button"
@@ -113,12 +116,9 @@ const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.col
                     </li>
                 </ul>
 
-                <div class="card border-top-0 rounded-top-0 shadow-sm">
+                <div class="card shadow-sm" :class="{ 'border-top-0 rounded-top-0': tabs.length }">
                     <div class="card-body p-0">
-                        <p
-                            v-if="!tabs.find((tab) => tab.key === active).count"
-                            class="text-body-secondary p-3 mb-0"
-                        >
+                        <p v-if="!tabs.length" class="text-body-secondary p-3 mb-0">
                             {{ t('parts.tab_empty') }}
                         </p>
 
