@@ -23,9 +23,18 @@ class ItemImageController extends Controller
             }
         }
 
-        // A placeholder is a normal answer, not an error: plenty of catalog
-        // entries simply have no picture. Cached briefly so a later import or
-        // a successful retry can replace it.
+        // Нет в кэше — отправляем браузер прямо к источнику, вместо того чтобы
+        // качать байты через себя. Ждать очередь не приходится: картинка
+        // появляется сразу, а место на диске занимает только то, чем человек
+        // владеет.
+        if ($item) {
+            return redirect()->away($item->imageUrl($color), 302, [
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
+        }
+
+        // Такого предмета нет в справочнике: показывать нечего и спрашивать
+        // не у кого.
         return response($images->placeholder($type), 200, [
             'Content-Type' => 'image/svg+xml',
             'Cache-Control' => 'public, max-age=3600',

@@ -7,22 +7,34 @@ use App\Catalog\Models\Item;
 use Illuminate\Console\Command;
 
 /**
- * Fills the image cache for pictures the interface has asked for.
+ * Fills the image cache with pictures of what the person owns.
  *
  * Runs outside the request cycle on purpose: fetching in a request made a
  * single card take seconds and a full page of them exhaust the web server.
+ * Nothing waits on this — a picture that is not cached yet is shown straight
+ * from the source. The cache is what makes the collection keep its pictures
+ * when the source will not answer.
  */
 class FetchItemImagesCommand extends Command
 {
     protected $signature = 'catalog:images
                             {--limit=200 : How many images to fetch in this run}
                             {--retry : Also retry lookups that previously failed}
-                            {--pause=100 : Milliseconds to wait between requests}';
+                            {--pause=100 : Milliseconds to wait between requests}
+                            {--no-queue : Do not look for newly owned items first}';
 
-    protected $description = 'Download item images the interface has requested';
+    protected $description = 'Download pictures of items in the collection';
 
     public function handle(ItemImages $images): int
     {
+        if (! $this->option('no-queue')) {
+            $added = $images->queueCollection();
+
+            if ($added > 0) {
+                $this->line("Queued {$added} newly owned items.");
+            }
+        }
+
         $pending = $images->pending((int) $this->option('limit'), (bool) $this->option('retry'));
 
         if ($pending->isEmpty()) {

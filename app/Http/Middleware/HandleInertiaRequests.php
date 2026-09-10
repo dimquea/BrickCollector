@@ -44,6 +44,10 @@ class HandleInertiaRequests extends Middleware
             'locale' => $locale,
             'supportedLocales' => SetLocale::SUPPORTED,
             'translations' => Lang::get('app', [], $locale),
+            // Карточка, для которой картинки в кэше нет, забирает её у
+            // источника сама — иначе каждая из сорока восьми ходила бы к нам
+            // за редиректом.
+            'imageUrl' => config('brickcollector.image_url'),
             'flash' => fn () => $request->session()->get('flash'),
         ];
     }

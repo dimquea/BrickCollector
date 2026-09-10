@@ -1,50 +1,78 @@
 <script setup>
-import { url } from '@/support/base';
 import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { url } from '@/support/base';
 
 /**
  * Item picture.
  *
- * When the server says there is no cached picture, the placeholder is drawn
- * here and no request is made at all. A listing renders 48 cards, and asking
- * the server 48 times only to be told "nothing yet" is a flood that answers
- * nothing — heavy enough, on this platform, to make some of those requests
- * fail outright.
+ * Two places it can come from, tried in that order.
  *
- * Leaving `hasImage` undefined means "ask anyway", for the few places that
- * render a single picture without having looked it up in advance.
+ * From our cache — that is what lets a collection keep its pictures when the
+ * source will not answer. Not cached — the browser fetches it from the source
+ * itself, so nothing waits on the download queue: the picture is there the
+ * moment the card is. Neither answers — the placeholder is drawn here.
+ *
+ * The card goes to the source directly rather than letting our route redirect
+ * it there: a listing renders 48 of these, and 48 redirects would be the
+ * request flood we removed once already.
  */
 const props = defineProps({
     type: { type: String, required: true },
     id: { type: String, required: true },
     colorId: { type: Number, default: 0 },
     alt: { type: String, default: '' },
+    /** false — картинки в кэше нет; undefined — не спрашивали, начнём с кэша. */
     hasImage: { type: Boolean, default: undefined },
 });
 
-const failed = ref(false);
+const page = usePage();
 
-watch(
-    () => [props.type, props.id, props.colorId],
-    () => (failed.value = false),
-);
-
-const src = computed(
+const cached = computed(
     () => url(`/images/${props.type}/${encodeURIComponent(props.id)}/${props.colorId ?? 0}`),
 );
 
-const showImage = computed(() => props.hasImage !== false && !failed.value);
+const source = computed(() => {
+    const pattern = page.props.imageUrl;
+
+    if (typeof pattern !== 'string' || pattern === '') {
+        return null;
+    }
+
+    return pattern
+        .replaceAll('{type}', props.type)
+        .replaceAll('{color}', String(props.colorId ?? 0))
+        .replaceAll('{id}', encodeURIComponent(props.id));
+});
+
+// Известно, что в кэше пусто — значит и спрашивать нас не о чем: сразу к
+// источнику. В остальных случаях начинаем со своего, а источник остаётся
+// запасным вариантом на случай, если файл из кэша пропал.
+const candidates = computed(() =>
+    (props.hasImage === false ? [source.value] : [cached.value, source.value])
+        .filter((candidate) => candidate !== null),
+);
+
+const attempt = ref(0);
+
+watch(
+    () => [props.type, props.id, props.colorId, props.hasImage],
+    () => (attempt.value = 0),
+);
+
+const src = computed(() => candidates.value[attempt.value] ?? null);
 </script>
 
 <template>
     <img
-        v-if="showImage"
+        v-if="src"
+        :key="src"
         :src="src"
         :alt="alt"
         loading="lazy"
         decoding="async"
         class="img-fluid"
-        @error="failed = true"
+        @error="attempt += 1"
     />
 
     <svg

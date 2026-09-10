@@ -31,9 +31,10 @@ class ItemImages
     private const RETRY_AFTER_DAYS = 7;
 
     /**
-     * Cached file for an item, or null when there is nothing to serve yet.
+     * Cached file for an item, or null when we do not have one.
      *
-     * Never performs a network call. A miss is queued for the fetcher.
+     * Never performs a network call and never writes: what gets cached is
+     * decided by what the person owns, not by what a page happened to show.
      */
     public function cached(Item $item, ?int $colorId = null): ?string
     {
@@ -41,15 +42,9 @@ class ItemImages
 
         $row = $this->row($item->type, $item->id, $colorId);
 
-        if ($row && $row->status === 'ok' && Storage::disk(self::DISK)->exists($row->path)) {
-            return $row->path;
-        }
-
-        if (! $row) {
-            $this->remember($item->type, $item->id, $colorId, null, 'pending', null);
-        }
-
-        return null;
+        return $row && $row->status === 'ok' && Storage::disk(self::DISK)->exists($row->path)
+            ? $row->path
+            : null;
     }
 
     /**
@@ -90,31 +85,11 @@ class ItemImages
             ->keyBy(fn ($row) => $row->item_type.'/'.$row->item_id.'/'.$row->color_id);
 
         $available = [];
-        $queue = [];
 
         foreach ($keys as $key => [$type, $id, $colorId]) {
             $row = $known[$key] ?? null;
 
             $available[$key] = $row !== null && $row->status === 'ok' && $row->path !== null;
-
-            if ($row === null) {
-                $queue[] = [
-                    'item_type' => $type,
-                    'item_id' => $id,
-                    'color_id' => $colorId,
-                    'path' => null,
-                    'status' => 'pending',
-                    'fetched_at' => null,
-                ];
-            }
-        }
-
-        if ($queue) {
-            DB::table('image_cache')->upsert(
-                $queue,
-                ['item_type', 'item_id', 'color_id'],
-                ['status'],
-            );
         }
 
         return $available;
@@ -179,6 +154,54 @@ class ItemImages
         }
 
         return $query->limit($limit)->get();
+    }
+
+    /**
+     * Ставит в очередь картинки того, чем человек владеет.
+     *
+     * Кэшируем коллекцию, а не всё подряд: справочник — это 175 тысяч
+     * предметов, и качать их «на всякий случай» бессмысленно. Всё, чего в кэше
+     * нет, страница покажет прямо из источника, так что ждать очередь никому не
+     * приходится; она лишь делает коллекцию независимой от того, жив ли BrickLink.
+     *
+     * @return int сколько строк добавилось
+     */
+    public function queueCollection(): int
+    {
+        $wanted = DB::table('collection_entries')
+            ->whereNotNull('item_type')
+            ->selectRaw('item_type, item_id, COALESCE(color_id, 0) as color_id')
+            ->union(
+                DB::table('collection_items')
+                    ->selectRaw('item_type, item_id, COALESCE(color_id, 0) as color_id')
+            );
+
+        $rows = DB::query()
+            ->fromSub($wanted, 'wanted')
+            ->whereNotExists(fn ($sub) => $sub
+                ->from('image_cache')
+                ->whereColumn('image_cache.item_type', 'wanted.item_type')
+                ->whereColumn('image_cache.item_id', 'wanted.item_id')
+                ->whereColumn('image_cache.color_id', 'wanted.color_id')
+                ->selectRaw('1'))
+            ->get();
+
+        $added = 0;
+
+        foreach ($rows->chunk(500) as $chunk) {
+            $added += DB::table('image_cache')->insertOrIgnore(
+                $chunk->map(fn ($row) => [
+                    'item_type' => $row->item_type,
+                    'item_id' => $row->item_id,
+                    'color_id' => (int) $row->color_id,
+                    'path' => null,
+                    'status' => 'pending',
+                    'fetched_at' => null,
+                ])->all()
+            );
+        }
+
+        return $added;
     }
 
     /**
