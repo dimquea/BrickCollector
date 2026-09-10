@@ -66,6 +66,24 @@ return [
         'found' => '{0} nothing here|{1} :count item|[2,*] :count items',
     ],
 
+    'parts' => [
+        'found' => '{0} nothing here|{1} :count part|[2,*] :count parts',
+        'query_hint' => 'Name or item number',
+        'placement' => 'Where it is',
+        'total' => 'In collection',
+        'in_sets' => 'In sets',
+        'in_minifigures' => 'In minifigures',
+        'loose' => 'Loose',
+        'lost' => 'Missing somewhere',
+        'filter_by_article' => 'Filter by this item number',
+        'filter_by_colour' => 'Filter by this colour',
+        'tab_entries' => 'Sets',
+        'tab_minifigures' => 'Minifigures',
+        'tab_colours' => 'Other colours',
+        'tab_missing' => 'Missing from',
+        'tab_empty' => 'Nothing to show here.',
+    ],
+
     'collection' => [
         'title' => 'Collection',
         'add' => 'Add to collection',

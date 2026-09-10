@@ -4,6 +4,7 @@ use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\ItemImageController;
 use App\Http\Controllers\LotController;
+use App\Http\Controllers\PartsController;
 use App\Http\Controllers\SetsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Middleware\SetLocale;
@@ -45,6 +46,16 @@ Route::get('/sets', [SetsController::class, 'index'])->name('sets.index');
 Route::get('/sets/{entry}', [SetsController::class, 'show'])->name('sets.show');
 Route::patch('/sets/{entry}', [SetsController::class, 'update'])->name('sets.update');
 Route::delete('/sets/{entry}', [SetsController::class, 'destroy'])->name('sets.destroy');
+
+/*
+ * Parts are counted, not owned in copies: the same brick sits in several
+ * boxes at once, so this section lists totals per part and colour and has no
+ * page for an individual one.
+ */
+Route::get('/parts', [PartsController::class, 'index'])->name('parts.index');
+Route::get('/parts/{id}/{color}', [PartsController::class, 'show'])
+    ->where('color', '[0-9]+')
+    ->name('parts.show');
 
 // A lot belongs to a copy of anything, so it sits outside the sections.
 Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.lost');

@@ -59,7 +59,7 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-lg-3">
                         <label for="q" class="form-label">{{ t('catalog.query') }}</label>
                         <input
                             id="q"
@@ -100,8 +100,8 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         />
                     </div>
 
-                    <div class="col-12 col-lg-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-outline-secondary w-100" @click="reset">
+                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-secondary w-100 text-nowrap" @click="reset">
                             {{ t('catalog.reset') }}
                         </button>
                     </div>

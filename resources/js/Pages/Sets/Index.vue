@@ -124,8 +124,8 @@ const shows = (list) => list.length > 1;
                         />
                     </div>
 
-                    <div class="col-12 col-lg-1 d-flex align-items-end">
-                        <button type="button" class="btn btn-outline-secondary w-100" @click="reset">
+                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-secondary w-100 text-nowrap" @click="reset">
                             {{ t('catalog.reset') }}
                         </button>
                     </div>

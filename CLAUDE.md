@@ -123,6 +123,11 @@ A single SQLite database. Table prefixes carry meaning — follow them strictly:
   an entry from the collection relies on `ON DELETE CASCADE`.
 - **WAL and a busy timeout are not optional here.** One page pulls dozens of images and each cache
   miss writes a row, so writers collide. Configured in `config/database.php`.
+- **Parenthesise an OR, in a where and in a having alike.** `->orWhere(...)` chained at the top level
+  escapes the constraints already on the query, and a second `havingRaw` is joined with AND, so
+  `total > 0 OR spares > 0 AND in_sets > 0` binds the AND tighter than the OR. Both mistakes were
+  made here and both read as plausible numbers rather than as errors: 71 of a brick there were two
+  of, and a placement filter that matched everything. Wrap the OR in a closure or in brackets.
 - **Never write with `updateOrInsert` on a path that can run concurrently.** It is a SELECT followed
   by an INSERT: two requests for the same missing image both saw no row, both inserted, and the loser
   got a UNIQUE violation. Use `upsert`, which SQLite executes as a single `INSERT ... ON CONFLICT`.

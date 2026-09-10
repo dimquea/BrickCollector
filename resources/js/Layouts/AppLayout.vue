@@ -11,7 +11,7 @@ const page = usePage();
 const links = computed(() => [
     { key: 'catalog', href: '/catalog' },
     { key: 'sets', href: '/sets' },
-    { key: 'parts', href: null },
+    { key: 'parts', href: '/parts' },
     { key: 'minifigures', href: null },
     { key: 'analytics', href: null },
     { key: 'settings', href: '/settings' },
