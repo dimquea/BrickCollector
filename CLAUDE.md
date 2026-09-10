@@ -103,8 +103,13 @@ A single SQLite database. Table prefixes carry meaning — follow them strictly:
   `DB::statement()`, using the SQL from the design document verbatim.
 - **`PRAGMA foreign_keys = ON` is mandatory.** SQLite disables foreign keys by default, and removing
   an entry from the collection relies on `ON DELETE CASCADE`.
-- **Wrap imports in transactions**, otherwise 1.5M inserts take minutes instead of seconds. Measured:
-  full import 17.6 s, resulting database 145 MB.
+- **Wrap imports in transactions**, otherwise 1.5M inserts take minutes instead of seconds.
+- **Do not bulk-load through the query builder.** It prepares a fresh statement per call, and a chunk
+  of 2,000 rows is a statement with 20,000 placeholders for SQLite to parse every time. Use
+  `App\Catalog\Import\BulkInsert`, which prepares one fixed-width statement and reuses it. Measured
+  on the real archive: inventories fell from 123 s to 10 s.
+- **Build indexes after a bulk load, not during.** For the 1.5M inventory rows: 4.8 s + 6.0 s to
+  create the indexes afterwards, against 13.4 s maintaining them row by row.
 - **Money** is an integer in minor units, column `price`, cast in the model. Never float, never
   decimal.
 - **Dates** are `Y-m-d` strings; SQLite has no date type.
@@ -133,7 +138,9 @@ under "Размещение изменяемых данных".
 
 ## Catalog import
 
-- Runs only as an artisan command, **never** inside an HTTP request.
+- Runs only as an artisan command (`catalog:import`), **never** inside an HTTP request.
+- Current cost on the reference archive: 46 s, 116 MB peak, 192 MB database. The command prints
+  per-step timings — check them before optimising anything.
 - Read straight out of the zip without extracting: one `ZipArchive::open()` for the whole import (it
   costs ~590 ms and is paid once). Never use the `zip://` stream wrapper in a loop — it reopens the
   archive on every read, 1.2 s each.
