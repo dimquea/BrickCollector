@@ -45,7 +45,11 @@ class FetchItemImagesCommand extends Command
 
         $pause = (int) $this->option('pause') * 1000;
         $tally = ['ok' => 0, 'missing' => 0, 'error' => 0];
-        $bar = $this->output->createProgressBar($pending->count());
+        // В журнале аддона полоска прогресса — это десяток строк мусора на
+        // каждый прогон, а прогон идёт раз в несколько минут.
+        $bar = $this->output->isDecorated()
+            ? $this->output->createProgressBar($pending->count())
+            : null;
 
         foreach ($pending as $row) {
             $item = Item::where('type', $row->item_type)->where('id', $row->item_id)->first();
@@ -54,14 +58,17 @@ class FetchItemImagesCommand extends Command
                 $tally[$images->fetch($item, (int) $row->color_id)]++;
             }
 
-            $bar->advance();
+            $bar?->advance();
 
             // The source is somebody else's server; do not hammer it.
             usleep($pause);
         }
 
-        $bar->finish();
-        $this->newLine(2);
+        $bar?->finish();
+
+        if ($bar !== null) {
+            $this->newLine(2);
+        }
 
         foreach ($tally as $status => $count) {
             $this->line(sprintf('  %-8s %d', $status, $count));
