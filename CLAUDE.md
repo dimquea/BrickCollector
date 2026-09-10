@@ -228,6 +228,11 @@ request path reads the cache and records what is missing.
   grid). The components and their classes are listed in the design document.
 - Icons: MDI only.
 - Wrap tables in `table-responsive` — the service must be usable on a phone.
+- **An item links where the page it sits on belongs.** The same parts table is drawn for a catalog
+  item, for an owned set and for a standalone minifigure. Inside the catalog an item opens in the
+  catalog — the question there is "what is this". Inside something owned it opens in its collection
+  section (`/parts/{id}/{color}`, `/minifigures/{id}`) — the question there is "what else do I have of
+  these". A subset has no section and falls back to the catalog.
 - **Selects longer than 10 options** use `SearchSelect.vue`, a wrapper around Tom Select with the
   `tom-select.bootstrap5.css` theme. Create the instance in `onMounted`, destroy it in `onUnmounted`
   — without that, Inertia navigation leaves orphaned instances behind. Never reach for Tom Select

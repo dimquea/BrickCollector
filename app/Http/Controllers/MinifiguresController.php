@@ -93,9 +93,6 @@ class MinifiguresController extends Controller
                 'year' => $catalogItem->year ?? null,
                 'theme' => $catalogItem?->theme?->path,
                 'image_color_id' => (int) ($catalogItem->image_color_id ?? 0),
-                'qty' => (int) ($root['qty'] ?? 1),
-                'lost_qty' => (int) ($root['lost_qty'] ?? 0),
-                'lot_id' => $root['id'] ?? null,
             ],
             'parts' => $root['children'] ?? [],
             'meta' => [

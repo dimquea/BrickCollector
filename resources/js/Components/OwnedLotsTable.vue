@@ -13,6 +13,10 @@ import { t } from '@/i18n';
  * The input writes on change rather than through a save button: a person
  * marking losses works through a pile of bricks and would lose track of an
  * unsaved form.
+ *
+ * Drawn inside something owned, so a part opens in the collection rather than
+ * in the catalog: the question here is "what else do I have of these", not
+ * "what is this". The catalog's own table (PartsTable) links to the catalog.
  */
 const props = defineProps({
     lots: { type: Array, required: true },
@@ -42,12 +46,12 @@ const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
                     :class="{ 'table-warning': lot.lost_qty > 0, 'opacity-50': !lot.counts }"
                 >
                     <td>
-                        <Link :href="`/catalog/P/${encodeURIComponent(lot.item_id)}`">
+                        <Link :href="`/parts/${encodeURIComponent(lot.item_id)}/${lot.color_id}`">
                             <ItemImage type="P" :id="lot.item_id" :color-id="lot.color_id" :alt="lot.name" />
                         </Link>
                     </td>
                     <td>
-                        <Link :href="`/catalog/P/${encodeURIComponent(lot.item_id)}`" class="text-decoration-none">
+                        <Link :href="`/parts/${encodeURIComponent(lot.item_id)}/${lot.color_id}`" class="text-decoration-none">
                             <span class="line-clamp-2" :title="lot.name">{{ lot.name }}</span>
                         </Link>
                         <div class="d-flex align-items-center gap-1 mt-1">

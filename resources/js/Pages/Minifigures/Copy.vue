@@ -1,11 +1,10 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
 import EntryMetaForm from '@/Components/EntryMetaForm.vue';
-import LostQuantityInput from '@/Components/LostQuantityInput.vue';
 import { t } from '@/i18n';
 
 /**
@@ -17,6 +16,11 @@ import { t } from '@/i18n';
  * The tree of such an entry begins with a row for the figure itself; the
  * server hands over its children, since a page showing the figure inside
  * itself would be nonsense.
+ *
+ * There is no "lost" count for the figure as a whole here. Inside a set that
+ * count answers "the set is missing its figure"; for a figure owned on its
+ * own, not having it means it is not in the collection, and the answer is to
+ * remove the copy. Individual parts of it can still go missing.
  */
 const props = defineProps({
     entry: { type: Object, required: true },
@@ -28,12 +32,6 @@ const props = defineProps({
 
 const page = usePage();
 const flash = computed(() => page.props.flash);
-
-const lot = ref({
-    id: props.entry.lot_id,
-    qty: props.entry.qty,
-    lost_qty: props.entry.lost_qty,
-});
 
 function remove() {
     if (window.confirm(t('collection.remove_confirm', { name: props.entry.name }))) {
@@ -81,15 +79,6 @@ function remove() {
                         <li v-if="entry.theme" class="list-group-item d-flex justify-content-between gap-2">
                             <span class="text-body-secondary">{{ t('catalog.theme') }}</span>
                             <span class="text-end">{{ entry.theme }}</span>
-                        </li>
-                        <li
-                            v-if="lot.id"
-                            class="list-group-item d-flex justify-content-between align-items-center gap-2"
-                        >
-                            <span class="text-body-secondary">{{ t('lot.lost') }}</span>
-                            <div style="width: 6rem">
-                                <LostQuantityInput :lot="lot" small />
-                            </div>
                         </li>
                     </ul>
 

@@ -80,8 +80,13 @@ const lostInside = computed(() => {
                             <LostQuantityInput :lot="lot" small @saved="emit('saved', $event)" />
                         </div>
                     </div>
+                    <!-- A minifigure has a section of its own, so it opens
+                         there; a subset has none and falls back to the
+                         catalog. -->
                     <Link
-                        :href="`/catalog/${lot.type}/${encodeURIComponent(lot.item_id)}`"
+                        :href="lot.type === 'M'
+                            ? `/minifigures/${encodeURIComponent(lot.item_id)}`
+                            : `/catalog/${lot.type}/${encodeURIComponent(lot.item_id)}`"
                         class="btn btn-sm btn-outline-secondary"
                     >
                         {{ t('item.open') }}
