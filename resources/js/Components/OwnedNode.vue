@@ -1,8 +1,9 @@
 <script setup>
-import { Link, router } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import ItemImage from '@/Components/ItemImage.vue';
 import LotBadges from '@/Components/LotBadges.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
+import LostQuantityInput from '@/Components/LostQuantityInput.vue';
 import { t } from '@/i18n';
 
 /**
@@ -14,17 +15,7 @@ defineProps({
     domId: { type: String, required: true },
 });
 
-function setLost(lot, event) {
-    const value = Number(event.target.value);
-
-    if (!Number.isNaN(value) && value !== lot.lost_qty) {
-        router.patch(
-            `/collection/lot/${lot.id}`,
-            { lost_qty: value },
-            { preserveScroll: true, preserveState: false },
-        );
-    }
-}
+const emit = defineEmits(['saved']);
 </script>
 
 <template>
@@ -54,15 +45,9 @@ function setLost(lot, event) {
                 <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
                     <div>
                         <label class="form-label small mb-1">{{ t('lot.lost') }}</label>
-                        <input
-                            type="number"
-                            class="form-control form-control-sm text-end"
-                            style="width: 6rem"
-                            min="0"
-                            :max="lot.qty"
-                            :value="lot.lost_qty"
-                            @change="setLost(lot, $event)"
-                        />
+                        <div style="width: 6rem">
+                            <LostQuantityInput :lot="lot" small @saved="emit('saved', $event)" />
+                        </div>
                     </div>
                     <Link
                         :href="`/catalog/${lot.type}/${encodeURIComponent(lot.item_id)}`"
@@ -72,7 +57,7 @@ function setLost(lot, event) {
                     </Link>
                 </div>
 
-                <OwnedLotsTable :lots="lot.children" />
+                <OwnedLotsTable :lots="lot.children" @saved="emit('saved', $event)" />
 
                 <div v-if="lot.children.some((c) => c.type !== 'P')" class="accordion mt-3">
                     <OwnedNode
@@ -80,6 +65,7 @@ function setLost(lot, event) {
                         :key="child.id"
                         :lot="child"
                         :dom-id="`${domId}-${index}`"
+                        @saved="emit('saved', $event)"
                     />
                 </div>
 

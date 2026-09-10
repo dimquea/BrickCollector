@@ -1,9 +1,10 @@
 <script setup>
 import { computed } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import LotBadges from '@/Components/LotBadges.vue';
+import LostQuantityInput from '@/Components/LostQuantityInput.vue';
 import { t } from '@/i18n';
 
 /**
@@ -17,21 +18,9 @@ const props = defineProps({
     lots: { type: Array, required: true },
 });
 
+const emit = defineEmits(['saved']);
+
 const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
-
-function setLost(lot, event) {
-    const value = Number(event.target.value);
-
-    if (Number.isNaN(value) || value === lot.lost_qty) {
-        return;
-    }
-
-    router.patch(
-        `/collection/lot/${lot.id}`,
-        { lost_qty: value },
-        { preserveScroll: true, preserveState: false },
-    );
-}
 </script>
 
 <template>
@@ -69,15 +58,7 @@ function setLost(lot, event) {
                     <td><ColorDot :rgb="lot.color_rgb" :name="lot.color_name" /></td>
                     <td class="text-end fw-semibold">{{ lot.qty }}</td>
                     <td>
-                        <input
-                            type="number"
-                            class="form-control form-control-sm text-end"
-                            min="0"
-                            :max="lot.qty"
-                            :value="lot.lost_qty"
-                            :aria-label="t('lot.lost')"
-                            @change="setLost(lot, $event)"
-                        />
+                        <LostQuantityInput :lot="lot" small @saved="emit('saved', $event)" />
                     </td>
                 </tr>
             </tbody>

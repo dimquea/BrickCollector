@@ -67,7 +67,8 @@ Laravel · Inertia.js · Vue 3 · Bootstrap 5 · Material Design Icons · SQLite
   add Breeze, Jetstream, Sanctum, guards, or `auth` middleware.
 - **No jQuery.**
 - **No separate REST API.** Inertia hands data to the pages. Do not create `routes/api.php` without a
-  real external consumer.
+  real external consumer. A web route may still answer JSON when the caller asks for it — see
+  "Saving a single field" — which is not the same thing as an API layer.
 - **Minimal dependencies.** A new entry in `composer.json` or `package.json` needs an explicit
   justification for why the job cannot be done without it. This is a product requirement (Home
   Assistant add-on), not a matter of taste.
@@ -226,6 +227,26 @@ request path reads the cache and records what is missing.
   `tom-select.bootstrap5.css` theme. Create the instance in `onMounted`, destroy it in `onUnmounted`
   — without that, Inertia navigation leaves orphaned instances behind. Never reach for Tom Select
   from a page; go through the wrapper. Short lists stay a plain `<select class="form-select">`.
+
+## Saving a single field
+
+Inertia's router re-renders the page on every response, and re-rendering throws away DOM state the
+framework does not own. Every expanded accordion collapses — unusable for marking losses, which means
+working down a nested list several levels deep.
+
+So a field that saves on its own does not go through the router:
+
+- `resources/js/support/save.js` PATCHes with axios and returns the payload.
+- The route answers JSON (still a web route, not an API) and includes whatever it recalculated —
+  totals, status flags — so the page updates those in place.
+- The field is disabled while the request is in flight, and the previous value is restored if the
+  server refuses it, so the input never shows something that was not stored.
+- Failures surface as a Bootstrap toast through `resources/js/support/toasts.js`. A field that
+  silently declines to save is worse than one that fails loudly.
+
+Validation messages reach the user, so they are translated: `lang/*/validation.php`. The Russian file
+is deliberately partial and falls back to English for rules the application does not use. Both files
+carry an `attributes` list, or a message reads "The lost qty field must be at least 0."
 
 ## Internationalisation
 

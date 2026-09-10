@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
@@ -19,6 +19,19 @@ const props = defineProps({
 
 const page = usePage();
 const flash = computed(() => page.props.flash);
+
+// Totals and statuses are recalculated by the server on every save and come
+// back with the response, so the page updates without a re-render.
+const totals = reactive({ ...props.totals });
+const flags = reactive({
+    flag_incomplete: props.entry.flag_incomplete,
+    flag_missing_figs: props.entry.flag_missing_figs,
+});
+
+function applySaved(result) {
+    Object.assign(totals, result.totals ?? {});
+    Object.assign(flags, result.flags ?? {});
+}
 
 const nested = computed(() => props.contents.filter((lot) => lot.type !== 'P'));
 const hasParts = computed(() => props.contents.some((lot) => lot.type === 'P'));
@@ -74,14 +87,14 @@ function remove() {
 
                     <div class="card-footer d-flex flex-wrap gap-1 align-items-center">
                         <span
-                            v-if="entry.flag_incomplete"
+                            v-if="flags.flag_incomplete"
                             class="badge text-bg-warning"
                             :title="t('collection.incomplete_hint')"
                         >
                             <i class="mdi mdi-alert-outline"></i> {{ t('collection.incomplete') }}
                         </span>
                         <span
-                            v-if="entry.flag_missing_figs"
+                            v-if="flags.flag_missing_figs"
                             class="badge text-bg-warning"
                             :title="t('collection.missing_figs_hint')"
                         >
@@ -155,13 +168,14 @@ function remove() {
                         :key="lot.id"
                         :lot="lot"
                         :dom-id="`owned-${index}`"
+                        @saved="applySaved"
                     />
                 </div>
 
                 <div v-if="hasParts" class="card shadow-sm">
                     <div class="card-header">{{ t('item.parts') }}</div>
                     <div class="card-body p-0">
-                        <OwnedLotsTable :lots="contents" />
+                        <OwnedLotsTable :lots="contents" @saved="applySaved" />
                     </div>
                 </div>
             </div>

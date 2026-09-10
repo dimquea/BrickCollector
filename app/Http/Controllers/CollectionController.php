@@ -15,6 +15,7 @@ use App\Collection\Models\Tag;
 use App\Collection\Queries\EntryContents;
 use App\Support\Settings;
 use App\Collection\Models\Entry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -114,7 +115,7 @@ class CollectionController extends Controller
         ]);
     }
 
-    public function update(Request $request, Entry $entry, UpdateEntryMeta $update): RedirectResponse
+    public function update(Request $request, Entry $entry, UpdateEntryMeta $update): JsonResponse
     {
         $validated = $request->validate([
             'acquired_at' => ['nullable', 'date'],
@@ -131,18 +132,38 @@ class CollectionController extends Controller
 
         $update->handle($entry, $validated);
 
-        return back()->with('flash', ['message' => __('app.collection.saved')]);
+        return response()->json(['message' => __('app.collection.saved')]);
     }
 
-    public function updateLost(Request $request, CollectionItem $item, SetLostQuantity $setLost): RedirectResponse
-    {
+    /**
+     * Answers JSON, not a redirect.
+     *
+     * This is not an API layer: it is the same web route, replying with data
+     * because the caller asked for data. Inertia re-renders the page on every
+     * response, and re-rendering collapses every expanded accordion — which is
+     * exactly where these fields live.
+     */
+    public function updateLost(
+        Request $request,
+        CollectionItem $item,
+        SetLostQuantity $setLost,
+        EntryContents $contents,
+    ): JsonResponse {
         $validated = $request->validate([
             'lost_qty' => ['required', 'integer', 'min:0'],
         ]);
 
-        $setLost->handle($item, $validated['lost_qty']);
+        $item = $setLost->handle($item, $validated['lost_qty']);
+        $entry = $item->entry->refresh();
 
-        return back();
+        return response()->json([
+            'lost_qty' => $item->lost_qty,
+            'totals' => $contents->totals($entry),
+            'flags' => [
+                'flag_incomplete' => $entry->flag_incomplete,
+                'flag_missing_figs' => $entry->flag_missing_figs,
+            ],
+        ]);
     }
 
     public function store(Request $request, AddToCollection $add): RedirectResponse

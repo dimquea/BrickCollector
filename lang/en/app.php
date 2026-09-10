@@ -107,6 +107,10 @@ return [
         'manual' => 'Instructions',
     ],
 
+    'errors' => [
+        'save_failed' => 'Could not save. The server did not answer.',
+    ],
+
     'locale' => [
         'label' => 'Language',
         'en' => 'English',

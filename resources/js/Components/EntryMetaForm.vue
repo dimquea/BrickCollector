@@ -1,7 +1,9 @@
 <script setup>
-import { computed, reactive, watch } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { computed, reactive, ref, watch } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import SearchSelect from '@/Components/SearchSelect.vue';
+import { patchField } from '@/support/save';
+import { notify } from '@/support/toasts';
 import { locale, t } from '@/i18n';
 
 /**
@@ -29,15 +31,26 @@ const form = reactive({
     tag_ids: [...props.meta.tag_ids],
 });
 
-const saving = reactive({ value: false });
+const saving = ref(false);
 
-function save() {
+/** Kept so a rejected save can put the form back the way the server has it. */
+let lastAccepted = snapshot();
+
+function snapshot() {
+    return JSON.parse(JSON.stringify(form));
+}
+
+async function save() {
     saving.value = true;
 
-    router.patch(
+    const attempted = snapshot();
+
+    const result = await patchField(
         `/collection/${props.entryId}`,
         {
             acquired_at: form.acquired_at || null,
+            // The one place that knows about decimals. Everything below this
+            // line deals in integer minor units.
             price: form.price === '' ? null : Math.round(Number(form.price) * 100),
             source_id: form.source_id ? Number(form.source_id) : null,
             storage_id: form.storage_id ? Number(form.storage_id) : null,
@@ -45,8 +58,15 @@ function save() {
             status_ids: form.status_ids,
             tag_ids: form.tag_ids,
         },
-        { preserveScroll: true, onFinish: () => (saving.value = false) },
+        { onRevert: () => Object.assign(form, lastAccepted) },
     );
+
+    saving.value = false;
+
+    if (result) {
+        lastAccepted = attempted;
+        notify(result.message ?? t('collection.saved'), 'success', 2500);
+    }
 }
 
 // Checkboxes save themselves; a person ticking "box" does not expect to have
@@ -188,7 +208,7 @@ const hasDictionary = (name) => props.dictionaries[name].length > 0;
                     </div>
 
                     <div class="col-12">
-                        <button type="button" class="btn btn-primary" :disabled="saving.value" @click="save">
+                        <button type="button" class="btn btn-primary" :disabled="saving" @click="save">
                             {{ t('collection.save') }}
                         </button>
                     </div>

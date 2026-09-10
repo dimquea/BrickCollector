@@ -91,19 +91,21 @@ class EntryMetaTest extends TestCase
 
     public function test_the_route_saves_and_validates(): void
     {
-        $this->patch("/collection/{$this->entry->id}", [
+        $this->patchJson("/collection/{$this->entry->id}", [
             'price' => 1250,
             'note' => 'ok',
-        ])->assertRedirect()->assertSessionHas('flash');
+        ])->assertOk()->assertJsonStructure(['message']);
 
         $this->assertSame(1250, $this->entry->fresh()->price);
 
         // A fraction is a bug somewhere upstream: the interface converts.
-        $this->patch("/collection/{$this->entry->id}", ['price' => 12.5])
-            ->assertSessionHasErrors('price');
+        $this->patchJson("/collection/{$this->entry->id}", ['price' => 12.5])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('price');
 
-        $this->patch("/collection/{$this->entry->id}", ['source_id' => 999])
-            ->assertSessionHasErrors('source_id');
+        $this->patchJson("/collection/{$this->entry->id}", ['source_id' => 999])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('source_id');
     }
 
     /**

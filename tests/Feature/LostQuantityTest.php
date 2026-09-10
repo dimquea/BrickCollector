@@ -128,14 +128,34 @@ class LostQuantityTest extends TestCase
         $this->assertSame(0, $this->lotOf('brick')->lost_qty);
     }
 
-    public function test_the_route_records_a_loss(): void
+    /**
+     * The route answers with data, not a redirect: the page updates in place
+     * so that expanded accordions survive.
+     */
+    public function test_the_route_records_a_loss_and_returns_the_new_totals(): void
     {
         $lot = $this->lotOf('brick');
 
-        $this->patch("/collection/lot/{$lot->id}", ['lost_qty' => 3])->assertRedirect();
+        $this->patchJson("/collection/lot/{$lot->id}", ['lost_qty' => 3])
+            ->assertOk()
+            ->assertJsonPath('lost_qty', 3)
+            ->assertJsonPath('totals.lost', 3)
+            ->assertJsonPath('flags.flag_incomplete', true)
+            ->assertJsonPath('flags.flag_missing_figs', false);
 
         $this->assertSame(3, $lot->refresh()->lost_qty);
-        $this->assertTrue($this->entry->refresh()->flag_incomplete);
+    }
+
+    /** An impossible number is refused so the field can put itself back. */
+    public function test_the_route_rejects_a_negative_loss(): void
+    {
+        $lot = $this->lotOf('brick');
+
+        $this->patchJson("/collection/lot/{$lot->id}", ['lost_qty' => -5])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('lost_qty');
+
+        $this->assertSame(0, $lot->refresh()->lost_qty);
     }
 
     public function test_the_entry_page_renders(): void

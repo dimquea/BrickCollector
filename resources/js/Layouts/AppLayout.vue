@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import ToastHost from '@/Components/ToastHost.vue';
 import { t } from '@/i18n';
 
 const page = usePage();
@@ -59,5 +60,7 @@ const isActive = (href) => href !== null && page.url.startsWith(href);
         <main class="container flex-grow-1 py-4">
             <slot />
         </main>
+
+        <ToastHost />
     </div>
 </template>
