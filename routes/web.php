@@ -10,10 +10,16 @@ use App\Http\Controllers\SetsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', fn () => Inertia::render('Home'))->name('home');
+Route::get('/', fn () => Inertia::render('Home', [
+    // Плашка «справочник не импортирован» должна появляться по факту, а не
+    // висеть всегда: на свежей установке она подсказка, на заполненной — ложь.
+    'catalogItems' => (int) DB::table('bl_items')->count(),
+    'entryCount' => (int) DB::table('collection_entries')->count(),
+]))->name('home');
 
 /*
  * The catalog: everything BrickLink knows about, read-only.

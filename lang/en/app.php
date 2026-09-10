@@ -16,6 +16,7 @@ return [
     'home' => [
         'title' => 'Welcome',
         'tagline' => 'Self-hosted LEGO collection manager.',
+        'catalog_size' => 'Catalog',
         'catalog_empty' => 'The catalog has not been imported yet.',
     ],
 
