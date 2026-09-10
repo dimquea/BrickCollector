@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Catalog\Models\Item;
 use App\Catalog\Models\ItemType;
 use App\Catalog\Models\Theme;
+use App\Catalog\Images\ItemImages;
 use App\Catalog\Queries\ItemInventory;
 use App\Catalog\Queries\SearchItems;
 use Illuminate\Http\Request;
@@ -26,6 +27,12 @@ class CatalogController extends Controller
 
         $results = $search->filters($filters)->paginate();
 
+        $images = app(ItemImages::class)->availability(
+            collect($results->items())
+                ->map(fn (Item $item) => [$item->type, $item->id, (int) $item->image_color_id])
+                ->all(),
+        );
+
         return Inertia::render('Catalog/Index', [
             'filters' => $filters,
             'results' => $results->through(fn (Item $item) => [
@@ -36,6 +43,7 @@ class CatalogController extends Controller
                 'theme' => $item->theme?->path,
                 'has_inventory' => $item->has_inventory,
                 'image_color_id' => $item->image_color_id,
+                'has_image' => $images[$item->type.'/'.$item->id.'/'.(int) $item->image_color_id] ?? false,
             ]),
             'itemTypes' => ItemType::whereIn('code', ItemType::BROWSABLE)
                 ->orderByRaw("CASE code ".implode(' ', array_map(

@@ -139,6 +139,7 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         :type="item.type"
                         :id="item.id"
                         :color-id="item.image_color_id"
+                        :has-image="item.has_image"
                         :alt="item.name"
                         class="card-img-top p-2"
                     />

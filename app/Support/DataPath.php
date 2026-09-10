@@ -9,6 +9,10 @@ namespace App\Support;
  * alphabetical order, so one config file reading another only works by
  * accident of naming. This class is safe to call from any of them.
  *
+ * **Only call it from a config file.** It reads env(), which returns null
+ * everywhere else once the configuration is cached. Application code reads
+ * config('brickcollector.*') instead, and gets the value that was baked in.
+ *
  * Plain install : storage/app/brickcollector
  * HA add-on     : /addon_config  (needs read_only: false in the add-on manifest)
  */

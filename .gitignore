@@ -30,3 +30,5 @@ yarn-error.log
 /storage/app/brickcollector/
 *.sqlite
 *.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

@@ -33,6 +33,11 @@ class AddToCollection
                 'source_id' => $meta['source_id'] ?? null,
                 'storage_id' => $meta['storage_id'] ?? null,
                 'note' => $meta['note'] ?? null,
+                // Set here rather than left to the column default: otherwise
+                // the object handed back carries null until something reloads
+                // it, and callers reasonably expect a boolean.
+                'flag_incomplete' => false,
+                'flag_missing_figs' => false,
             ]);
 
             $tree = $item->has_inventory ? $this->inventory->tree($item->type, $item->id) : [];

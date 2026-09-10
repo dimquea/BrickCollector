@@ -42,6 +42,23 @@ out with a confusing SSL error. Prefix every Composer command:
 Editing `php.ini` or the vhost requires an Apache restart. **The user restarts Apache**, never
 automate it: other local sites share the same instance.
 
+**Do not cache the configuration on this machine.** `php artisan config:cache` makes `RefreshDatabase`
+point at the real database file instead of the `:memory:` one from `phpunit.xml`, and the test suite
+then wipes the imported catalog and the collection. That has happened once already; `tests/TestCase`
+now refuses to run unless the connection is in-memory. Caching is right for the add-on image, where
+it is built once and nothing runs tests.
+
+Two things follow from that, and they matter wherever the cache does exist:
+
+- **`env()` returns null outside config files** once the configuration is cached. Application code
+  reads `config('brickcollector.*')`; `App\Support\DataPath` is a config-time helper and nothing
+  else may call it.
+- **Reading `.env` on every request does not survive concurrency on Windows.** Two dozen simultaneous
+  requests and some of them fail to open the file, fall back to framework defaults, and die with "No
+  application encryption key has been specified". The fix was not to cache the config but to stop
+  making the requests: a listing renders 48 cards and each was fetching its own placeholder. Pages
+  now ask once, in bulk, and draw the placeholder client-side.
+
 ## Stack and its boundaries
 
 Laravel · Inertia.js · Vue 3 · Bootstrap 5 · Material Design Icons · SQLite · Vite.
@@ -103,6 +120,11 @@ A single SQLite database. Table prefixes carry meaning — follow them strictly:
   `DB::statement()`, using the SQL from the design document verbatim.
 - **`PRAGMA foreign_keys = ON` is mandatory.** SQLite disables foreign keys by default, and removing
   an entry from the collection relies on `ON DELETE CASCADE`.
+- **WAL and a busy timeout are not optional here.** One page pulls dozens of images and each cache
+  miss writes a row, so writers collide. Configured in `config/database.php`.
+- **Never write with `updateOrInsert` on a path that can run concurrently.** It is a SELECT followed
+  by an INSERT: two requests for the same missing image both saw no row, both inserted, and the loser
+  got a UNIQUE violation. Use `upsert`, which SQLite executes as a single `INSERT ... ON CONFLICT`.
 - **Wrap imports in transactions**, otherwise 1.5M inserts take minutes instead of seconds.
 - **Do not bulk-load through the query builder.** It prepares a fresh statement per call, and a chunk
   of 2,000 rows is a statement with 20,000 placeholders for SQLite to parse every time. Use
@@ -237,3 +259,6 @@ in settings and is switched under Settings.
 - The import fixture is the `downloads.zip` referenced above; do not copy it into the repository.
 - Before claiming something works, open http://127.0.0.1:82 and check. Code that looks right is not
   evidence.
+- **Check the number of requests a page makes, not only that it renders.** The image flood was
+  invisible in the markup and only showed up in the network panel, where it was both slow and a
+  source of intermittent 500s.

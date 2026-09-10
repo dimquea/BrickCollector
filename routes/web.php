@@ -24,7 +24,9 @@ Route::get('/images/{type}/{id}/{color}', [ItemImageController::class, 'show'])
 
 Route::get('/collection', [CollectionController::class, 'index'])->name('collection.index');
 Route::post('/collection', [CollectionController::class, 'store'])->name('collection.store');
+Route::get('/collection/{entry}', [CollectionController::class, 'show'])->name('collection.show');
 Route::delete('/collection/{entry}', [CollectionController::class, 'destroy'])->name('collection.destroy');
+Route::patch('/collection/lot/{item}', [CollectionController::class, 'updateLost'])->name('collection.lot.lost');
 
 Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings');
 

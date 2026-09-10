@@ -52,6 +52,74 @@ class ItemImages
         return null;
     }
 
+    /**
+     * Which of the given items have a cached picture.
+     *
+     * A page renders dozens of cards. Letting each one ask the server was a
+     * flood of requests that answered a placeholder every time, and on Windows
+     * two dozen concurrent requests are enough that some fail to read .env at
+     * all. One query here, one write for the whole page, and a card with no
+     * picture draws its placeholder without asking anyone.
+     *
+     * @param  array<int, array{0: string, 1: string, 2: int}>  $items  type, id, colour
+     * @return array<string, bool>  "type/id/colour" => is there a picture
+     */
+    public function availability(array $items): array
+    {
+        if (! $items) {
+            return [];
+        }
+
+        $keys = [];
+
+        foreach ($items as [$type, $id, $colorId]) {
+            $keys[$type.'/'.$id.'/'.$colorId] = [$type, $id, (int) $colorId];
+        }
+
+        $known = DB::table('image_cache')
+            ->select('item_type', 'item_id', 'color_id', 'status', 'path')
+            ->where(function ($query) use ($keys) {
+                foreach ($keys as [$type, $id, $colorId]) {
+                    $query->orWhere(fn ($w) => $w
+                        ->where('item_type', $type)
+                        ->where('item_id', $id)
+                        ->where('color_id', $colorId));
+                }
+            })
+            ->get()
+            ->keyBy(fn ($row) => $row->item_type.'/'.$row->item_id.'/'.$row->color_id);
+
+        $available = [];
+        $queue = [];
+
+        foreach ($keys as $key => [$type, $id, $colorId]) {
+            $row = $known[$key] ?? null;
+
+            $available[$key] = $row !== null && $row->status === 'ok' && $row->path !== null;
+
+            if ($row === null) {
+                $queue[] = [
+                    'item_type' => $type,
+                    'item_id' => $id,
+                    'color_id' => $colorId,
+                    'path' => null,
+                    'status' => 'pending',
+                    'fetched_at' => null,
+                ];
+            }
+        }
+
+        if ($queue) {
+            DB::table('image_cache')->upsert(
+                $queue,
+                ['item_type', 'item_id', 'color_id'],
+                ['status'],
+            );
+        }
+
+        return $available;
+    }
+
     public function contents(string $path): ?string
     {
         $disk = Storage::disk(self::DISK);
@@ -147,6 +215,12 @@ class ItemImages
         return preg_replace('/[^A-Za-z0-9._-]/', '_', $id);
     }
 
+    /**
+     * upsert, not updateOrInsert: the latter is a SELECT followed by an
+     * INSERT, and one page asks for dozens of images at once. Two requests for
+     * the same missing picture both saw no row, both inserted, and the loser
+     * got a UNIQUE violation — a 500 in place of an image.
+     */
     private function remember(
         string $type,
         string $id,
@@ -155,9 +229,17 @@ class ItemImages
         string $status,
         ?string $fetchedAt,
     ): void {
-        DB::table('image_cache')->updateOrInsert(
-            ['item_type' => $type, 'item_id' => $id, 'color_id' => $colorId],
-            ['path' => $path, 'status' => $status, 'fetched_at' => $fetchedAt],
+        DB::table('image_cache')->upsert(
+            [[
+                'item_type' => $type,
+                'item_id' => $id,
+                'color_id' => $colorId,
+                'path' => $path,
+                'status' => $status,
+                'fetched_at' => $fetchedAt,
+            ]],
+            ['item_type', 'item_id', 'color_id'],
+            ['path', 'status', 'fetched_at'],
         );
     }
 }

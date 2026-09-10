@@ -90,12 +90,15 @@ function remove(entry) {
 
         <div class="masonry">
             <div v-for="entry in entries.data" :key="entry.id" class="card shadow-sm">
-                <div class="card-header d-flex align-items-center gap-2 text-truncate">
+                <Link
+                    :href="`/collection/${entry.id}`"
+                    class="card-header d-flex align-items-center gap-2 text-truncate text-decoration-none"
+                >
                     <span class="badge text-bg-secondary flex-shrink-0">{{ entry.item_id }}</span>
                     <span class="text-truncate" :title="entry.name">{{ entry.name }}</span>
-                </div>
+                </Link>
 
-                <Link :href="`/catalog/${entry.type}/${encodeURIComponent(entry.item_id)}`">
+                <Link :href="`/collection/${entry.id}`">
                     <ItemImage
                         :type="entry.type"
                         :id="entry.item_id"

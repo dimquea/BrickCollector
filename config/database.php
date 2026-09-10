@@ -38,9 +38,20 @@ return [
             'database' => \App\Support\DataPath::database(),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
+            /*
+              * A web page pulls dozens of images at once and every miss writes
+              * a row to the cache. On the defaults, eleven of forty concurrent
+              * requests answered 500: SQLite lets one writer in and fails the
+              * rest immediately.
+              *
+              * WAL keeps readers out of the writer's way, and busy_timeout
+              * makes a blocked writer wait instead of giving up. NORMAL is the
+              * safe companion to WAL: a crash can cost the last transaction,
+              * never the database.
+              */
+            'busy_timeout' => env('DB_BUSY_TIMEOUT', 5000),
+            'journal_mode' => env('DB_JOURNAL_MODE', 'WAL'),
+            'synchronous' => env('DB_SYNCHRONOUS', 'NORMAL'),
             'transaction_mode' => 'DEFERRED',
         ],
 

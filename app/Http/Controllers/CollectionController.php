@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Catalog\Models\Item as CatalogItem;
 use App\Catalog\Models\ItemType;
 use App\Collection\Actions\AddToCollection;
+use App\Collection\Actions\SetLostQuantity;
+use App\Collection\Models\Item as CollectionItem;
+use App\Collection\Queries\EntryContents;
 use App\Collection\Models\Entry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -56,6 +59,41 @@ class CollectionController extends Controller
         ]);
     }
 
+    public function show(Entry $entry, EntryContents $contents): Response
+    {
+        $catalogItem = $entry->item_type === null ? null : CatalogItem::with('theme')
+            ->where('type', $entry->item_type)
+            ->where('id', $entry->item_id)
+            ->first();
+
+        return Inertia::render('Collection/Show', [
+            'entry' => [
+                'id' => $entry->id,
+                'type' => $entry->item_type,
+                'item_id' => $entry->item_id,
+                'name' => $catalogItem->name ?? $entry->name ?? $entry->item_id,
+                'year' => $catalogItem->year ?? null,
+                'theme' => $catalogItem?->theme?->path,
+                'image_color_id' => (int) ($catalogItem->image_color_id ?? 0),
+                'flag_incomplete' => $entry->flag_incomplete,
+                'flag_missing_figs' => $entry->flag_missing_figs,
+            ],
+            'contents' => $contents->tree($entry),
+            'totals' => $contents->totals($entry),
+        ]);
+    }
+
+    public function updateLost(Request $request, CollectionItem $item, SetLostQuantity $setLost): RedirectResponse
+    {
+        $validated = $request->validate([
+            'lost_qty' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $setLost->handle($item, $validated['lost_qty']);
+
+        return back();
+    }
+
     public function store(Request $request, AddToCollection $add): RedirectResponse
     {
         $validated = $request->validate([
@@ -70,7 +108,7 @@ class CollectionController extends Controller
 
         $entry = $add->handle($item, ['qty' => $validated['qty'] ?? 1]);
 
-        return to_route('collection.index')->with('flash', [
+        return to_route('collection.show', $entry)->with('flash', [
             'message' => __('app.collection.added', ['name' => $item->name]),
             'entry_id' => $entry->id,
         ]);

@@ -191,10 +191,11 @@ class AddToCollectionTest extends TestCase
         $this->assertSame(0, DB::table('collection_items')->count());
     }
 
-    public function test_the_route_adds_and_redirects(): void
+    /** Adding lands on the copy just created, not back in the list. */
+    public function test_the_route_adds_and_redirects_to_the_new_entry(): void
     {
         $this->post('/collection', ['type' => 'S', 'id' => 'packet-a'])
-            ->assertRedirect('/collection')
+            ->assertRedirect('/collection/'.Entry::first()->id)
             ->assertSessionHas('flash');
 
         $this->assertSame(1, Entry::count());
