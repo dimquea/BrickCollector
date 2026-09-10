@@ -42,6 +42,7 @@ return [
         'lots' => 'Lots',
         'minifigures' => 'Minifigures',
         'subsets' => 'Subsets',
+        'extras' => 'Spares',
         'element_codes' => 'LEGO element numbers',
         'no_inventory' => 'The catalog has no contents listed for this item.',
         'open' => 'Open',

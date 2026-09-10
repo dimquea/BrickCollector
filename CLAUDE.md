@@ -259,6 +259,12 @@ in settings and is switched under Settings.
   duplicate a mechanism that already exists.
 - **Plural forms.** Russian has three. Do not hand-write the rules: use `trans_choice` on the server
   and the browser's built-in `Intl.PluralRules` on the client.
+- **Count labels are written in the nominative plural** — "Детали", not "Деталей" — so one key can
+  serve both a label beside a number and a heading above a list. Russian would otherwise need the
+  genitive after a numeral and the nominative in a heading, which cannot be the same string.
+- **A key belongs to the role a string plays, not to its English spelling.** English collapses roles
+  that other languages keep apart: "Parts" reads the same as a heading and as a count label, which is
+  how one key ended up serving both and reading wrong in one of them.
 - **Reference data is not translated.** Set, part, colour and category names stay English — that is
   BrickLink's data, and search runs against it.
 - **Internal dictionaries are not translated** either; the user names those entries. The exception is

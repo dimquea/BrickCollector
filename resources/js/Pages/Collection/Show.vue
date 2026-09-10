@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
@@ -11,7 +11,6 @@ import { t } from '@/i18n';
 const props = defineProps({
     entry: { type: Object, required: true },
     contents: { type: Array, default: () => [] },
-    totals: { type: Object, default: () => ({}) },
     meta: { type: Object, required: true },
     dictionaries: { type: Object, required: true },
     currency: { type: String, default: 'RUB' },
@@ -20,21 +19,57 @@ const props = defineProps({
 const page = usePage();
 const flash = computed(() => page.props.flash);
 
-// Totals and statuses are recalculated by the server on every save and come
-// back with the response, so the page updates without a re-render.
-const totals = reactive({ ...props.totals });
+// The two derived statuses are recalculated by the server on every save and
+// come back with the response, so the page updates them without a re-render.
+// The group counts do not need it: they are computed from the rows, and the
+// row a field just saved updates itself.
 const flags = reactive({
     flag_incomplete: props.entry.flag_incomplete,
     flag_missing_figs: props.entry.flag_missing_figs,
 });
 
 function applySaved(result) {
-    Object.assign(totals, result.totals ?? {});
     Object.assign(flags, result.flags ?? {});
 }
 
-const nested = computed(() => props.contents.filter((lot) => lot.type !== 'P'));
-const hasParts = computed(() => props.contents.some((lot) => lot.type === 'P'));
+/**
+ * Top level of the copy, grouped by kind: subsets, minifigures, parts.
+ *
+ * The count is what the group holds directly, so it always matches the list
+ * underneath it. Parts inside a minifigure are counted by the minifigure's
+ * group, which is where they are shown.
+ *
+ * Losses and spares are summed over the whole subtree instead. A part missing
+ * from a minifigure is exactly what someone wants to see without opening
+ * every accordion to find it, and a header that stayed silent about it would
+ * be misleading in the one case that matters.
+ */
+const groups = computed(() => {
+    const kinds = [
+        { key: 'subsets', type: 'S' },
+        { key: 'minifigures', type: 'M' },
+        { key: 'parts', type: 'P' },
+    ];
+
+    const walk = (lots, pick) =>
+        lots.reduce((sum, lot) => sum + pick(lot) + walk(lot.children ?? [], pick), 0);
+
+    return kinds
+        .map(({ key, type }) => {
+            const lots = props.contents.filter((lot) => lot.type === type);
+
+            return {
+                key,
+                lots,
+                count: lots.filter((lot) => lot.counts).reduce((sum, lot) => sum + lot.qty, 0),
+                // Spares and alternates hang off the copy without being part
+                // of it, so they are counted apart from the total.
+                extras: walk(lots, (lot) => (lot.is_extra ? lot.qty : 0)),
+                lost: walk(lots, (lot) => (lot.counts ? lot.lost_qty : 0)),
+            };
+        })
+        .filter((group) => group.lots.length > 0);
+});
 
 function remove() {
     if (window.confirm(t('collection.remove_confirm', { name: props.entry.name }))) {
@@ -141,41 +176,52 @@ function remove() {
             </div>
 
             <div class="col-12 col-lg-8">
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body d-flex flex-wrap gap-4">
-                        <div>
-                            <div class="fs-4 fw-semibold">{{ totals.parts }}</div>
-                            <div class="text-body-secondary small">{{ t('item.parts') }}</div>
-                        </div>
-                        <div v-if="totals.minifigures">
-                            <div class="fs-4 fw-semibold">{{ totals.minifigures }}</div>
-                            <div class="text-body-secondary small">{{ t('item.minifigures') }}</div>
-                        </div>
-                        <div v-if="totals.extras">
-                            <div class="fs-4 fw-semibold">{{ totals.extras }}</div>
-                            <div class="text-body-secondary small">{{ t('lot.extra') }}</div>
-                        </div>
-                        <div v-if="totals.lost">
-                            <div class="fs-4 fw-semibold text-warning">{{ totals.lost }}</div>
-                            <div class="text-body-secondary small">{{ t('collection.lost') }}</div>
-                        </div>
-                    </div>
-                </div>
+                <!--
+                    Everything the copy consists of, grouped by kind. The counts
+                    that used to sit in a separate header live in these headers
+                    instead: the number belongs next to what it counts, and a
+                    long parts table no longer pushes it off the screen.
+                -->
+                <div class="accordion">
+                    <div v-for="group in groups" :key="group.key" class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button
+                                class="accordion-button collapsed gap-2"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                :data-bs-target="`#group-${group.key}`"
+                            >
+                                <span>{{ t(`item.${group.key}`) }}</span>
+                                <span class="badge text-bg-secondary">{{ group.count }}</span>
+                                <span v-if="group.extras" class="badge text-bg-warning">
+                                    {{ t('item.extras') }}: {{ group.extras }}
+                                </span>
+                                <span v-if="group.lost" class="badge text-bg-warning ms-auto">
+                                    <i class="mdi mdi-alert-outline"></i>
+                                    {{ t('collection.lost') }}: {{ group.lost }}
+                                </span>
+                            </button>
+                        </h2>
 
-                <div v-if="nested.length" class="accordion mb-4">
-                    <OwnedNode
-                        v-for="(lot, index) in nested"
-                        :key="lot.id"
-                        :lot="lot"
-                        :dom-id="`owned-${index}`"
-                        @saved="applySaved"
-                    />
-                </div>
+                        <div :id="`group-${group.key}`" class="accordion-collapse collapse">
+                            <div class="accordion-body" :class="{ 'p-0': group.key === 'parts' }">
+                                <OwnedLotsTable
+                                    v-if="group.key === 'parts'"
+                                    :lots="contents"
+                                    @saved="applySaved"
+                                />
 
-                <div v-if="hasParts" class="card shadow-sm">
-                    <div class="card-header">{{ t('item.parts') }}</div>
-                    <div class="card-body p-0">
-                        <OwnedLotsTable :lots="contents" @saved="applySaved" />
+                                <div v-else class="accordion">
+                                    <OwnedNode
+                                        v-for="(lot, index) in group.lots"
+                                        :key="lot.id"
+                                        :lot="lot"
+                                        :dom-id="`owned-${group.key}-${index}`"
+                                        @saved="applySaved"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -115,7 +115,7 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                         </div>
                         <div v-if="totals.extras">
                             <div class="fs-4 fw-semibold text-warning">{{ totals.extras }}</div>
-                            <div class="text-body-secondary small">{{ t('lot.extra') }}</div>
+                            <div class="text-body-secondary small">{{ t('item.extras') }}</div>
                         </div>
                     </div>
                 </div>
