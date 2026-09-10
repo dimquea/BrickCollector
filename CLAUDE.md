@@ -34,6 +34,11 @@ number is recorded there. Change the schema in the design document first, then i
 Xdebug slows the CLI down and floods the output with warnings — run scripts and benchmarks with
 `php -d xdebug.mode=off`.
 
+**Composer needs `COMPOSER_IPRESOLVE=4` on this network.** `repo.packagist.org` publishes an AAAA
+record, IPv6 does not route from here, and Composer hangs through the TLS handshake until it times
+out with a confusing SSL error. Prefix every Composer command:
+`COMPOSER_IPRESOLVE=4 composer require ...`.
+
 Editing `php.ini` or the vhost requires an Apache restart. **The user restarts Apache**, never
 automate it: other local sites share the same instance.
 
@@ -103,6 +108,28 @@ A single SQLite database. Table prefixes carry meaning — follow them strictly:
 - **Money** is an integer in minor units, column `price`, cast in the model. Never float, never
   decimal.
 - **Dates** are `Y-m-d` strings; SQLite has no date type.
+
+## Mutable data lives outside the container
+
+The service targets deployment as a Home Assistant add-on, and an add-on container is rebuilt on every
+update. Anything that must survive a restart therefore lives outside the image, under one configurable
+data directory: the SQLite database, the image cache, the catalog archive, and `APP_KEY`.
+
+- **Never hardcode a path** to any of those. No `storage_path()`, no path literals in business logic —
+  read them from config, which reads them from the environment. One root variable, with per-item
+  overrides derived from it.
+- Defaults: `storage/app/brickcollector` for a plain install, `/addon_config` under Home Assistant.
+- `image_cache.path` stores a path **relative to the cache root**, never an absolute one; the root
+  moves when the deployment changes.
+- `APP_KEY` is generated once and kept with the data, not regenerated on boot: a new key invalidates
+  every session cookie and everything encrypted.
+- Only derived artefacts stay inside the container — compiled views, config and route caches, built
+  assets. They are rebuilt on start.
+- Under the add-on, log to stdout so Home Assistant can display it; a plain install uses the normal
+  file log.
+
+The full reasoning, including why `addon_config` was chosen over `/data`, is in the design document
+under "Размещение изменяемых данных".
 
 ## Catalog import
 

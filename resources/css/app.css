@@ -1,0 +1,15 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import '@mdi/font/css/materialdesignicons.min.css';
+@import 'tom-select/dist/css/tom-select.bootstrap5.css';
+
+/* Masonry grid for card listings. Bootstrap has no masonry, so this is ours. */
+.masonry {
+    column-gap: 1rem;
+}
+.masonry > * {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+}
+@media (min-width: 576px)  { .masonry { column-count: 2; } }
+@media (min-width: 992px)  { .masonry { column-count: 3; } }
+@media (min-width: 1400px) { .masonry { column-count: 4; } }
