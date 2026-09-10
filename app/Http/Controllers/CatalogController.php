@@ -8,6 +8,8 @@ use App\Catalog\Models\Theme;
 use App\Catalog\Images\ItemImages;
 use App\Catalog\Queries\ItemInventory;
 use App\Catalog\Queries\SearchItems;
+use App\Collection\Actions\AddToCollection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -87,6 +89,34 @@ class CatalogController extends Controller
             'totals' => $inventory->summarise($tree),
             'elementCodes' => $this->elementCodes($item),
         ]);
+    }
+
+    /**
+     * Puts a catalog item into the collection and goes to where it now lives.
+     *
+     * Parts and minifigures have no section yet, so those land back on the
+     * catalog page with a note. Sending them to a page that does not exist
+     * would be worse than saying so.
+     */
+    public function addToCollection(
+        Request $request,
+        string $type,
+        string $id,
+        AddToCollection $add,
+    ): RedirectResponse {
+        $item = Item::where('type', $type)->where('id', $id)->firstOrFail();
+
+        $validated = $request->validate([
+            'qty' => ['nullable', 'integer', 'min:1', 'max:999'],
+        ]);
+
+        $entry = $add->handle($item, ['qty' => $validated['qty'] ?? 1]);
+
+        $flash = ['message' => __('app.collection.added', ['name' => $item->name])];
+
+        return in_array($item->type, SetsController::TYPES, true)
+            ? to_route('sets.show', $entry)->with('flash', $flash)
+            : back()->with('flash', $flash);
     }
 
     /**

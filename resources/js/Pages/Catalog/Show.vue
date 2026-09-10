@@ -20,8 +20,8 @@ const adding = ref(false);
 function addToCollection() {
     adding.value = true;
     router.post(
-        '/collection',
-        { type: props.item.type, id: props.item.id },
+        `/catalog/${props.item.type}/${encodeURIComponent(props.item.id)}/add`,
+        {},
         { onFinish: () => (adding.value = false) },
     );
 }

@@ -35,7 +35,7 @@ async function save(event) {
     saving.value = true;
 
     const result = await patchField(
-        `/collection/lot/${props.lot.id}`,
+        `/lots/${props.lot.id}`,
         { lost_qty: next },
         { onRevert: () => (value.value = previous) },
     );

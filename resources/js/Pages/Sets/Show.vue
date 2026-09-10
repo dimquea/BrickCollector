@@ -1,11 +1,12 @@
 <script setup>
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
 import OwnedNode from '@/Components/OwnedNode.vue';
 import EntryMetaForm from '@/Components/EntryMetaForm.vue';
+import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
 import { t } from '@/i18n';
 
 const props = defineProps({
@@ -30,6 +31,16 @@ const flags = reactive({
 
 function applySaved(result) {
     Object.assign(flags, result.flags ?? {});
+}
+
+/**
+ * Ticking "box" in the management block has to show up on the card without a
+ * reload, so the codes are local state the form updates too.
+ */
+const statusCodes = ref([...(props.entry.status_codes ?? [])]);
+
+function applyStatuses(codes) {
+    statusCodes.value = codes;
 }
 
 /**
@@ -73,7 +84,7 @@ const groups = computed(() => {
 
 function remove() {
     if (window.confirm(t('collection.remove_confirm', { name: props.entry.name }))) {
-        router.delete(`/collection/${props.entry.id}`);
+        router.delete(`/sets/${props.entry.id}`);
     }
 }
 </script>
@@ -88,8 +99,8 @@ function remove() {
         </div>
 
         <nav class="mb-3">
-            <Link href="/collection" class="text-decoration-none">
-                <i class="mdi mdi-arrow-left"></i> {{ t('collection.title') }}
+            <Link href="/sets" class="text-decoration-none">
+                <i class="mdi mdi-arrow-left"></i> {{ t('nav.sets') }}
             </Link>
         </nav>
 
@@ -121,20 +132,11 @@ function remove() {
                     </ul>
 
                     <div class="card-footer d-flex flex-wrap gap-1 align-items-center">
-                        <span
-                            v-if="flags.flag_incomplete"
-                            class="badge text-bg-warning"
-                            :title="t('collection.incomplete_hint')"
-                        >
-                            <i class="mdi mdi-alert-outline"></i> {{ t('collection.incomplete') }}
-                        </span>
-                        <span
-                            v-if="flags.flag_missing_figs"
-                            class="badge text-bg-warning"
-                            :title="t('collection.missing_figs_hint')"
-                        >
-                            <i class="mdi mdi-account-alert-outline"></i> {{ t('collection.missing_figs') }}
-                        </span>
+                        <EntryStatusBadges
+                            :status-codes="statusCodes"
+                            :incomplete="flags.flag_incomplete"
+                            :missing-figs="flags.flag_missing_figs"
+                        />
                         <Link
                             :href="`/catalog/${entry.type}/${encodeURIComponent(entry.item_id)}`"
                             class="btn btn-sm btn-link ms-auto p-0"
@@ -150,6 +152,7 @@ function remove() {
                         :meta="meta"
                         :dictionaries="dictionaries"
                         :currency="currency"
+                        @statuses="applyStatuses"
                     />
 
                     <div class="accordion-item">

@@ -191,11 +191,25 @@ class AddToCollectionTest extends TestCase
         $this->assertSame(0, DB::table('collection_items')->count());
     }
 
-    /** Adding lands on the copy just created, not back in the list. */
+/** Adding lands on the copy just created, in the section it belongs to. */
     public function test_the_route_adds_and_redirects_to_the_new_entry(): void
     {
-        $this->post('/collection', ['type' => 'S', 'id' => 'packet-a'])
-            ->assertRedirect('/collection/'.Entry::first()->id)
+        $this->post('/catalog/S/packet-a/add')
+            ->assertRedirect('/sets/'.Entry::first()->id)
+            ->assertSessionHas('flash');
+
+        $this->assertSame(1, Entry::count());
+    }
+
+    /**
+     * Parts and minifigures have no section yet, so adding one stays put and
+     * says so rather than redirecting to a page that does not exist.
+     */
+    public function test_adding_a_minifigure_stays_where_it_was(): void
+    {
+        $this->from('/catalog/M/fig-a')
+            ->post('/catalog/M/fig-a/add')
+            ->assertRedirect('/catalog/M/fig-a')
             ->assertSessionHas('flash');
 
         $this->assertSame(1, Entry::count());
@@ -203,8 +217,7 @@ class AddToCollectionTest extends TestCase
 
     public function test_the_route_rejects_an_unknown_item(): void
     {
-        $this->post('/collection', ['type' => 'S', 'id' => 'nope'])->assertNotFound();
-        $this->post('/collection', ['type' => 'Z', 'id' => 'packet-a'])->assertSessionHasErrors('type');
+        $this->post('/catalog/S/nope/add')->assertNotFound();
 
         $this->assertSame(0, Entry::count());
     }

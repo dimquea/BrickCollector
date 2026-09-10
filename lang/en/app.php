@@ -62,6 +62,10 @@ return [
         'counterpart_hint' => 'Paired with another lot; not counted separately.',
     ],
 
+    'sets' => [
+        'found' => '{0} nothing here|{1} :count item|[2,*] :count items',
+    ],
+
     'collection' => [
         'title' => 'Collection',
         'add' => 'Add to collection',

@@ -136,7 +136,7 @@ class LostQuantityTest extends TestCase
     {
         $lot = $this->lotOf('brick');
 
-        $this->patchJson("/collection/lot/{$lot->id}", ['lost_qty' => 3])
+        $this->patchJson("/lots/{$lot->id}", ['lost_qty' => 3])
             ->assertOk()
             ->assertJsonPath('lost_qty', 3)
             ->assertJsonPath('totals.lost', 3)
@@ -151,7 +151,7 @@ class LostQuantityTest extends TestCase
     {
         $lot = $this->lotOf('brick');
 
-        $this->patchJson("/collection/lot/{$lot->id}", ['lost_qty' => -5])
+        $this->patchJson("/lots/{$lot->id}", ['lost_qty' => -5])
             ->assertStatus(422)
             ->assertJsonValidationErrors('lost_qty');
 
@@ -160,7 +160,7 @@ class LostQuantityTest extends TestCase
 
     public function test_the_entry_page_renders(): void
     {
-        $this->get("/collection/{$this->entry->id}")
+        $this->get("/sets/{$this->entry->id}")
             ->assertOk()
             ->assertSee('set-1');
     }

@@ -31,7 +31,16 @@ const form = reactive({
     tag_ids: [...props.meta.tag_ids],
 });
 
+const emit = defineEmits(['statuses']);
+
 const saving = ref(false);
+
+/** Codes of the ticked statuses, so the card above can redraw its badges. */
+function tickedCodes() {
+    return props.dictionaries.statuses
+        .filter((status) => form.status_ids.includes(status.id) && status.code)
+        .map((status) => status.code);
+}
 
 /** Kept so a rejected save can put the form back the way the server has it. */
 let lastAccepted = snapshot();
@@ -46,7 +55,7 @@ async function save() {
     const attempted = snapshot();
 
     const result = await patchField(
-        `/collection/${props.entryId}`,
+        `/sets/${props.entryId}`,
         {
             acquired_at: form.acquired_at || null,
             // The one place that knows about decimals. Everything below this
@@ -65,6 +74,7 @@ async function save() {
 
     if (result) {
         lastAccepted = attempted;
+        emit('statuses', tickedCodes());
         notify(result.message ?? t('collection.saved'), 'success', 2500);
     }
 }

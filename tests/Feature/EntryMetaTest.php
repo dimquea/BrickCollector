@@ -91,7 +91,7 @@ class EntryMetaTest extends TestCase
 
     public function test_the_route_saves_and_validates(): void
     {
-        $this->patchJson("/collection/{$this->entry->id}", [
+        $this->patchJson("/sets/{$this->entry->id}", [
             'price' => 1250,
             'note' => 'ok',
         ])->assertOk()->assertJsonStructure(['message']);
@@ -99,11 +99,11 @@ class EntryMetaTest extends TestCase
         $this->assertSame(1250, $this->entry->fresh()->price);
 
         // A fraction is a bug somewhere upstream: the interface converts.
-        $this->patchJson("/collection/{$this->entry->id}", ['price' => 12.5])
+        $this->patchJson("/sets/{$this->entry->id}", ['price' => 12.5])
             ->assertStatus(422)
             ->assertJsonValidationErrors('price');
 
-        $this->patchJson("/collection/{$this->entry->id}", ['source_id' => 999])
+        $this->patchJson("/sets/{$this->entry->id}", ['source_id' => 999])
             ->assertStatus(422)
             ->assertJsonValidationErrors('source_id');
     }
@@ -119,7 +119,7 @@ class EntryMetaTest extends TestCase
         // Asserted against the Inertia props, not the markup: the page ships
         // its data JSON-encoded, so a Cyrillic string never appears literally
         // in the HTML.
-        $this->get("/collection/{$this->entry->id}")
+        $this->get("/sets/{$this->entry->id}")
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('dictionaries.statuses.0.name', 'Коробка')

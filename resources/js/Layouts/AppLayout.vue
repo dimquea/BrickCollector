@@ -10,8 +10,7 @@ const page = usePage();
 // their pages land.
 const links = computed(() => [
     { key: 'catalog', href: '/catalog' },
-    { key: 'collection', href: '/collection' },
-    { key: 'sets', href: null },
+    { key: 'sets', href: '/sets' },
     { key: 'parts', href: null },
     { key: 'minifigures', href: null },
     { key: 'analytics', href: null },
