@@ -12,6 +12,7 @@ use App\Collection\Models\Tag;
 use App\Collection\Queries\EntryContents;
 use App\Collection\Queries\EntryFacets;
 use App\Collection\Queries\SearchEntries;
+use App\Support\ExternalLinks;
 use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -68,6 +69,7 @@ class SetsController extends Controller
             ->first();
 
         return Inertia::render('Sets/Show', [
+            'links' => ExternalLinks::for($entry->item_type, $entry->item_id),
             'entry' => [
                 'id' => $entry->id,
                 'type' => $entry->item_type,

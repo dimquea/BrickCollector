@@ -8,9 +8,11 @@ import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import PartsTable from '@/Components/PartsTable.vue';
 import InventoryNode from '@/Components/InventoryNode.vue';
+import ExternalLinks from '@/Components/ExternalLinks.vue';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
+    links: { type: Array, default: () => [] },
     item: { type: Object, required: true },
     inventory: { type: Array, default: () => [] },
     totals: { type: Object, default: () => ({}) },
@@ -95,6 +97,8 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                         </li>
                     </ul>
                 </div>
+
+                <ExternalLinks :links="links" />
             </div>
 
             <div class="col-12 col-lg-8">

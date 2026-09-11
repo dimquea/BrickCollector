@@ -100,6 +100,10 @@ return [
         'copy_untitled' => 'Copy without a date',
     ],
 
+    'links' => [
+        'title' => 'Elsewhere',
+    ],
+
     'collection' => [
         'title' => 'Collection',
         'add' => 'Add to collection',

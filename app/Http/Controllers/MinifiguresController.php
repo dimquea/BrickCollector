@@ -11,6 +11,7 @@ use App\Collection\Models\Tag;
 use App\Collection\Queries\EntryContents;
 use App\Collection\Queries\MinifigurePlaces;
 use App\Collection\Queries\MinifigureTotals;
+use App\Support\ExternalLinks;
 use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -59,6 +60,7 @@ class MinifiguresController extends Controller
         $places = new MinifigurePlaces($id);
 
         return Inertia::render('Minifigures/Show', [
+            'links' => ExternalLinks::for('M', $id),
             'figure' => $figure,
             'parts' => $places->parts(),
             'inEntries' => $places->inEntries(),
@@ -86,6 +88,7 @@ class MinifiguresController extends Controller
         $root = collect($contents->tree($entry))->first();
 
         return Inertia::render('Minifigures/Copy', [
+            'links' => ExternalLinks::for('M', $entry->item_id),
             'entry' => [
                 'id' => $entry->id,
                 'item_id' => $entry->item_id,

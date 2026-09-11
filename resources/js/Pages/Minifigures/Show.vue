@@ -6,9 +6,11 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import LotBadges from '@/Components/LotBadges.vue';
+import ExternalLinks from '@/Components/ExternalLinks.vue';
 import { locale, t } from '@/i18n';
 
 const props = defineProps({
+    links: { type: Array, default: () => [] },
     figure: { type: Object, required: true },
     parts: { type: Array, default: () => [] },
     inEntries: { type: Array, default: () => [] },
@@ -95,6 +97,8 @@ const money = (minor) =>
                         </Link>
                     </div>
                 </div>
+
+                <ExternalLinks :links="links" />
             </div>
 
             <div class="col-12 col-lg-8">

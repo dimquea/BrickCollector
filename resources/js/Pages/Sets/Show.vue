@@ -12,9 +12,11 @@ import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
 import EntryMetaBadges from '@/Components/EntryMetaBadges.vue';
 import EntryMetaRows from '@/Components/EntryMetaRows.vue';
 import EntryNote from '@/Components/EntryNote.vue';
+import ExternalLinks from '@/Components/ExternalLinks.vue';
 import { t } from '@/i18n';
 
 const props = defineProps({
+    links: { type: Array, default: () => [] },
     entry: { type: Object, required: true },
     contents: { type: Array, default: () => [] },
     meta: { type: Object, required: true },
@@ -159,6 +161,8 @@ function remove() {
                         </Link>
                     </div>
                 </div>
+
+                <ExternalLinks :links="links" />
 
                 <EntryNote :note="meta.note" />
 

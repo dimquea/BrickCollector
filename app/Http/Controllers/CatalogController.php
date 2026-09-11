@@ -10,6 +10,7 @@ use App\Catalog\Queries\ItemInventory;
 use App\Catalog\Queries\SearchItems;
 use App\Collection\Actions\AddToCollection;
 use Illuminate\Http\RedirectResponse;
+use App\Support\ExternalLinks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -72,6 +73,7 @@ class CatalogController extends Controller
         $tree = $item->has_inventory ? $inventory->tree($type, $id) : [];
 
         return Inertia::render('Catalog/Show', [
+            'links' => ExternalLinks::for($item->type, $item->id, $item->image_color_id),
             'item' => [
                 'type' => $item->type,
                 'id' => $item->id,

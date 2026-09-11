@@ -31,7 +31,6 @@ class EntryMetaTest extends TestCase
             'image_color_id' => 0, 'has_inventory' => 0,
         ]);
 
-        $this->seed(\Database\Seeders\ReferenceSeeder::class);
 
         $this->entry = app(AddToCollection::class)->handle(
             CatalogItem::where('type', 'S')->where('id', 'set-1')->first(),

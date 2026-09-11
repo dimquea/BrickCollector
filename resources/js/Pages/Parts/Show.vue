@@ -8,6 +8,7 @@ import ColorDot from '@/Components/ColorDot.vue';
 import { t } from '@/i18n';
 
 const props = defineProps({
+    links: { type: Array, default: () => [] },
     part: { type: Object, required: true },
     inEntries: { type: Array, default: () => [] },
     inMinifigures: { type: Array, default: () => [] },
@@ -100,6 +101,8 @@ const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.col
                         </Link>
                     </div>
                 </div>
+
+                <ExternalLinks :links="links" />
             </div>
 
             <div class="col-12 col-lg-8">

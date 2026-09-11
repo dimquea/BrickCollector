@@ -18,7 +18,6 @@ class DictionaryTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\ReferenceSeeder::class);
     }
 
     public function test_it_creates_an_entry_and_puts_it_last(): void

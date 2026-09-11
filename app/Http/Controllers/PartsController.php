@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Collection\Queries\PartPlaces;
 use App\Collection\Queries\PartTotals;
+use App\Support\ExternalLinks;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -42,6 +43,7 @@ class PartsController extends Controller
         $places = new PartPlaces($id, $color);
 
         return Inertia::render('Parts/Show', [
+            'links' => ExternalLinks::for('P', $id, $color),
             'part' => $part,
             'inEntries' => $places->inEntries(),
             'inMinifigures' => $places->inMinifigures(),
