@@ -5,6 +5,7 @@ import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
+import ExternalLinks from '@/Components/ExternalLinks.vue';
 import { t } from '@/i18n';
 
 const props = defineProps({
