@@ -1,28 +1,33 @@
 <script setup>
-import { ref } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, usePage } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import ExternalLinks from '@/Components/ExternalLinks.vue';
-import { t } from '@/i18n';
+import { locale, t } from '@/i18n';
 
 const props = defineProps({
     links: { type: Array, default: () => [] },
     part: { type: Object, required: true },
     inEntries: { type: Array, default: () => [] },
+    loose: { type: Array, default: () => [] },
     inMinifigures: { type: Array, default: () => [] },
     otherColours: { type: Array, default: () => [] },
     missingIn: { type: Array, default: () => [] },
 });
 
-// A part is not something one owns a copy of, so there is nothing to edit
-// here — no purchase date, no source, no note. Only where it is.
+const page = usePage();
+const flash = computed(() => page.props.flash);
+
+// The part itself has nothing to edit — no purchase date, no source, no note.
+// A loose lot of it does, and has a page of its own for that.
 // An empty tab is not information: it invites a click that shows nothing.
 // Only the ones with something behind them are offered.
 const tabs = [
     { key: 'entries', label: 'parts.tab_entries', count: props.inEntries.length },
+    { key: 'loose', label: 'parts.tab_loose', count: props.loose.length },
     { key: 'minifigures', label: 'parts.tab_minifigures', count: props.inMinifigures.length },
     { key: 'colours', label: 'parts.tab_colours', count: props.otherColours.length },
     { key: 'missing', label: 'parts.tab_missing', count: props.missingIn.length },
@@ -30,14 +35,28 @@ const tabs = [
 
 const active = ref(tabs[0]?.key ?? null);
 
-const entryHref = (row) => `/sets/${row.entry_id}`;
+// Each kind of owned copy has its own page; a loose lot or a figure opened
+// on the set page read as if it were a set.
+const entryHref = (row) => ({
+    P: `/parts/copy/${row.entry_id}`,
+    M: `/minifigures/copy/${row.entry_id}`,
+}[row.type] ?? `/sets/${row.entry_id}`);
+
 const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.color_id}`;
+
+const lotDate = (lot) =>
+    lot.date ? new Intl.DateTimeFormat(locale.value).format(new Date(lot.date)) : t('parts.lot_undated');
 </script>
 
 <template>
     <Head :title="`${part.item_id} ${part.name}`" />
 
     <AppLayout>
+        <div v-if="flash?.message" class="alert alert-success d-flex align-items-center gap-2">
+            <i class="mdi mdi-check-circle-outline"></i>
+            <span>{{ flash.message }}</span>
+        </div>
+
         <nav class="mb-3">
             <Link href="/parts" class="text-decoration-none">
                 <i class="mdi mdi-arrow-left"></i> {{ t('nav.parts') }}
@@ -148,6 +167,30 @@ const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.col
                                             <div><span class="badge text-bg-light border">{{ row.item_id }}</span></div>
                                         </td>
                                         <td class="text-end fw-semibold">{{ row.qty }}</td>
+                                    </tr>
+                                </template>
+
+                                <!-- A lot is told apart by when and where, not by
+                                     name: every row here is the same part. -->
+                                <template v-else-if="active === 'loose'">
+                                    <tr v-for="lot in loose" :key="lot.entry_id">
+                                        <td class="ps-3">
+                                            <Link :href="`/parts/copy/${lot.entry_id}`" class="text-decoration-none">
+                                                {{ lotDate(lot) }}
+                                            </Link>
+                                            <div
+                                                v-if="lot.storage || lot.source"
+                                                class="small text-body-secondary"
+                                            >
+                                                {{ [lot.storage, lot.source].filter(Boolean).join(' · ') }}
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                            <span v-if="lot.lost" class="badge text-bg-warning me-2">
+                                                <i class="mdi mdi-alert-outline"></i> {{ lot.lost }}
+                                            </span>
+                                            <span class="fw-semibold">{{ lot.qty }}</span>
+                                        </td>
                                     </tr>
                                 </template>
 

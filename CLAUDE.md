@@ -235,6 +235,14 @@ so `back()` led to the last of them. Anything that serves bytes and needs no ses
   catalog — the question there is "what is this". Inside something owned it opens in its collection
   section (`/parts/{id}/{color}`, `/minifigures/{id}`) — the question there is "what else do I have of
   these". A subset has no section and falls back to the catalog.
+- **An owned copy opens on the page of its kind:** a set on `/sets/{id}`, a loose lot of parts on
+  `/parts/copy/{id}`, a standalone minifigure on `/minifigures/copy/{id}`. Build the link from the
+  entry's type. The set page used to take any entry, and a lot of loose parts opened as if it were a
+  set; it now redirects the other two kinds to their own pages.
+- **Modals** are Bootstrap's `Modal`, owned by a component that holds the markup (`AddPartDialog.vue`):
+  created in `onMounted`, disposed in `onBeforeUnmount`. A request that navigates is sent from
+  `hidden.bs.modal`, once the dialog has closed. Sent while it is open, the page changes underneath it
+  and Bootstrap's backdrop outlives the dialog, greying out the next page.
 - **Every select in a list filter** uses `SearchSelect.vue`, a wrapper around Tom Select with the
   `tom-select.bootstrap5.css` theme — short lists included. It was once the rule for lists longer
   than ten options only, and a native select next to Tom Select ones read as a different kind of

@@ -50,10 +50,18 @@ Route::delete('/sets/{entry}', [SetsController::class, 'destroy'])->name('sets.d
 
 /*
  * Parts are counted, not owned in copies: the same brick sits in several
- * boxes at once, so this section lists totals per part and colour and has no
- * page for an individual one.
+ * boxes at once, so this section lists totals per part and colour. A loose
+ * lot is the exception — bought on some day, kept in some place — and has a
+ * page of its own, like a standalone minifigure.
+ *
+ * The lot routes are declared first: /parts/copy/12 has the shape of
+ * /parts/{id}/{color} and would be read as a part called "copy".
  */
 Route::get('/parts', [PartsController::class, 'index'])->name('parts.index');
+Route::get('/parts/copy/{entry}', [PartsController::class, 'copy'])->name('parts.copy');
+Route::patch('/parts/copy/{entry}', [PartsController::class, 'update'])->name('parts.update');
+Route::patch('/parts/copy/{entry}/qty', [PartsController::class, 'resize'])->name('parts.resize');
+Route::delete('/parts/copy/{entry}', [PartsController::class, 'destroy'])->name('parts.destroy');
 Route::get('/parts/{id}/{color}', [PartsController::class, 'show'])
     ->where('color', '[0-9]+')
     ->name('parts.show');

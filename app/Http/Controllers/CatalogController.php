@@ -9,12 +9,17 @@ use App\Catalog\Images\ItemImages;
 use App\Catalog\Queries\ItemInventory;
 use App\Catalog\Queries\SearchItems;
 use App\Collection\Actions\AddToCollection;
+use App\Collection\Actions\ResizeLot;
+use App\Collection\Models\Entry;
+use App\Collection\Queries\PartPlaces;
 use Illuminate\Http\RedirectResponse;
 use App\Support\ExternalLinks;
 use App\Support\Settings;
 use App\Http\ListFilters;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -74,6 +79,11 @@ class CatalogController extends Controller
 
         $tree = $item->has_inventory ? $inventory->tree($type, $id) : [];
 
+        // A part is added in a colour, and either as a lot of its own or onto
+        // one already held, so its dialog needs both lists. Nothing else
+        // has either.
+        $lots = $item->type === 'P' ? PartPlaces::lots($item->id) : collect();
+
         return Inertia::render('Catalog/Show', [
             'links' => ExternalLinks::for($item->type, $item->id, $item->image_color_id),
             'item' => [
@@ -92,29 +102,43 @@ class CatalogController extends Controller
             'inventory' => $tree,
             'totals' => $inventory->summarise($tree),
             'elementCodes' => $this->elementCodes($item),
+            'colours' => $item->type === 'P' ? $this->colours($item, $lots) : [],
+            'lots' => $lots->values(),
         ]);
     }
 
     /**
      * Puts a catalog item into the collection and goes to where it now lives.
-     *
-     * Parts and minifigures have no section yet, so those land back on the
-     * catalog page with a note. Sending them to a page that does not exist
-     * would be worse than saying so.
      */
     public function addToCollection(
         Request $request,
         string $type,
         string $id,
         AddToCollection $add,
+        ResizeLot $resize,
     ): RedirectResponse {
         $item = Item::where('type', $type)->where('id', $id)->firstOrFail();
 
         $validated = $request->validate([
             'qty' => ['nullable', 'integer', 'min:1', 'max:999'],
+            'color_id' => ['nullable', 'integer', 'exists:bl_colors,id'],
+            'lot_id' => ['nullable', 'integer'],
         ]);
 
-        $entry = $add->handle($item, ['qty' => $validated['qty'] ?? 1]);
+        $qty = $validated['qty'] ?? 1;
+
+        if ($item->type === 'P') {
+            return $this->addPart(
+                $item,
+                $qty,
+                $validated['color_id'] ?? (int) $item->image_color_id,
+                $validated['lot_id'] ?? null,
+                $add,
+                $resize,
+            );
+        }
+
+        $entry = $add->handle($item, ['qty' => $qty]);
 
         $flash = ['message' => __('app.collection.added', ['name' => $item->name])];
 
@@ -123,11 +147,82 @@ class CatalogController extends Controller
         $destination = match (true) {
             in_array($item->type, SetsController::TYPES, true) => to_route('sets.show', $entry),
             $item->type === 'M' => to_route('minifigures.copy', $entry),
-            $item->type === 'P' => to_route('parts.show', [$entry->item_id, $entry->color_id ?? 0]),
             default => back(),
         };
 
         return $destination->with('flash', $flash);
+    }
+
+    /**
+     * A part goes either into a lot of its own or onto one already held.
+     *
+     * Topping up is for more of the same; a new lot is another purchase, with
+     * its own date, price and place. Only the person knows which it is, so the
+     * dialog asks rather than the server guessing.
+     */
+    private function addPart(
+        Item $item,
+        int $qty,
+        int $colorId,
+        ?int $lotId,
+        AddToCollection $add,
+        ResizeLot $resize,
+    ): RedirectResponse {
+        if ($lotId === null) {
+            $entry = $add->handle($item, ['qty' => $qty, 'color_id' => $colorId]);
+
+            return to_route('parts.copy', $entry)
+                ->with('flash', ['message' => __('app.collection.added', ['name' => $item->name])]);
+        }
+
+        // Only a lot of this very part in this very colour: topping up a red
+        // brick with blue ones would quietly change what the lot is.
+        $lot = Entry::where('id', $lotId)
+            ->where('item_type', 'P')
+            ->where('item_id', $item->id)
+            ->where('color_id', $colorId)
+            ->first();
+
+        if ($lot === null) {
+            throw ValidationException::withMessages(['lot_id' => __('app.parts.lot_mismatch')]);
+        }
+
+        $resize->handle($lot, (int) $lot->roots()->value('qty') + $qty);
+
+        return to_route('parts.copy', $lot)
+            ->with('flash', ['message' => __('app.parts.topped_up', ['count' => $qty])]);
+    }
+
+    /**
+     * Colours a part can be added in.
+     *
+     * The ones BrickLink has element codes for, plus any already held and the
+     * one in the picture. A part with no element codes at all — old moulds,
+     * mostly — gets the whole palette: offering only its picture colour would
+     * leave every other one impossible to record.
+     *
+     * @param  Collection<int, array<string, mixed>>  $lots
+     * @return array<int, array<string, mixed>>
+     */
+    private function colours(Item $item, Collection $lots): array
+    {
+        $known = DB::table('bl_element_codes')
+            ->where('item_type', 'P')
+            ->where('item_id', $item->id)
+            ->distinct()
+            ->pluck('color_id');
+
+        $query = DB::table('bl_colors')->orderBy('name');
+
+        if ($known->isNotEmpty()) {
+            $query->whereIn('id', $known
+                ->merge($lots->pluck('color_id'))
+                ->push((int) $item->image_color_id)
+                ->unique()
+                ->values());
+        }
+
+        return $query->get(['id', 'name', 'rgb'])->map(fn ($row) => (array) $row)->all();
     }
 
     /**

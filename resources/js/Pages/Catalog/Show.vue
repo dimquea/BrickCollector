@@ -9,6 +9,7 @@ import ColorDot from '@/Components/ColorDot.vue';
 import PartsTable from '@/Components/PartsTable.vue';
 import InventoryNode from '@/Components/InventoryNode.vue';
 import ExternalLinks from '@/Components/ExternalLinks.vue';
+import AddPartDialog from '@/Components/AddPartDialog.vue';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -17,11 +18,25 @@ const props = defineProps({
     inventory: { type: Array, default: () => [] },
     totals: { type: Object, default: () => ({}) },
     elementCodes: { type: Array, default: () => [] },
+    // A part only: what the add dialog offers.
+    colours: { type: Array, default: () => [] },
+    lots: { type: Array, default: () => [] },
 });
 
-const adding = ref(false);
+const isPart = computed(() => props.item.type === 'P');
 
-function addToCollection() {
+const adding = ref(false);
+const dialog = ref(null);
+
+// A part needs a colour and a quantity, and may go onto a lot already held,
+// so it asks first. Anything else is added as one whole thing straight away.
+function addToCollection(colorId = null) {
+    if (isPart.value) {
+        dialog.value.open(colorId);
+
+        return;
+    }
+
     adding.value = true;
     router.post(
         url(`/catalog/${props.item.type}/${encodeURIComponent(props.item.id)}/add`),
@@ -66,7 +81,7 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                             type="button"
                             class="btn btn-primary w-100"
                             :disabled="adding"
-                            @click="addToCollection"
+                            @click="addToCollection()"
                         >
                             <i class="mdi mdi-plus"></i>
                             {{ t('collection.add') }}
@@ -151,6 +166,17 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                                 <tr v-for="code in elementCodes" :key="code.code">
                                     <td><ColorDot :rgb="code.color_rgb" :name="code.color_name" /></td>
                                     <td class="text-end"><code>{{ code.code }}</code></td>
+                                    <td class="text-end" style="width: 3rem">
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-primary py-0"
+                                            :title="t('parts.add_in_colour')"
+                                            :aria-label="t('parts.add_in_colour')"
+                                            @click="addToCollection(code.color_id)"
+                                        >
+                                            <i class="mdi mdi-plus"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -162,5 +188,7 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                 </p>
             </div>
         </div>
+
+        <AddPartDialog v-if="isPart" ref="dialog" :item="item" :colours="colours" :lots="lots" />
     </AppLayout>
 </template>

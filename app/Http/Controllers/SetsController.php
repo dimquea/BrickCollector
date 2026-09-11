@@ -61,8 +61,18 @@ class SetsController extends Controller
         ]);
     }
 
-    public function show(Entry $entry, EntryContents $contents): Response
+    public function show(Entry $entry, EntryContents $contents): Response|RedirectResponse
     {
+        // Loose parts and standalone figures have pages of their own. A link
+        // from before they did still lands in the right place.
+        if ($entry->item_type === 'P') {
+            return to_route('parts.copy', $entry);
+        }
+
+        if ($entry->item_type === 'M') {
+            return to_route('minifigures.copy', $entry);
+        }
+
         $catalogItem = CatalogItem::with('theme')
             ->where('type', $entry->item_type)
             ->where('id', $entry->item_id)
