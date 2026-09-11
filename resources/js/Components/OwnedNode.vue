@@ -82,9 +82,11 @@ const lostInside = computed(() => {
                     </div>
                     <!-- A minifigure has a section of its own, so it opens
                          there; a subset has none and falls back to the
-                         catalog. -->
+                         catalog. So does anything that does not count — an
+                         alternate is the version that is not in the box, so
+                         the section may know nothing of it and answer 404. -->
                     <Link
-                        :href="lot.type === 'M'
+                        :href="lot.type === 'M' && lot.counts
                             ? `/minifigures/${encodeURIComponent(lot.item_id)}`
                             : `/catalog/${lot.type}/${encodeURIComponent(lot.item_id)}`"
                         class="btn btn-sm btn-outline-secondary"

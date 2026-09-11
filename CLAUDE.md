@@ -234,7 +234,9 @@ so `back()` led to the last of them. Anything that serves bytes and needs no ses
   item, for an owned set and for a standalone minifigure. Inside the catalog an item opens in the
   catalog — the question there is "what is this". Inside something owned it opens in its collection
   section (`/parts/{id}/{color}`, `/minifigures/{id}`) — the question there is "what else do I have of
-  these". A subset has no section and falls back to the catalog.
+  these". A subset has no section and falls back to the catalog, and so does anything that does not
+  count — an alternate, a counterpart, or what sits inside one. It is not held there, so the section
+  may know nothing of it and answer 404. Spares stay in the section: they are in the box.
 - **An owned copy opens on the page of its kind:** a set on `/sets/{id}`, a loose lot of parts on
   `/parts/copy/{id}`, a standalone minifigure on `/minifigures/copy/{id}`. Build the link from the
   entry's type. The set page used to take any entry, and a lot of loose parts opened as if it were a

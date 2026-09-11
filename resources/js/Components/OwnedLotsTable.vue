@@ -25,6 +25,15 @@ const props = defineProps({
 const emit = defineEmits(['saved']);
 
 const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
+
+// The section lists what is held: counted parts, and spares, which are in the
+// box though kept out of the count. An alternate or a counterpart — or a part
+// of a figure that is one — is not held here, and the section may answer 404,
+// so it opens in the catalog instead.
+const href = (lot) =>
+    lot.counts || lot.is_extra
+        ? `/parts/${encodeURIComponent(lot.item_id)}/${lot.color_id}`
+        : `/catalog/P/${encodeURIComponent(lot.item_id)}`;
 </script>
 
 <template>
@@ -46,12 +55,12 @@ const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
                     :class="{ 'table-warning': lot.lost_qty > 0, 'opacity-50': !lot.counts }"
                 >
                     <td>
-                        <Link :href="`/parts/${encodeURIComponent(lot.item_id)}/${lot.color_id}`">
+                        <Link :href="href(lot)">
                             <ItemImage type="P" :id="lot.item_id" :color-id="lot.color_id" :alt="lot.name" />
                         </Link>
                     </td>
                     <td>
-                        <Link :href="`/parts/${encodeURIComponent(lot.item_id)}/${lot.color_id}`" class="text-decoration-none">
+                        <Link :href="href(lot)" class="text-decoration-none">
                             <span class="line-clamp-2" :title="lot.name">{{ lot.name }}</span>
                         </Link>
                         <div class="d-flex align-items-center gap-1 mt-1">
