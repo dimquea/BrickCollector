@@ -1,59 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# BrickCollector
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+*[Русская версия](README.ru.md)*
 
-## About Laravel
+A self-hosted manager for a LEGO® collection, with the BrickLink catalogue
+inside it. Runs on your own machine or as a Home Assistant add-on. Nothing
+leaves the house.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+It answers the questions a collection actually raises. Do I already have this
+set? How many black 2×4 bricks are there, and which boxes are they in? Which
+minifigure is missing from that set, and what did the whole shelf cost?
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## What it does
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**The catalogue.** Every LEGO set, minifigure and part BrickLink knows about —
+175 thousand items with their contents, colours, themes and release years.
+Search by name or item number, filter by type, theme and year. Updated from the
+interface whenever you want it updated.
 
-## Learning Laravel
+**Sets you own.** Adding a set copies its whole contents: parts, minifigures,
+the parts inside those minifigures, and boxed sub-sets down the chain. Every
+copy is its own record, so three of the same set are three sets with three
+prices, three storage places and three stories.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**What went missing.** Any lot can be marked short, down to a single part
+inside a minifigure inside a set. A set then knows it is incomplete without
+your having to open it. A spare part is not a missing one — losing a spare
+leaves the set complete.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Minifigures.** A figure built into a set and one bought on its own are the
+same figure, so a single card counts both. Open it to see which sets hold it,
+what it is made of, and which copies you own loose. Each loose copy keeps its
+own purchase details.
 
-## Laravel Sponsors
+**Parts.** Counted across the collection rather than listed box by box: how
+many you have in total, how many sit in sets, how many inside minifigures, how
+many loose — and which copies each of them came from.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Your own notes.** Purchase date, price, source and storage place; tags and
+statuses you define yourself; a free-form note. Only the two statuses that ship
+with the application — box and instructions — cannot be deleted.
 
-### Premium Partners
+**Analytics.** What the collection holds, what it cost, and both broken down by
+theme and by release year. The numbers are links: click one and the section
+opens filtered to exactly what was counted.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**Elsewhere.** Buttons to BrickLink, Rebrickable and Brickset on every detail
+page, plus two blocks for whatever else you use. The addresses are patterns you
+can edit.
 
-## Contributing
+**Two languages.** English and Russian, switchable in the settings. Catalogue
+names stay as BrickLink writes them — that is the data, and that is what search
+matches.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Installing
 
-## Code of Conduct
+As a Home Assistant add-on — the simplest way, and the one it is built for:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. Add the repository `https://github.com/dimquea/hassio` in **Settings →
+   Add-ons → Add-on store → ⋮ → Repositories**.
+2. Install **BrickCollector** and start it. The first start downloads the
+   catalogue and unpacks it; the log says what it is doing.
+3. Open **BrickCollector** in the sidebar.
 
-## Security Vulnerabilities
+On your own machine you need PHP 8.2 or newer with SQLite, and a web server
+pointed at `public/`:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+git clone https://github.com/dimquea/BrickCollector.git
+cd BrickCollector
+composer install
+npm ci && npm run build
+cp .env.example .env && php artisan key:generate
+php artisan migrate
+php artisan catalog:import --download
+```
 
-## License
+## A word about access
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+BrickCollector has no accounts and no passwords, on purpose: it is built for a
+home network, or for the Home Assistant panel, which does the guarding. The
+add-on exposes no port of its own — the panel is the only way in. Do not put it
+on the open internet as it stands.
+
+## Thanks
+
+The catalogue comes from [rgriebl/brickstore-database][db], which republishes
+the BrickLink catalogue several times a day. Item pictures come from BrickLink.
+
+LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or
+endorse this project.
+
+[db]: https://github.com/rgriebl/brickstore-database
