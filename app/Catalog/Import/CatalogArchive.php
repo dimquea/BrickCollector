@@ -106,6 +106,12 @@ class CatalogArchive
 
     public function close(): void
     {
-        $this->zip->close();
+        // После неудачи объект может быть уже закрыт: ValueError отсюда заслонил
+        // бы настоящую причину, с которой сюда и пришли.
+        try {
+            $this->zip->close();
+        } catch (\Throwable) {
+            //
+        }
     }
 }

@@ -49,6 +49,16 @@ return [
         'parts' => ['per_page' => 50, 'cards' => false],
     ],
 
+    /*
+     * Чем запускать artisan для фоновой работы.
+     *
+     * Угадать нельзя: под mod_php константа PHP_BINARY указывает на сам Apache,
+     * а PHP_BINDIR — на каталог времени сборки, которого на машине может и не
+     * быть. По умолчанию полагаемся на PATH; там, где php лежит в стороне, путь
+     * задаётся переменной окружения.
+     */
+    'php_binary' => env('BRICKCOLLECTOR_PHP_BINARY', 'php'),
+
     /* Where catalog releases are fetched from. */
     'release_url' => env(
         'BRICKCOLLECTOR_RELEASE_URL',

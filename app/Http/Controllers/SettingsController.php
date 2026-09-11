@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Catalog\Import\CatalogRefresh;
+use App\Catalog\Import\CatalogStatus;
 use App\Collection\Models\Link;
 use App\Collection\Models\Source;
 use App\Collection\Models\Status;
@@ -57,11 +59,43 @@ class SettingsController extends Controller
                     ])
                     ->values(),
             ],
-            'catalog' => [
-                'imported_at' => Settings::get('catalog_imported_at'),
-                'items' => \App\Catalog\Models\Item::count(),
-            ],
+            'catalog' => $this->catalog(),
         ]);
+    }
+
+    /**
+     * Запускает обновление справочника.
+     *
+     * Возвращается сразу: работа идёт отдельным процессом, а страница потом
+     * спрашивает о ней сама.
+     */
+    public function refreshCatalog(CatalogRefresh $refresh): JsonResponse
+    {
+        if (CatalogStatus::isRunning()) {
+            return response()->json($this->catalog() + ['message' => __('app.settings.catalog_running')]);
+        }
+
+        $refresh->start();
+
+        return response()->json($this->catalog() + ['message' => __('app.settings.catalog_started')]);
+    }
+
+    /** Как там справочник: страница спрашивает, пока идёт импорт. */
+    public function catalogStatus(): JsonResponse
+    {
+        return response()->json($this->catalog());
+    }
+
+    /** @return array<string, mixed> */
+    private function catalog(): array
+    {
+        $status = CatalogStatus::current();
+
+        return [
+            'imported_at' => $status['imported_at'],
+            'items' => \App\Catalog\Models\Item::count(),
+            'status' => $status,
+        ];
     }
 
     public function update(Request $request): JsonResponse

@@ -40,6 +40,32 @@ class ImportCatalog
         $this->progress = $progress;
         $counts = [];
 
+        /*
+         * Справочник заменяется целиком, а коллекция на него ссылается: строки
+         * collection_* держат внешние ключи на bl_item_types. Удалить старый
+         * справочник, не сняв проверку, нельзя — при первом ввозе коллекции ещё
+         * нет, и это незаметно, но обновление на живой коллекции упиралось бы
+         * в неё каждый раз.
+         *
+         * Снимаем проверку снаружи транзакции: внутри PRAGMA в SQLite молчаливо
+         * ничего не делает.
+         */
+        DB::statement('PRAGMA foreign_keys = OFF');
+
+        try {
+            $this->reload($archive, $counts);
+        } finally {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
+
+        return $counts;
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     */
+    private function reload(CatalogArchive $archive, array &$counts): void
+    {
         DB::transaction(function () use ($archive, &$counts) {
             $this->truncate();
 
@@ -56,8 +82,6 @@ class ImportCatalog
             $this->writeMeta($archive);
             $this->closeStep();
         });
-
-        return $counts;
     }
 
     /** @return array<string, float> seconds spent per step, slowest first */

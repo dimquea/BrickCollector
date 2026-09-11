@@ -92,6 +92,12 @@ Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
+Route::post('/settings/catalog', [SettingsController::class, 'refreshCatalog'])
+    ->name('settings.catalog.refresh');
+
+Route::get('/settings/catalog', [SettingsController::class, 'catalogStatus'])
+    ->name('settings.catalog.status');
+
 Route::patch('/settings/links/{link}', [SettingsController::class, 'updateLink'])
     ->name('settings.links.update');
 

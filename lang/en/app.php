@@ -167,6 +167,16 @@ return [
     ],
 
     'settings' => [
+        'catalog_no_php' => 'Could not run PHP as ":binary". Set BRICKCOLLECTOR_PHP_BINARY to the path of the command-line PHP.',
+        'catalog_update' => 'Update the catalogue',
+        'catalog_updating' => 'Updating',
+        'catalog_imported_at' => 'Last updated',
+        'catalog_never' => 'never',
+        'catalog_started' => 'The update has started. It keeps going if you leave this page.',
+        'catalog_running' => 'An update is already under way.',
+        'catalog_abandoned' => 'The update stopped without saying why. Look in the add-on log, then try again.',
+        'catalog_failed' => 'The update failed',
+        'catalog_update_hint' => 'Downloads a fresh archive and rebuilds the catalogue: 175 thousand items and a million and a half inventory rows. Minutes on a small machine. The collection is not touched — the catalogue and the collection live in different tables.',
         'lists' => 'Lists',
         'lists_hint' => 'How many rows a page shows, and how big the cards are. Card size is chosen separately for a phone and for a wide screen: what reads well on a monitor is too small on a phone.',
         'per_page' => 'Rows per page',

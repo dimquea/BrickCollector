@@ -7,6 +7,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import DictionaryEditor from '@/Components/DictionaryEditor.vue';
 import LinkEditor from '@/Components/LinkEditor.vue';
 import ListAppearance from '@/Components/ListAppearance.vue';
+import CatalogUpdate from '@/Components/CatalogUpdate.vue';
 import { notify } from '@/support/toasts';
 import { locale, t } from '@/i18n';
 
@@ -188,11 +189,7 @@ const sections = [
                 </h2>
                 <div id="settingsCatalog" class="accordion-collapse collapse">
                     <div class="accordion-body">
-                        <p class="mb-1">
-                            {{ t('settings.catalog_items') }}:
-                            <strong>{{ (catalog.items ?? 0).toLocaleString(locale) }}</strong>
-                        </p>
-                        <p class="text-body-secondary small mb-0">{{ t('settings.catalog_hint') }}</p>
+                        <CatalogUpdate :catalog="catalog" />
                     </div>
                 </div>
             </div>
