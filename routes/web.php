@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\ItemImageController;
@@ -83,6 +84,11 @@ Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.l
 /*
  * Settings and the internal dictionaries.
  */
+/*
+ * Сводка по коллекции: считается на лету из тех же таблиц, что и разделы.
+ */
+Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
 

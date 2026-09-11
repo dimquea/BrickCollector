@@ -14,7 +14,7 @@ const links = computed(() => [
     { key: 'sets', href: '/sets' },
     { key: 'parts', href: '/parts' },
     { key: 'minifigures', href: '/minifigures' },
-    { key: 'analytics', href: null },
+    { key: 'analytics', href: '/analytics' },
     { key: 'settings', href: '/settings' },
 ]);
 

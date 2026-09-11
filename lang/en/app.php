@@ -111,6 +111,28 @@ return [
         'title' => 'Elsewhere',
     ],
 
+    'analytics' => [
+        'counts' => 'What is in the collection',
+        'finance' => 'Money',
+        'by_theme' => 'By theme',
+        'by_year' => 'By year',
+        'group_sets' => 'Sets',
+        'group_minifigures' => 'Minifigures',
+        'group_parts' => 'Parts',
+        'field_total' => 'In total',
+        'field_unique' => 'Distinct',
+        'field_incomplete' => 'Incomplete',
+        'field_in_sets' => 'In sets',
+        'field_loose' => 'On their own',
+        'field_lost' => 'Missing',
+        'price' => 'Paid',
+        'spent' => 'Paid in total',
+        'priced' => 'With a price',
+        'average' => 'On average',
+        'priciest' => 'The dearest one',
+        'no_prices' => 'No price has been recorded yet.',
+    ],
+
     'collection' => [
         'title' => 'Collection',
         'add' => 'Add to collection',

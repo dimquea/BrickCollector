@@ -111,6 +111,28 @@ return [
         'title' => 'Ссылки',
     ],
 
+    'analytics' => [
+        'counts' => 'Количество в коллекции',
+        'finance' => 'Финансы',
+        'by_theme' => 'По темам',
+        'by_year' => 'По годам',
+        'group_sets' => 'Наборы',
+        'group_minifigures' => 'Минифигурки',
+        'group_parts' => 'Детали',
+        'field_total' => 'Всего',
+        'field_unique' => 'Уникальных',
+        'field_incomplete' => 'Некомплектных',
+        'field_in_sets' => 'В наборах',
+        'field_loose' => 'Отдельно',
+        'field_lost' => 'Потеряно',
+        'price' => 'Стоимость',
+        'spent' => 'Потрачено',
+        'priced' => 'С указанной ценой',
+        'average' => 'В среднем',
+        'priciest' => 'Самая дорогая покупка',
+        'no_prices' => 'Ни у одного экземпляра цена не указана.',
+    ],
+
     'collection' => [
         'title' => 'Коллекция',
         'add' => 'Добавить в коллекцию',
