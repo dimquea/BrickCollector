@@ -15,6 +15,17 @@
     overflow: hidden;
 }
 
+/*
+ * A picture in a table row keeps its size. img-fluid lets it shrink with its
+ * column, and a table squeezed onto a phone narrows the picture column first —
+ * at 320px down to nothing. A fixed width is a minimum the column can not go
+ * below; the rest of the row wraps, or scrolls inside table-responsive.
+ */
+.table td .img-fluid {
+    width: 3.5rem;
+    max-width: none;
+}
+
 /* Masonry grid for card listings. Bootstrap has no masonry, so this is ours. */
 .masonry {
     column-gap: 1rem;

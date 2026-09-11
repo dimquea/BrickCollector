@@ -24,7 +24,7 @@ const isActive = (href) => href !== null && page.url.startsWith(href);
 <template>
     <div class="min-vh-100 d-flex flex-column bg-body-tertiary">
         <nav class="navbar navbar-expand-lg bg-body border-bottom">
-            <div class="container">
+            <div class="container-lg">
                 <Link class="navbar-brand d-flex align-items-center gap-2" href="/">
                     <i class="mdi mdi-toy-brick-outline fs-4 text-primary"></i>
                     <span class="fw-semibold">BrickCollector</span>
@@ -57,7 +57,7 @@ const isActive = (href) => href !== null && page.url.startsWith(href);
             </div>
         </nav>
 
-        <main class="container flex-grow-1 py-4">
+        <main class="container-lg flex-grow-1 py-4">
             <slot />
         </main>
 
