@@ -204,6 +204,24 @@ request path reads the cache and records what is missing.
 - "Incomplete" and "Missing figures" are derived, cached in `collection_entries.flag_*`, and
   recomputed whenever the contents change.
 
+## List filters
+
+- **Read list filters with `App\Http\ListFilters`, not `$request->validate()`.** Two reasons, both
+  learnt the hard way. A query string carries strings, and the `boolean` rule rejects `"true"`: the
+  "Incomplete" checkbox sent `incomplete=true`, validation refused it, and the filter silently did
+  nothing. And a filter is not a form: a URL with `?year=abc` in it deserves the full list, not a
+  redirect "back" — which, before pictures left the session, could land on `/images/…`.
+- **Switches are declared as switches** (`switches: [...]`) and read as PHP reads a boolean. An off
+  switch is the absence of a filter and does not come back in `filters`.
+- **Test filters as the browser sends them**, in the URL. Passing `['incomplete' => true]` as a PHP
+  array is exactly how this bug stayed invisible.
+
+## Pictures and the session
+
+The picture route lives in `routes/images.php`, outside the `web` group. Every GET that passes
+through the session is remembered as the "previous page", and a list renders two dozen pictures —
+so `back()` led to the last of them. Anything that serves bytes and needs no session belongs there.
+
 ## Frontend
 
 - A page is a file under `resources/js/Pages`; its path mirrors the route.

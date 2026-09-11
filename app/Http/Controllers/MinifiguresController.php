@@ -15,6 +15,7 @@ use App\Support\ExternalLinks;
 use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use App\Http\ListFilters;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,12 +33,12 @@ class MinifiguresController extends Controller
 {
     public function index(Request $request, MinifigureTotals $totals): Response
     {
-        $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:120'],
-            'theme_id' => ['nullable', 'integer'],
-            'year' => ['nullable', 'integer', 'min:1949', 'max:'.(date('Y') + 1)],
-            'tag_id' => ['nullable', 'integer'],
-            'placement' => ['nullable', 'string', 'in:set,loose'],
+        $filters = ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'theme_id' => ['integer'],
+            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
+            'tag_id' => ['integer'],
+            'placement' => ['string', 'in:set,loose'],
         ]);
 
         $facets = $totals->facets();

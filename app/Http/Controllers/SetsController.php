@@ -16,6 +16,7 @@ use App\Support\ExternalLinks;
 use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use App\Http\ListFilters;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -33,16 +34,14 @@ class SetsController extends Controller
 
     public function index(Request $request, SearchEntries $search): Response
     {
-        $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:120'],
-            'type' => ['nullable', 'string', 'in:'.implode(',', self::TYPES)],
-            'theme_id' => ['nullable', 'integer'],
-            'year' => ['nullable', 'integer', 'min:1949', 'max:'.(date('Y') + 1)],
-            'status_id' => ['nullable', 'integer'],
-            'tag_id' => ['nullable', 'integer'],
-            'incomplete' => ['nullable', 'boolean'],
-            'missing_figs' => ['nullable', 'boolean'],
-        ]);
+        $filters = ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'type' => ['string', 'in:'.implode(',', self::TYPES)],
+            'theme_id' => ['integer'],
+            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
+            'status_id' => ['integer'],
+            'tag_id' => ['integer'],
+        ], switches: ['incomplete', 'missing_figs']);
 
         $entries = $search->filters($filters)->ofTypes(self::TYPES)->paginate(Settings::perPage('sets'));
 

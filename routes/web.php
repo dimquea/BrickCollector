@@ -3,7 +3,6 @@
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\DictionaryController;
-use App\Http\Controllers\ItemImageController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\MinifiguresController;
 use App\Http\Controllers\PartsController;
@@ -37,12 +36,6 @@ Route::post('/catalog/{type}/{id}/add', [CatalogController::class, 'addToCollect
     ->where('type', '[A-Z]')
     ->name('catalog.add');
 
-// Item ids contain dots and other odd characters, so the id segment takes
-// anything but a slash.
-Route::get('/images/{type}/{id}/{color}', [ItemImageController::class, 'show'])
-    ->where('type', '[A-Z]')
-    ->where('color', '[0-9]+')
-    ->name('item.image');
 
 /*
  * The collection is not a section of its own: a thing is filed by what it is.

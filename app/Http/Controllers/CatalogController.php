@@ -12,6 +12,7 @@ use App\Collection\Actions\AddToCollection;
 use Illuminate\Http\RedirectResponse;
 use App\Support\ExternalLinks;
 use App\Support\Settings;
+use App\Http\ListFilters;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -21,13 +22,12 @@ class CatalogController extends Controller
 {
     public function index(Request $request, SearchItems $search): Response
     {
-        $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:120'],
-            'type' => ['nullable', 'string', 'in:'.implode(',', ItemType::BROWSABLE)],
-            'theme_id' => ['nullable', 'integer'],
-            'year' => ['nullable', 'integer', 'min:1949', 'max:'.(date('Y') + 1)],
-            'has_inventory' => ['nullable', 'boolean'],
-        ]);
+        $filters = ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'type' => ['string', 'in:'.implode(',', ItemType::BROWSABLE)],
+            'theme_id' => ['integer'],
+            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
+        ], switches: ['has_inventory']);
 
         $results = $search->filters($filters)->paginate(Settings::perPage('catalog'));
 

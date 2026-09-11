@@ -6,6 +6,7 @@ use App\Collection\Queries\PartPlaces;
 use App\Collection\Queries\PartTotals;
 use App\Support\ExternalLinks;
 use App\Support\Settings;
+use App\Http\ListFilters;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,10 +23,10 @@ class PartsController extends Controller
 {
     public function index(Request $request, PartTotals $totals): Response
     {
-        $filters = $request->validate([
-            'q' => ['nullable', 'string', 'max:120'],
-            'color_id' => ['nullable', 'integer'],
-            'placement' => ['nullable', 'string', 'in:set,minifigure,loose,lost'],
+        $filters = ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'color_id' => ['integer'],
+            'placement' => ['string', 'in:set,minifigure,loose,lost'],
         ]);
 
         return Inertia::render('Parts/Index', [
