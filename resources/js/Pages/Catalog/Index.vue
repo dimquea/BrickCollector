@@ -1,6 +1,6 @@
 <script setup>
 import { url } from '@/support/base';
-import { reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import { debounce } from '@/support/debounce';
@@ -18,6 +18,8 @@ const props = defineProps({
     themes: { type: Array, default: () => [] },
     years: { type: Array, default: () => [] },
 });
+
+const typeOptions = computed(() => props.itemTypes.map((type) => ({ value: type.code, label: type.name })));
 
 const form = reactive({
     q: props.filters.q ?? '',
@@ -76,12 +78,12 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
 
                     <div class="col-6 col-lg-2">
                         <label for="type" class="form-label">{{ t('catalog.type') }}</label>
-                        <select id="type" v-model="form.type" class="form-select">
-                            <option :value="null">{{ t('catalog.any') }}</option>
-                            <option v-for="type in itemTypes" :key="type.code" :value="type.code">
-                                {{ type.name }}
-                            </option>
-                        </select>
+                        <SearchSelect
+                            id="type"
+                            v-model="form.type"
+                            :options="typeOptions"
+                            :placeholder="t('catalog.any')"
+                        />
                     </div>
 
                     <div class="col-12 col-lg-3">

@@ -59,6 +59,8 @@ const placements = [
     { value: 'lost', label: 'parts.lost' },
 ];
 
+const placementOptions = computed(() => placements.map((place) => ({ value: place.value, label: t(place.label) })));
+
 const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_id}`;
 </script>
 
@@ -97,12 +99,12 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
 
                     <div class="col-12 col-lg-3">
                         <label for="placement" class="form-label">{{ t('parts.placement') }}</label>
-                        <select id="placement" v-model="form.placement" class="form-select">
-                            <option :value="null">{{ t('catalog.any') }}</option>
-                            <option v-for="place in placements" :key="place.value" :value="place.value">
-                                {{ t(place.label) }}
-                            </option>
-                        </select>
+                        <SearchSelect
+                            id="placement"
+                            v-model="form.placement"
+                            :options="placementOptions"
+                            :placeholder="t('catalog.any')"
+                        />
                     </div>
 
                     <div class="col-12 col-lg-2 d-flex align-items-end">

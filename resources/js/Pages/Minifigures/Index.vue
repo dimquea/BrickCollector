@@ -54,6 +54,7 @@ function togglePlacement(value) {
 
 const themeOptions = computed(() => props.themes.map((theme) => ({ value: theme.id, label: theme.path })));
 const yearOptions = computed(() => props.years.map((year) => ({ value: year, label: String(year) })));
+const tagOptions = computed(() => props.tags.map((tag) => ({ value: tag.id, label: tag.name })));
 
 const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
 </script>
@@ -131,10 +132,12 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
 
                     <div v-if="tags.length" class="col-12 col-lg-6">
                         <label for="tag" class="form-label">{{ t('collection.tags') }}</label>
-                        <select id="tag" v-model="form.tag_id" class="form-select">
-                            <option :value="null">{{ t('catalog.any') }}</option>
-                            <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
-                        </select>
+                        <SearchSelect
+                            id="tag"
+                            v-model="form.tag_id"
+                            :options="tagOptions"
+                            :placeholder="t('catalog.any')"
+                        />
                         <div class="form-text">{{ t('minifigures.tag_hint') }}</div>
                     </div>
                 </div>

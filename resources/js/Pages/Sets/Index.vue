@@ -61,6 +61,9 @@ watch(
 );
 
 const themeOptions = computed(() => props.themes.map((theme) => ({ value: theme.id, label: theme.path })));
+const typeOptions = computed(() => props.itemTypes.map((type) => ({ value: type.code, label: type.name })));
+const statusOptions = computed(() => props.statuses.map((status) => ({ value: status.id, label: status.name })));
+const tagOptions = computed(() => props.tags.map((tag) => ({ value: tag.id, label: tag.name })));
 const yearOptions = computed(() => props.years.map((year) => ({ value: year, label: String(year) })));
 
 /**
@@ -100,12 +103,12 @@ const shows = (list) => list.length > 1;
 
                     <div v-if="shows(itemTypes)" class="col-6 col-lg-2">
                         <label for="type" class="form-label">{{ t('catalog.type') }}</label>
-                        <select id="type" v-model="form.type" class="form-select">
-                            <option :value="null">{{ t('catalog.any') }}</option>
-                            <option v-for="type in itemTypes" :key="type.code" :value="type.code">
-                                {{ type.name }}
-                            </option>
-                        </select>
+                        <SearchSelect
+                            id="type"
+                            v-model="form.type"
+                            :options="typeOptions"
+                            :placeholder="t('catalog.any')"
+                        />
                     </div>
 
                     <div v-if="shows(themes)" class="col-12 col-lg-3">
@@ -136,20 +139,22 @@ const shows = (list) => list.length > 1;
 
                     <div v-if="shows(statuses)" class="col-12 col-lg-3">
                         <label for="status" class="form-label">{{ t('collection.statuses') }}</label>
-                        <select id="status" v-model="form.status_id" class="form-select">
-                            <option :value="null">{{ t('catalog.any') }}</option>
-                            <option v-for="status in statuses" :key="status.id" :value="status.id">
-                                {{ status.name }}
-                            </option>
-                        </select>
+                        <SearchSelect
+                            id="status"
+                            v-model="form.status_id"
+                            :options="statusOptions"
+                            :placeholder="t('catalog.any')"
+                        />
                     </div>
 
                     <div v-if="tags.length" class="col-12 col-lg-3">
                         <label for="tag" class="form-label">{{ t('collection.tags') }}</label>
-                        <select id="tag" v-model="form.tag_id" class="form-select">
-                            <option :value="null">{{ t('catalog.any') }}</option>
-                            <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
-                        </select>
+                        <SearchSelect
+                            id="tag"
+                            v-model="form.tag_id"
+                            :options="tagOptions"
+                            :placeholder="t('catalog.any')"
+                        />
                     </div>
 
                     <div class="col-12 col-lg-6 d-flex align-items-end gap-3 flex-wrap">

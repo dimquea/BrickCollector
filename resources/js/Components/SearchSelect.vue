@@ -3,7 +3,13 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import TomSelect from 'tom-select';
 
 /**
- * Select with a search box, for lists longer than about ten options.
+ * Every select in a list filter, whatever its length.
+ *
+ * Tom Select rather than the platform control: one look across the filters,
+ * where a native select among Tom Select ones reads as a different kind of
+ * control. It started as the choice for lists longer than about ten options;
+ * short ones now use it too, for the same reason.
+ *
  * Wraps Tom Select so no page ever touches that library directly.
  */
 const props = defineProps({

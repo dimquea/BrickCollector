@@ -235,10 +235,13 @@ so `back()` led to the last of them. Anything that serves bytes and needs no ses
   catalog — the question there is "what is this". Inside something owned it opens in its collection
   section (`/parts/{id}/{color}`, `/minifigures/{id}`) — the question there is "what else do I have of
   these". A subset has no section and falls back to the catalog.
-- **Selects longer than 10 options** use `SearchSelect.vue`, a wrapper around Tom Select with the
-  `tom-select.bootstrap5.css` theme. Create the instance in `onMounted`, destroy it in `onUnmounted`
-  — without that, Inertia navigation leaves orphaned instances behind. Never reach for Tom Select
-  from a page; go through the wrapper. Short lists stay a plain `<select class="form-select">`.
+- **Every select in a list filter** uses `SearchSelect.vue`, a wrapper around Tom Select with the
+  `tom-select.bootstrap5.css` theme — short lists included. It was once the rule for lists longer
+  than ten options only, and a native select next to Tom Select ones read as a different kind of
+  control. Create the instance in `onMounted`, destroy it in `onUnmounted` — without that, Inertia
+  navigation leaves orphaned instances behind. Never reach for Tom Select from a page; go through
+  the wrapper. Forms outside the filters (settings, management) may still use a plain
+  `<select class="form-select">`.
 
 ## Saving a single field
 
