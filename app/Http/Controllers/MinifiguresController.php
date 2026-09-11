@@ -43,8 +43,9 @@ class MinifiguresController extends Controller
         $facets = $totals->facets();
 
         return Inertia::render('Minifigures/Index', [
+            'cardSize' => Settings::cardSize('minifigures'),
             'filters' => $filters,
-            'figures' => $totals->filters($filters)->paginate(),
+            'figures' => $totals->filters($filters)->paginate(Settings::perPage('minifigures')),
             'themes' => $facets['themes'],
             'years' => $facets['years'],
             'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),

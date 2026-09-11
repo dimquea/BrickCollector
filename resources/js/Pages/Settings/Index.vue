@@ -6,6 +6,7 @@ import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DictionaryEditor from '@/Components/DictionaryEditor.vue';
 import LinkEditor from '@/Components/LinkEditor.vue';
+import ListAppearance from '@/Components/ListAppearance.vue';
 import { notify } from '@/support/toasts';
 import { locale, t } from '@/i18n';
 
@@ -14,6 +15,7 @@ const props = defineProps({
     colors: { type: Array, default: () => [] },
     currency: { type: String, default: 'RUB' },
     links: { type: Array, default: () => [] },
+    appearance: { type: Object, default: () => ({ lists: [] }) },
     catalog: { type: Object, default: () => ({}) },
 });
 
@@ -102,6 +104,10 @@ const sections = [
                                 <div class="form-text">{{ t('settings.currency_hint') }}</div>
                             </div>
                         </div>
+
+                        <h3 class="h6 mt-4">{{ t('settings.lists') }}</h3>
+
+                        <ListAppearance :lists="appearance.lists" />
                     </div>
                 </div>
             </div>

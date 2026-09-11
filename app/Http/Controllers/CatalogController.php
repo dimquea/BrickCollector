@@ -11,6 +11,7 @@ use App\Catalog\Queries\SearchItems;
 use App\Collection\Actions\AddToCollection;
 use Illuminate\Http\RedirectResponse;
 use App\Support\ExternalLinks;
+use App\Support\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -28,7 +29,7 @@ class CatalogController extends Controller
             'has_inventory' => ['nullable', 'boolean'],
         ]);
 
-        $results = $search->filters($filters)->paginate();
+        $results = $search->filters($filters)->paginate(Settings::perPage('catalog'));
 
         $images = app(ItemImages::class)->availability(
             collect($results->items())
@@ -37,6 +38,7 @@ class CatalogController extends Controller
         );
 
         return Inertia::render('Catalog/Index', [
+            'cardSize' => Settings::cardSize('catalog'),
             'filters' => $filters,
             'results' => $results->through(fn (Item $item) => [
                 'type' => $item->type,

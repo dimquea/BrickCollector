@@ -7,9 +7,11 @@ import { debounce } from '@/support/debounce';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import ItemImage from '@/Components/ItemImage.vue';
+import { masonry } from '@/support/cards';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
+    cardSize: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
     results: { type: Object, required: true },
     itemTypes: { type: Array, default: () => [] },
@@ -129,7 +131,7 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
             {{ t('catalog.nothing_found') }}
         </p>
 
-        <div class="masonry">
+        <div :class="masonry(cardSize)">
             <div v-for="item in results.data" :key="`${item.type}/${item.id}`" class="card shadow-sm">
                 <div class="card-header d-flex align-items-center gap-2 text-truncate">
                     <span class="badge text-bg-secondary flex-shrink-0">{{ item.id }}</span>

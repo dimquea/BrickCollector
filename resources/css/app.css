@@ -26,3 +26,34 @@
 @media (min-width: 576px)  { .masonry { column-count: 2; } }
 @media (min-width: 992px)  { .masonry { column-count: 3; } }
 @media (min-width: 1400px) { .masonry { column-count: 4; } }
+
+/*
+ * Маленькая карточка — вдвое больше колонок на той же ширине, то есть карточка
+ * вдвое уже. Размер выбирается отдельно для узкого и широкого экрана: на
+ * телефоне мелко то, что на мониторе ещё читается. Граница — 768px, ниже неё
+ * решает мобильная настройка.
+ */
+@media (max-width: 575.98px) {
+    .masonry--mobile-small { column-count: 2; }
+}
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .masonry--mobile-small { column-count: 4; }
+}
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .masonry--desktop-small { column-count: 4; }
+}
+@media (min-width: 992px) and (max-width: 1399.98px) {
+    .masonry--desktop-small { column-count: 6; }
+}
+@media (min-width: 1400px) {
+    .masonry--desktop-small { column-count: 8; }
+}
+
+/* В узкой карточке подписи и отступы крупноваты: ужимаем заодно. */
+.masonry--mobile-small .card-header,
+.masonry--desktop-small .card-header,
+.masonry--mobile-small .card-footer,
+.masonry--desktop-small .card-footer {
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.5rem;
+}

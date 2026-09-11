@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Collection\Queries\PartPlaces;
 use App\Collection\Queries\PartTotals;
 use App\Support\ExternalLinks;
+use App\Support\Settings;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,7 +30,7 @@ class PartsController extends Controller
 
         return Inertia::render('Parts/Index', [
             'filters' => $filters,
-            'parts' => $totals->filters($filters)->paginate(),
+            'parts' => $totals->filters($filters)->paginate(Settings::perPage('parts')),
             'colours' => $totals->colours(),
         ]);
     }

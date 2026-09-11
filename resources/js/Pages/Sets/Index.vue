@@ -8,9 +8,11 @@ import SearchSelect from '@/Components/SearchSelect.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
 import { debounce } from '@/support/debounce';
+import { masonry } from '@/support/cards';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
+    cardSize: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
     entries: { type: Object, required: true },
     itemTypes: { type: Array, default: () => [] },
@@ -183,7 +185,7 @@ const shows = (list) => list.length > 1;
             <Link href="/catalog">{{ t('collection.empty_hint') }}</Link>
         </p>
 
-        <div class="masonry">
+        <div :class="masonry(cardSize)">
             <div v-for="entry in entries.data" :key="entry.id" class="card shadow-sm">
                 <Link
                     :href="`/sets/${entry.id}`"

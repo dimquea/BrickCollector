@@ -45,6 +45,18 @@ class SettingsController extends Controller
                 'set_only' => $link->isSetOnly(),
             ]),
             'currency' => Settings::currency(),
+            'appearance' => [
+                'lists' => collect(config('brickcollector.lists'))
+                    ->map(fn (array $list, string $key) => [
+                        'key' => $key,
+                        'per_page' => Settings::perPage($key),
+                        // У деталей список — таблица, размер карточки к ней не
+                        // применим.
+                        'cards' => $list['cards'],
+                        'card_size' => Settings::cardSize($key),
+                    ])
+                    ->values(),
+            ],
             'catalog' => [
                 'imported_at' => Settings::get('catalog_imported_at'),
                 'items' => \App\Catalog\Models\Item::count(),
@@ -54,10 +66,31 @@ class SettingsController extends Controller
 
     public function update(Request $request): JsonResponse
     {
+        $lists = implode(',', array_keys(config('brickcollector.lists')));
+
         $validated = $request->validate([
             'currency' => ['nullable', 'string', 'size:3', 'alpha'],
             'locale' => ['nullable', 'string', 'in:'.implode(',', SetLocale::SUPPORTED)],
+            'per_page' => ['array'],
+            'per_page.*' => ['integer', 'min:6', 'max:200'],
+            'card_size' => ['array'],
+            'card_size.*.desktop' => ['in:large,small'],
+            'card_size.*.mobile' => ['in:large,small'],
         ]);
+
+        foreach ($validated['per_page'] ?? [] as $list => $value) {
+            if (str_contains($lists, $list)) {
+                Settings::put("per_page.{$list}", (string) $value);
+            }
+        }
+
+        foreach ($validated['card_size'] ?? [] as $list => $sizes) {
+            foreach ($sizes as $screen => $size) {
+                if (str_contains($lists, $list)) {
+                    Settings::put("card_size.{$list}.{$screen}", $size);
+                }
+            }
+        }
 
         if (array_key_exists('currency', $validated)) {
             Settings::put('currency', strtoupper($validated['currency']));

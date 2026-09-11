@@ -44,13 +44,14 @@ class SetsController extends Controller
             'missing_figs' => ['nullable', 'boolean'],
         ]);
 
-        $entries = $search->filters($filters)->ofTypes(self::TYPES)->paginate();
+        $entries = $search->filters($filters)->ofTypes(self::TYPES)->paginate(Settings::perPage('sets'));
 
         // Type, theme and year come from what is owned, not from the catalog:
         // a filter that can only return nothing is worse than no filter.
         $facets = (new EntryFacets(self::TYPES))->all();
 
         return Inertia::render('Sets/Index', [
+            'cardSize' => Settings::cardSize('sets'),
             'filters' => $filters,
             'entries' => $entries->through(fn (Entry $entry) => $this->card($entry)),
             'itemTypes' => $facets['types'],

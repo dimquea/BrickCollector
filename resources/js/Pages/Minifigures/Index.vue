@@ -7,9 +7,11 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import { debounce } from '@/support/debounce';
+import { masonry } from '@/support/cards';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
+    cardSize: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
     figures: { type: Object, required: true },
     themes: { type: Array, default: () => [] },
@@ -144,7 +146,7 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
             <Link href="/catalog">{{ t('collection.empty_hint') }}</Link>
         </p>
 
-        <div class="masonry">
+        <div :class="masonry(cardSize)">
             <div v-for="figure in figures.data" :key="figure.item_id" class="card shadow-sm">
                 <Link
                     :href="href(figure)"

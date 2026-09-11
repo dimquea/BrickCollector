@@ -40,6 +40,35 @@ class Settings
         return self::get('currency', config('brickcollector.currency'));
     }
 
+    /** Сколько строк показывать в списке. */
+    public static function perPage(string $list): int
+    {
+        $default = (int) config("brickcollector.lists.{$list}.per_page", 24);
+        $chosen = (int) self::get("per_page.{$list}", (string) $default);
+
+        // Настройку правят и мимо интерфейса: ноль или отрицательное число
+        // уронили бы пагинатор.
+        return $chosen > 0 ? min($chosen, 200) : $default;
+    }
+
+    /**
+     * Размер карточки списка, отдельно для узкого и широкого экрана.
+     *
+     * @return array{desktop: string, mobile: string}
+     */
+    public static function cardSize(string $list): array
+    {
+        return [
+            'desktop' => self::size("card_size.{$list}.desktop"),
+            'mobile' => self::size("card_size.{$list}.mobile"),
+        ];
+    }
+
+    private static function size(string $key): string
+    {
+        return self::get($key) === 'small' ? 'small' : 'large';
+    }
+
     public static function forget(): void
     {
         self::$cache = null;
