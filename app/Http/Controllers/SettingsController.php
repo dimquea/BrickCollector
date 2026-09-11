@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Collection\Models\Link;
 use App\Collection\Models\Source;
 use App\Collection\Models\Status;
 use App\Collection\Models\Storage;
@@ -32,6 +33,17 @@ class SettingsController extends Controller
                 ]),
             ],
             'colors' => DictionaryController::COLORS,
+            'links' => Link::orderBy('sort')->get()->map(fn (Link $link) => [
+                'id' => $link->id,
+                'code' => $link->code,
+                'enabled' => $link->enabled,
+                'label' => $link->label,
+                'url_set' => $link->url_set,
+                'url_minifig' => $link->url_minifig,
+                'url_part' => $link->url_part,
+                // Инструкция бывает только у набора, поэтому у неё одно поле.
+                'set_only' => $link->isSetOnly(),
+            ]),
             'currency' => Settings::currency(),
             'catalog' => [
                 'imported_at' => Settings::get('catalog_imported_at'),
@@ -54,6 +66,35 @@ class SettingsController extends Controller
         if (! empty($validated['locale'])) {
             $request->session()->put('locale', $validated['locale']);
         }
+
+        return response()->json(['message' => __('app.settings.saved')]);
+    }
+
+    /**
+     * Настройка одного блока ссылок.
+     *
+     * Блоки фиксированы: создания и удаления здесь нет, только правка. Паттерн
+     * проверяем на схему, а не правилом url — подстановки вида {id} делают
+     * адрес невалидным до подстановки, и это нормально.
+     */
+    public function updateLink(Request $request, Link $link): JsonResponse
+    {
+        $pattern = ['nullable', 'string', 'max:500', 'regex:/^https?:\/\/\S+$/'];
+
+        $validated = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'label' => ['nullable', 'string', 'max:60'],
+            'url_set' => $pattern,
+            'url_minifig' => $pattern,
+            'url_part' => $pattern,
+        ]);
+
+        if ($link->isSetOnly()) {
+            $validated['url_minifig'] = null;
+            $validated['url_part'] = null;
+        }
+
+        $link->fill($validated)->save();
 
         return response()->json(['message' => __('app.settings.saved')]);
     }

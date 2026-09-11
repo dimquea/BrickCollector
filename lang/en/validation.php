@@ -179,6 +179,10 @@ return [
     */
 
     'custom' => [
+        'url_set' => ['regex' => 'An address must start with http:// or https://.'],
+        'url_minifig' => ['regex' => 'An address must start with http:// or https://.'],
+        'url_part' => ['regex' => 'An address must start with http:// or https://.'],
+
         'attribute-name' => [
             'rule-name' => 'custom-message',
         ],
@@ -201,6 +205,10 @@ return [
      * person who just typed a number into a box.
      */
     'attributes' => [
+        'label' => 'Button label',
+        'url_set' => 'Set address',
+        'url_minifig' => 'Minifigure address',
+        'url_part' => 'Part address',
         'lost_qty' => 'Missing',
         'acquired_at' => 'Acquired on',
         'price' => 'Price',

@@ -5,6 +5,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DictionaryEditor from '@/Components/DictionaryEditor.vue';
+import LinkEditor from '@/Components/LinkEditor.vue';
 import { notify } from '@/support/toasts';
 import { locale, t } from '@/i18n';
 
@@ -12,6 +13,7 @@ const props = defineProps({
     dictionaries: { type: Object, required: true },
     colors: { type: Array, default: () => [] },
     currency: { type: String, default: 'RUB' },
+    links: { type: Array, default: () => [] },
     catalog: { type: Object, default: () => ({}) },
 });
 
@@ -141,6 +143,27 @@ const sections = [
                                 <span>{{ t(section.note) }}</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#settingsLinks"
+                    >
+                        <i class="mdi mdi-open-in-new me-2"></i>
+                        {{ t('links.title') }}
+                    </button>
+                </h2>
+                <div id="settingsLinks" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <p class="text-body-secondary small">{{ t('links.hint') }}</p>
+
+                        <LinkEditor :rows="links" />
                     </div>
                 </div>
             </div>

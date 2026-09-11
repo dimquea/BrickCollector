@@ -86,6 +86,9 @@ Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.l
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
+Route::patch('/settings/links/{link}', [SettingsController::class, 'updateLink'])
+    ->name('settings.links.update');
+
 Route::post('/settings/dictionary/{kind}', [DictionaryController::class, 'store'])
     ->name('dictionary.store');
 Route::patch('/settings/dictionary/{kind}/{id}', [DictionaryController::class, 'update'])

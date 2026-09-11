@@ -101,6 +101,13 @@ return [
     ],
 
     'links' => [
+        'enabled' => 'Show',
+        'label' => 'Button label',
+        'url_set' => 'Set address',
+        'url_minifig' => 'Minifigure address',
+        'url_part' => 'Part address',
+        'placeholders' => 'An address is a pattern. {id} is the item number, {number} the same without the variant (75005 rather than 75005-1), {type} the one-letter type, {color} the BrickLink colour. An empty pattern means the site does not know about that kind of thing: no button is drawn.',
+        'hint' => 'Buttons under the card on a detail page. Six fixed blocks: the last two are yours to fill in.',
         'title' => 'Elsewhere',
     ],
 

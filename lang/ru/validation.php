@@ -37,7 +37,11 @@ return [
         'string' => 'Поле «:attribute» должно быть не короче :min символов.',
     ],
 
-    'custom' => [],
+    'custom' => [
+        'url_set' => ['regex' => 'Адрес должен начинаться с http:// или https://.'],
+        'url_minifig' => ['regex' => 'Адрес должен начинаться с http:// или https://.'],
+        'url_part' => ['regex' => 'Адрес должен начинаться с http:// или https://.'],
+],
 
     /*
      * Field names as a person sees them, not as the columns are called.
@@ -45,6 +49,10 @@ return [
      * person who just typed a number into a box.
      */
     'attributes' => [
+        'label' => 'Подпись кнопки',
+        'url_set' => 'Адрес набора',
+        'url_minifig' => 'Адрес минифигурки',
+        'url_part' => 'Адрес детали',
         'lost_qty' => 'Утеряно',
         'acquired_at' => 'Дата приобретения',
         'price' => 'Стоимость',
