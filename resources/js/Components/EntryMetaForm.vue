@@ -34,7 +34,7 @@ const form = reactive({
     tag_ids: [...props.meta.tag_ids],
 });
 
-const emit = defineEmits(['statuses']);
+const emit = defineEmits(['saved']);
 
 const saving = ref(false);
 
@@ -77,7 +77,21 @@ async function save() {
 
     if (result) {
         lastAccepted = attempted;
-        emit('statuses', tickedCodes());
+
+        // Карточка над формой показывает те же значения; отдаём их ей целиком,
+        // уже приведёнными к тому виду, в каком их отдал бы сервер.
+        emit('saved', {
+            codes: tickedCodes(),
+            meta: {
+                acquired_at: form.acquired_at || null,
+                price: form.price === '' ? null : Math.round(Number(form.price) * 100),
+                source_id: form.source_id ? Number(form.source_id) : null,
+                storage_id: form.storage_id ? Number(form.storage_id) : null,
+                note: form.note || null,
+                status_ids: [...form.status_ids],
+                tag_ids: [...form.tag_ids],
+            },
+        });
         notify(result.message ?? t('collection.saved'), 'success', 2500);
     }
 }

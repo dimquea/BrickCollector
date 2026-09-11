@@ -9,6 +9,9 @@ import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
 import OwnedNode from '@/Components/OwnedNode.vue';
 import EntryMetaForm from '@/Components/EntryMetaForm.vue';
 import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
+import EntryMetaBadges from '@/Components/EntryMetaBadges.vue';
+import EntryMetaRows from '@/Components/EntryMetaRows.vue';
+import EntryNote from '@/Components/EntryNote.vue';
 import { t } from '@/i18n';
 
 const props = defineProps({
@@ -41,8 +44,13 @@ function applySaved(result) {
  */
 const statusCodes = ref([...(props.entry.status_codes ?? [])]);
 
-function applyStatuses(codes) {
+// Карточка показывает то же, что правится в «Управлении», поэтому держит
+// собственную копию: сохранение обновляет её, а страница не перерисовывается.
+const meta = reactive({ ...props.meta });
+
+function applyMeta({ codes, meta: saved }) {
     statusCodes.value = codes;
+    Object.assign(meta, saved);
 }
 
 /**
@@ -132,6 +140,8 @@ function remove() {
                             <span class="text-body-secondary">{{ t('catalog.theme') }}</span>
                             <span class="text-end">{{ entry.theme }}</span>
                         </li>
+
+                        <EntryMetaRows :meta="meta" :dictionaries="dictionaries" :currency="currency" />
                     </ul>
 
                     <div class="card-footer d-flex flex-wrap gap-1 align-items-center">
@@ -140,6 +150,7 @@ function remove() {
                             :incomplete="flags.flag_incomplete"
                             :missing-figs="flags.flag_missing_figs"
                         />
+                        <EntryMetaBadges :meta="meta" :dictionaries="dictionaries" />
                         <Link
                             :href="`/catalog/${entry.type}/${encodeURIComponent(entry.item_id)}`"
                             class="btn btn-sm btn-link ms-auto p-0"
@@ -149,13 +160,15 @@ function remove() {
                     </div>
                 </div>
 
+                <EntryNote :note="meta.note" />
+
                 <div class="accordion mt-4">
                     <EntryMetaForm
                         :entry-id="entry.id"
-                        :meta="meta"
+                        :meta="props.meta"
                         :dictionaries="dictionaries"
                         :currency="currency"
-                        @statuses="applyStatuses"
+                        @saved="applyMeta"
                     />
 
                     <div class="accordion-item">

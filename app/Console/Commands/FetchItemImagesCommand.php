@@ -46,8 +46,10 @@ class FetchItemImagesCommand extends Command
         $pause = (int) $this->option('pause') * 1000;
         $tally = ['ok' => 0, 'missing' => 0, 'error' => 0];
         // В журнале аддона полоска прогресса — это десяток строк мусора на
-        // каждый прогон, а прогон идёт раз в несколько минут.
-        $bar = $this->output->isDecorated()
+        // каждый прогон, а прогон идёт раз в несколько минут. Спрашиваем у
+        // самого потока: isDecorated() под s6 отвечает «да», хотя никакого
+        // терминала там нет.
+        $bar = stream_isatty(STDOUT)
             ? $this->output->createProgressBar($pending->count())
             : null;
 

@@ -1,12 +1,15 @@
 <script setup>
 import { url } from '@/support/base';
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
 import EntryMetaForm from '@/Components/EntryMetaForm.vue';
+import EntryMetaBadges from '@/Components/EntryMetaBadges.vue';
+import EntryMetaRows from '@/Components/EntryMetaRows.vue';
+import EntryNote from '@/Components/EntryNote.vue';
 import { t } from '@/i18n';
 
 /**
@@ -34,6 +37,14 @@ const props = defineProps({
 
 const page = usePage();
 const flash = computed(() => page.props.flash);
+
+// Карточка показывает то же, что правится в «Управлении»: своя копия, которую
+// обновляет сохранение, чтобы страница не перерисовывалась.
+const meta = reactive({ ...props.meta });
+
+function applyMeta({ meta: saved }) {
+    Object.assign(meta, saved);
+}
 
 function remove() {
     if (window.confirm(t('collection.remove_confirm', { name: props.entry.name }))) {
@@ -82,9 +93,12 @@ function remove() {
                             <span class="text-body-secondary">{{ t('catalog.theme') }}</span>
                             <span class="text-end">{{ entry.theme }}</span>
                         </li>
+
+                        <EntryMetaRows :meta="meta" :dictionaries="dictionaries" :currency="currency" />
                     </ul>
 
                     <div class="card-footer d-flex flex-wrap gap-1 align-items-center">
+                        <EntryMetaBadges :meta="meta" :dictionaries="dictionaries" />
                         <Link
                             :href="`/catalog/M/${encodeURIComponent(entry.item_id)}`"
                             class="btn btn-sm btn-link ms-auto p-0"
@@ -94,13 +108,16 @@ function remove() {
                     </div>
                 </div>
 
+                <EntryNote :note="meta.note" />
+
                 <div class="accordion mt-4">
                     <EntryMetaForm
                         :entry-id="entry.id"
                         :endpoint="`/minifigures/copy/${entry.id}`"
-                        :meta="meta"
+                        :meta="props.meta"
                         :dictionaries="dictionaries"
                         :currency="currency"
+                        @saved="applyMeta"
                     />
 
                     <div class="accordion-item">
