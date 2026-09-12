@@ -90,4 +90,19 @@ the BrickLink catalogue several times a day. Item pictures come from BrickLink.
 LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or
 endorse this project.
 
+## Licence
+
+MIT — see [LICENSE](LICENSE). Fork it, change it, run it, ship it; keep the
+copyright notice with the code.
+
+The licence covers the code and nothing else. The catalogue is not part of this
+repository: the application downloads it onto your own machine from
+[rgriebl/brickstore-database][db], and item pictures come from BrickLink. That
+data belongs to its owners and travels under their terms, not under this
+licence.
+
+A built copy — the Home Assistant add-on image included — carries Bootstrap,
+Vue, Inertia, Tom Select and the Material Design Icons font inside it. They are
+MIT and Apache-2.0, and their own licences come along with them.
+
 [db]: https://github.com/rgriebl/brickstore-database
