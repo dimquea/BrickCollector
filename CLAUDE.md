@@ -213,6 +213,15 @@ request path reads the cache and records what is missing.
   Depth limit 8, with cycle protection along the traversal path.
 - "Incomplete" and "Missing figures" are derived, cached in `collection_entries.flag_*`, and
   recomputed whenever the contents change.
+- **An assembly is an entry with no `item_type`** — a group of loose parts with a name of its own and
+  no catalog counterpart. Its parts are a fourth place a part can be (`parent_item_type IS NULL` and
+  the entry's `item_type IS NULL`), so anything that splits parts by placement needs that fourth
+  bucket. Without it assembled parts are held and yet nowhere, and "in sets" quietly swallows them.
+- **Parts move in and out of an assembly; they are never created or destroyed there** (`MoveParts`).
+  Taking spends whole lots, oldest first, and deletes a lot spent to the last brick — a lot is a
+  purchase, and half a receipt belongs to nobody. Giving back always makes a new lot with no date and
+  no price: where the brick came from was forgotten when it went in. Deleting an assembly returns its
+  parts rather than eating them, unlike a set, whose contents *were* the set.
 
 ## List filters
 
@@ -259,8 +268,10 @@ so `back()` led to the last of them. Anything that serves bytes and needs no ses
   `tom-select.bootstrap5.css` theme — short lists included. It was once the rule for lists longer
   than ten options only, and a native select next to Tom Select ones read as a different kind of
   control. Create the instance in `onMounted`, destroy it in `onUnmounted` — without that, Inertia
-  navigation leaves orphaned instances behind. Never reach for Tom Select from a page; go through
-  the wrapper. Forms outside the filters (settings, management) may still use a plain
+  navigation leaves orphaned instances behind. Tom Select copies its options once, at creation, so
+  the wrapper re-fills them when the list changes — a dialog that fetches what it offers draws its
+  select before the answer arrives, and without that the filter is permanently empty. Never reach for
+  Tom Select from a page; go through the wrapper. Forms outside the filters (settings, management) may still use a plain
   `<select class="form-select">`.
 
 ## Saving a single field

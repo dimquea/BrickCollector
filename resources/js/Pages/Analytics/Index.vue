@@ -34,7 +34,7 @@ const money = (minor) =>
 const groups = [
     { key: 'sets', fields: ['total', 'unique', 'incomplete'] },
     { key: 'minifigures', fields: ['total', 'in_sets', 'loose', 'unique', 'incomplete'] },
-    { key: 'parts', fields: ['total', 'in_sets', 'loose', 'unique', 'lost'] },
+    { key: 'parts', fields: ['total', 'in_sets', 'loose', 'assemblies', 'unique', 'lost'] },
 ];
 </script>
 

@@ -102,14 +102,19 @@ class Analytics
     private function parts(): array
     {
         $loose = "ci.parent_item_type IS NULL AND e.item_type = 'P'";
+        // Сборка — запись без типа: её детали не куплены в составе чего-то и
+        // не лежат россыпью, поэтому у них своя колонка. Иначе они молча
+        // приписывались бы к наборам.
+        $assembled = 'ci.parent_item_type IS NULL AND e.item_type IS NULL';
 
         $row = DB::table('collection_items as ci')
             ->join('collection_entries as e', 'e.id', '=', 'ci.entry_id')
             ->where('ci.item_type', 'P')
             ->where('ci.counts', 1)
             ->selectRaw('COALESCE(SUM(ci.qty), 0) as total')
-            ->selectRaw("COALESCE(SUM(CASE WHEN NOT ({$loose}) THEN ci.qty END), 0) as in_sets")
+            ->selectRaw("COALESCE(SUM(CASE WHEN NOT ({$loose}) AND NOT ({$assembled}) THEN ci.qty END), 0) as in_sets")
             ->selectRaw("COALESCE(SUM(CASE WHEN {$loose} THEN ci.qty END), 0) as loose")
+            ->selectRaw("COALESCE(SUM(CASE WHEN {$assembled} THEN ci.qty END), 0) as assemblies")
             ->selectRaw('COUNT(DISTINCT ci.item_id || \'/\' || ci.color_id) as unique_items')
             ->selectRaw('COALESCE(SUM(ci.lost_qty), 0) as lost')
             ->first();
@@ -118,6 +123,7 @@ class Analytics
             'total' => (int) $row->total,
             'in_sets' => (int) $row->in_sets,
             'loose' => (int) $row->loose,
+            'assemblies' => (int) $row->assemblies,
             'unique' => (int) $row->unique_items,
             'lost' => (int) $row->lost,
         ];

@@ -49,6 +49,28 @@ watch(
         }
     },
 );
+
+// Tom Select copies the options once, at creation. Where a list arrives after
+// the control is drawn — a dialog that fetches what it offers — the copy stays
+// empty and the filter looks broken. Re-filling keeps the current choice: the
+// value may well be in the new list too.
+watch(
+    () => props.options,
+    (options) => {
+        if (! instance) {
+            return;
+        }
+
+        const chosen = instance.getValue();
+
+        instance.clearOptions();
+        instance.addOption({ value: '', text: '' });
+        instance.addOptions(options.map((option) => ({ value: String(option.value), text: option.label })));
+        instance.refreshOptions(false);
+        instance.setValue(chosen, true);
+    },
+    { deep: true },
+);
 </script>
 
 <template>

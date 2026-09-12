@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\AssembliesController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\LotController;
@@ -78,6 +79,33 @@ Route::get('/minifigures/copy/{entry}', [MinifiguresController::class, 'copy'])-
 Route::patch('/minifigures/copy/{entry}', [MinifiguresController::class, 'update'])->name('minifigures.update');
 Route::delete('/minifigures/copy/{entry}', [MinifiguresController::class, 'destroy'])->name('minifigures.destroy');
 Route::get('/minifigures/{id}', [MinifiguresController::class, 'show'])->name('minifigures.show');
+
+/*
+ * An assembly is a group of loose parts with a name of its own and no catalog
+ * counterpart. Its section is separate because a thing is filed by what it is,
+ * and an assembly is not a set: nothing in it has an item number to look up.
+ *
+ * Parts move in from the loose pile and back out to it; nothing is created or
+ * destroyed on the way, which is why those routes live here rather than under
+ * the catalog.
+ */
+Route::get('/assemblies', [AssembliesController::class, 'index'])->name('assemblies.index');
+Route::post('/assemblies', [AssembliesController::class, 'store'])->name('assemblies.store');
+Route::get('/assemblies/{entry}', [AssembliesController::class, 'show'])->name('assemblies.show');
+Route::patch('/assemblies/{entry}', [AssembliesController::class, 'update'])->name('assemblies.update');
+Route::delete('/assemblies/{entry}', [AssembliesController::class, 'destroy'])->name('assemblies.destroy');
+
+Route::get('/assemblies/{entry}/loose', [AssembliesController::class, 'loose'])->name('assemblies.loose');
+Route::post('/assemblies/{entry}/parts', [AssembliesController::class, 'addPart'])->name('assemblies.parts.add');
+Route::patch('/assemblies/{entry}/parts/{item}', [AssembliesController::class, 'updatePart'])
+    ->name('assemblies.parts.update');
+Route::delete('/assemblies/{entry}/parts/{item}', [AssembliesController::class, 'removePart'])
+    ->name('assemblies.parts.remove');
+
+Route::post('/assemblies/{entry}/image', [AssembliesController::class, 'storeImage'])
+    ->name('assemblies.image.store');
+Route::delete('/assemblies/{entry}/image', [AssembliesController::class, 'destroyImage'])
+    ->name('assemblies.image.destroy');
 
 // A lot belongs to a copy of anything, so it sits outside the sections.
 Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.lost');

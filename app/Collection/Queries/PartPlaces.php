@@ -28,10 +28,11 @@ class PartPlaces
     public function inEntries(): Collection
     {
         return $this->rows()
-            // NULL is an assembly, and a != comparison would drop it silently.
-            ->where(fn ($where) => $where
-                ->whereNull('e.item_type')
-                ->orWhere('e.item_type', '!=', 'P'))
+            // Neither a lot of loose parts nor an assembly: both have tabs of
+            // their own. NULL is an assembly, and a plain != would drop it
+            // silently rather than deliberately.
+            ->whereNotNull('e.item_type')
+            ->where('e.item_type', '!=', 'P')
             // Grouped, not chained: an orWhere at the top level escapes the
             // constraints added by rows() and matches every part in the
             // collection. It read as 71 of a brick there were two of.
@@ -42,6 +43,31 @@ class PartPlaces
             ->groupBy('entry_id')
             ->map(fn ($rows) => $this->summarise($rows))
             ->values();
+    }
+
+    /**
+     * Assemblies built with this part.
+     *
+     * An assembly has a name instead of an item number, so that is what the
+     * row shows.
+     */
+    public function assemblies(): Collection
+    {
+        return DB::table('collection_items as ci')
+            ->join('collection_entries as e', 'e.id', '=', 'ci.entry_id')
+            ->whereNull('e.item_type')
+            ->whereNull('ci.parent_id')
+            ->where('ci.item_type', 'P')
+            ->where('ci.item_id', $this->itemId)
+            ->where('ci.color_id', $this->colorId)
+            ->orderBy('e.name')
+            ->get(['e.id as entry_id', 'e.name', 'ci.qty', 'ci.lost_qty'])
+            ->map(fn ($row) => [
+                'entry_id' => (int) $row->entry_id,
+                'name' => $row->name,
+                'qty' => (int) $row->qty,
+                'lost' => (int) $row->lost_qty,
+            ]);
     }
 
     /** Lots of this part in this colour, owned on their own. */

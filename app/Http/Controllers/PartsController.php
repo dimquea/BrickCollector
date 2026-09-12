@@ -38,7 +38,7 @@ class PartsController extends Controller
         $filters = ListFilters::read($request, [
             'q' => ['string', 'max:120'],
             'color_id' => ['integer'],
-            'placement' => ['string', 'in:set,minifigure,loose,lost'],
+            'placement' => ['string', 'in:set,minifigure,loose,assembly,lost'],
         ]);
 
         return Inertia::render('Parts/Index', [
@@ -61,6 +61,7 @@ class PartsController extends Controller
             'part' => $part,
             'inEntries' => $places->inEntries(),
             'loose' => $places->loose(),
+            'assemblies' => $places->assemblies(),
             'inMinifigures' => $places->inMinifigures(),
             'otherColours' => $totals->otherColours($id, $color),
             'missingIn' => $places->missingIn(),

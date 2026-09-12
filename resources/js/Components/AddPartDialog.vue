@@ -9,9 +9,10 @@ import { locale, t, tChoice } from '@/i18n';
 /**
  * Adding a part: how many, in which colour, and where to.
  *
- * "Where to" is a new lot or one already held in that colour. A new lot is
- * another purchase with its own date and place; topping one up is more of
- * the same. Only the person knows which, so the dialog asks.
+ * "Where to" is a new lot, a lot already held in that colour, or an assembly
+ * being built. A new lot is another purchase; topping one up is more of the
+ * same; an assembly is a part bought for the model rather than for the drawer.
+ * Only the person knows which, so the dialog asks.
  *
  * The request goes out once the dialog has finished closing. Sent straight
  * away, the page changes under a modal that is still open, and Bootstrap's
@@ -21,25 +22,30 @@ const props = defineProps({
     item: { type: Object, required: true },
     colours: { type: Array, default: () => [] },
     lots: { type: Array, default: () => [] },
+    assemblies: { type: Array, default: () => [] },
 });
 
 const el = ref(null);
 let modal = null;
 let pending = false;
 
-const form = reactive({ qty: 1, color_id: null, lot_id: 'new' });
+// "new", "lot:12" or "assembly:3" — one list of radio buttons, so the choice
+// reads as one question with several answers.
+const form = reactive({ qty: 1, color_id: null, target: 'new' });
 const errors = ref({});
 const sending = ref(false);
 
 const colourOptions = computed(() => props.colours.map((colour) => ({ value: colour.id, label: colour.name })));
 
 // Only a lot of the chosen colour can take more; the server refuses any other.
+// An assembly takes any colour, being a list of parts rather than a pile of
+// one of them.
 const lotsInColour = computed(() =>
     props.lots.filter((lot) => String(lot.color_id) === String(form.color_id)),
 );
 
 // A lot picked under one colour means nothing under another.
-watch(() => form.color_id, () => (form.lot_id = 'new'));
+watch(() => form.color_id, () => (form.target = 'new'));
 
 const ready = computed(() => form.color_id !== null && form.color_id !== '' && Number(form.qty) >= 1);
 
@@ -52,7 +58,7 @@ const lotLabel = (lot) => [
 function open(colorId = null) {
     form.qty = 1;
     form.color_id = colorId ?? props.item.image_color_id ?? null;
-    form.lot_id = 'new';
+    form.target = 'new';
     errors.value = {};
     modal.show();
 }
@@ -72,12 +78,15 @@ function send() {
     pending = false;
     sending.value = true;
 
+    const [kind, id] = form.target.split(':');
+
     router.post(
         url(`/catalog/P/${encodeURIComponent(props.item.id)}/add`),
         {
             qty: Number(form.qty),
             color_id: Number(form.color_id),
-            lot_id: form.lot_id === 'new' ? null : Number(form.lot_id),
+            lot_id: kind === 'lot' ? Number(id) : null,
+            assembly_id: kind === 'assembly' ? Number(id) : null,
         },
         {
             // A refusal comes back to this page. Keep what was typed and
@@ -148,7 +157,7 @@ onBeforeUnmount(() => {
                             <div class="form-check">
                                 <input
                                     id="addLotNew"
-                                    v-model="form.lot_id"
+                                    v-model="form.target"
                                     class="form-check-input"
                                     type="radio"
                                     value="new"
@@ -159,17 +168,35 @@ onBeforeUnmount(() => {
                             <div v-for="lot in lotsInColour" :key="lot.entry_id" class="form-check">
                                 <input
                                     :id="`addLot${lot.entry_id}`"
-                                    v-model="form.lot_id"
+                                    v-model="form.target"
                                     class="form-check-input"
                                     type="radio"
-                                    :value="lot.entry_id"
+                                    :value="`lot:${lot.entry_id}`"
                                 />
                                 <label class="form-check-label" :for="`addLot${lot.entry_id}`">
                                     {{ lotLabel(lot) }}
                                 </label>
                             </div>
 
-                            <div v-if="errors.lot_id" class="invalid-feedback d-block">{{ errors.lot_id }}</div>
+                            <template v-if="assemblies.length">
+                                <hr class="my-2" />
+                                <div v-for="assembly in assemblies" :key="assembly.id" class="form-check">
+                                    <input
+                                        :id="`addAssembly${assembly.id}`"
+                                        v-model="form.target"
+                                        class="form-check-input"
+                                        type="radio"
+                                        :value="`assembly:${assembly.id}`"
+                                    />
+                                    <label class="form-check-label" :for="`addAssembly${assembly.id}`">
+                                        <i class="mdi mdi-shape-outline me-1"></i>{{ assembly.name }}
+                                    </label>
+                                </div>
+                            </template>
+
+                            <div v-if="errors.lot_id || errors.assembly_id" class="invalid-feedback d-block">
+                                {{ errors.lot_id ?? errors.assembly_id }}
+                            </div>
                         </fieldset>
                     </div>
                 </div>

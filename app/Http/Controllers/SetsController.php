@@ -73,6 +73,10 @@ class SetsController extends Controller
             return to_route('minifigures.copy', $entry);
         }
 
+        if ($entry->isAssembly()) {
+            return to_route('assemblies.show', $entry);
+        }
+
         $catalogItem = CatalogItem::with('theme')
             ->where('type', $entry->item_type)
             ->where('id', $entry->item_id)

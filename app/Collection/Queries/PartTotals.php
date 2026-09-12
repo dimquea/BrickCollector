@@ -102,6 +102,12 @@ class PartTotals
                     THEN ci.qty END), 0) as in_minifigures"),
                 DB::raw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
                     AND e.item_type = 'P' THEN ci.qty END), 0) as loose"),
+
+                // An assembly is an entry with no catalog counterpart, so its
+                // parts sit under no type at all. Without a bucket of their
+                // own they would be held but be nowhere.
+                DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
+                    AND e.item_type IS NULL THEN ci.qty END), 0) as in_assemblies'),
                 DB::raw('COALESCE(SUM(CASE WHEN ci.is_extra = 1 THEN ci.qty END), 0) as spares'),
                 DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 THEN ci.lost_qty END), 0) as lost'),
 
@@ -139,6 +145,7 @@ class PartTotals
             'set' => $query->havingRaw('in_sets > 0'),
             'minifigure' => $query->havingRaw('in_minifigures > 0'),
             'loose' => $query->havingRaw('loose > 0'),
+            'assembly' => $query->havingRaw('in_assemblies > 0'),
             'lost' => $query->havingRaw('lost > 0'),
             default => null,
         };

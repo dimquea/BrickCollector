@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssemblyImageController;
 use App\Http\Controllers\ItemImageController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,3 +21,9 @@ Route::get('/images/{type}/{id}/{color}', [ItemImageController::class, 'show'])
     ->where('type', '[A-Z]')
     ->where('color', '[0-9]+')
     ->name('item.image');
+
+// Картинка сборки — сюда же и по тем же причинам. Тип предмета однобуквенный,
+// поэтому «assembly» ни с чем не спутается.
+Route::get('/images/assembly/{entry}', [AssemblyImageController::class, 'show'])
+    ->where('entry', '[0-9]+')
+    ->name('assembly.image');

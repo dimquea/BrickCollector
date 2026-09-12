@@ -13,6 +13,7 @@ const props = defineProps({
     part: { type: Object, required: true },
     inEntries: { type: Array, default: () => [] },
     loose: { type: Array, default: () => [] },
+    assemblies: { type: Array, default: () => [] },
     inMinifigures: { type: Array, default: () => [] },
     otherColours: { type: Array, default: () => [] },
     missingIn: { type: Array, default: () => [] },
@@ -28,6 +29,7 @@ const flash = computed(() => page.props.flash);
 const tabs = [
     { key: 'entries', label: 'parts.tab_entries', count: props.inEntries.length },
     { key: 'loose', label: 'parts.tab_loose', count: props.loose.length },
+    { key: 'assemblies', label: 'assembly.tab_assemblies', count: props.assemblies.length },
     { key: 'minifigures', label: 'parts.tab_minifigures', count: props.inMinifigures.length },
     { key: 'colours', label: 'parts.tab_colours', count: props.otherColours.length },
     { key: 'missing', label: 'parts.tab_missing', count: props.missingIn.length },
@@ -40,7 +42,7 @@ const active = ref(tabs[0]?.key ?? null);
 const entryHref = (row) => ({
     P: `/parts/copy/${row.entry_id}`,
     M: `/minifigures/copy/${row.entry_id}`,
-}[row.type] ?? `/sets/${row.entry_id}`);
+}[row.type] ?? (row.type === null ? `/assemblies/${row.entry_id}` : `/sets/${row.entry_id}`));
 
 const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.color_id}`;
 
@@ -94,6 +96,10 @@ const lotDate = (lot) =>
                         <li v-if="part.in_minifigures" class="list-group-item d-flex justify-content-between gap-2">
                             <span class="text-body-secondary">{{ t('parts.in_minifigures') }}</span>
                             <span>{{ part.in_minifigures }}</span>
+                        </li>
+                        <li v-if="part.in_assemblies" class="list-group-item d-flex justify-content-between gap-2">
+                            <span class="text-body-secondary">{{ t('assembly.in_assemblies') }}</span>
+                            <span>{{ part.in_assemblies }}</span>
                         </li>
                         <li v-if="part.loose" class="list-group-item d-flex justify-content-between gap-2">
                             <span class="text-body-secondary">{{ t('parts.loose') }}</span>
@@ -191,6 +197,18 @@ const lotDate = (lot) =>
                                             </span>
                                             <span class="fw-semibold">{{ lot.qty }}</span>
                                         </td>
+                                    </tr>
+                                </template>
+
+                                <!-- An assembly has a name instead of a number. -->
+                                <template v-else-if="active === 'assemblies'">
+                                    <tr v-for="row in assemblies" :key="row.entry_id">
+                                        <td class="ps-3">
+                                            <Link :href="`/assemblies/${row.entry_id}`" class="text-decoration-none">
+                                                {{ row.name || t('assembly.untitled') }}
+                                            </Link>
+                                        </td>
+                                        <td class="text-end fw-semibold">{{ row.qty }}</td>
                                     </tr>
                                 </template>
 

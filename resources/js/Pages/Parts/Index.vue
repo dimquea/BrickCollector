@@ -56,6 +56,7 @@ const placements = [
     { value: 'set', label: 'parts.in_sets' },
     { value: 'minifigure', label: 'parts.in_minifigures' },
     { value: 'loose', label: 'parts.loose' },
+    { value: 'assembly', label: 'assembly.in_assemblies' },
     { value: 'lost', label: 'parts.lost' },
 ];
 

@@ -45,6 +45,7 @@ return [
         'catalog' => ['per_page' => 48, 'cards' => true],
         'sets' => ['per_page' => 24, 'cards' => true],
         'minifigures' => ['per_page' => 24, 'cards' => true],
+        'assemblies' => ['per_page' => 24, 'cards' => true],
         // Детали показываются таблицей, размер карточки к ним не применим.
         'parts' => ['per_page' => 50, 'cards' => false],
     ],

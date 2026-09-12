@@ -10,6 +10,7 @@ use App\Catalog\Queries\ItemInventory;
 use App\Catalog\Queries\ItemParents;
 use App\Catalog\Queries\SearchItems;
 use App\Collection\Actions\AddToCollection;
+use App\Collection\Actions\MoveParts;
 use App\Collection\Actions\ResizeLot;
 use App\Collection\Models\Entry;
 use App\Collection\Queries\PartPlaces;
@@ -110,6 +111,11 @@ class CatalogController extends Controller
             'elementCodes' => $this->elementCodes($item),
             'colours' => $item->type === 'P' ? $this->colours($item, $lots) : [],
             'lots' => $lots->values(),
+            // A part can also go straight into an assembly: bought for the
+            // model being built, not for the drawer.
+            'assemblies' => $item->type === 'P'
+                ? Entry::whereNull('item_type')->orderBy('name')->get(['id', 'name'])
+                : [],
             'parents' => $this->parents($request, $item, $parents),
         ]);
     }
@@ -184,6 +190,7 @@ class CatalogController extends Controller
             'qty' => ['nullable', 'integer', 'min:1', 'max:999'],
             'color_id' => ['nullable', 'integer', 'exists:bl_colors,id'],
             'lot_id' => ['nullable', 'integer'],
+            'assembly_id' => ['nullable', 'integer'],
         ]);
 
         $qty = $validated['qty'] ?? 1;
@@ -194,6 +201,7 @@ class CatalogController extends Controller
                 $qty,
                 $validated['color_id'] ?? (int) $item->image_color_id,
                 $validated['lot_id'] ?? null,
+                $validated['assembly_id'] ?? null,
                 $add,
                 $resize,
             );
@@ -226,9 +234,14 @@ class CatalogController extends Controller
         int $qty,
         int $colorId,
         ?int $lotId,
+        ?int $assemblyId,
         AddToCollection $add,
         ResizeLot $resize,
     ): RedirectResponse {
+        if ($assemblyId !== null) {
+            return $this->addPartToAssembly($item, $qty, $colorId, $assemblyId, $add);
+        }
+
         if ($lotId === null) {
             $entry = $add->handle($item, ['qty' => $qty, 'color_id' => $colorId]);
 
@@ -252,6 +265,35 @@ class CatalogController extends Controller
 
         return to_route('parts.copy', $lot)
             ->with('flash', ['message' => __('app.parts.topped_up', ['count' => $qty])]);
+    }
+
+    /**
+     * A part bought for something being built goes into the assembly directly.
+     *
+     * It is still entered as a lot first and then moved, rather than written
+     * into the assembly by hand: that is the one path parts take into an
+     * assembly, and a second one would be a second set of rules about what
+     * happens to the rows underneath.
+     */
+    private function addPartToAssembly(
+        Item $item,
+        int $qty,
+        int $colorId,
+        int $assemblyId,
+        AddToCollection $add,
+    ): RedirectResponse {
+        $assembly = Entry::whereNull('item_type')->find($assemblyId);
+
+        if ($assembly === null) {
+            throw ValidationException::withMessages(['assembly_id' => __('app.assembly.gone')]);
+        }
+
+        $lot = $add->handle($item, ['qty' => $qty, 'color_id' => $colorId]);
+
+        app(MoveParts::class)->fromLot($assembly, $lot, $qty);
+
+        return to_route('assemblies.show', $assembly)
+            ->with('flash', ['message' => __('app.assembly.added')]);
     }
 
     /**
