@@ -1,6 +1,6 @@
 <script setup>
 import { url } from '@/support/base';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -10,6 +10,7 @@ import PartsTable from '@/Components/PartsTable.vue';
 import InventoryNode from '@/Components/InventoryNode.vue';
 import ExternalLinks from '@/Components/ExternalLinks.vue';
 import AddPartDialog from '@/Components/AddPartDialog.vue';
+import SearchSelect from '@/Components/SearchSelect.vue';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -21,6 +22,8 @@ const props = defineProps({
     // A part only: what the add dialog offers.
     colours: { type: Array, default: () => [] },
     lots: { type: Array, default: () => [] },
+    // What this item is part of — null when nothing lists it.
+    parents: { type: Object, default: null },
 });
 
 const isPart = computed(() => props.item.type === 'P');
@@ -47,6 +50,57 @@ function addToCollection(colorId = null) {
 
 const nested = computed(() => props.inventory.filter((lot) => lot.type !== 'P'));
 const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'));
+
+/*
+ * "Part of" is paged on the server: a common brick is in tens of thousands of
+ * inventories, so the tab, the colour and the page all live in the address and
+ * each change is a visit. The state stays with the page, which is what makes a
+ * link to "this brick, in black" work.
+ */
+const parentsHref = (kind, colour, page = 1) => {
+    const query = new URLSearchParams();
+
+    if (kind) {
+        query.set('in', kind);
+    }
+
+    if (colour !== null && colour !== undefined && colour !== '') {
+        query.set('in_color', colour);
+    }
+
+    if (page > 1) {
+        query.set('in_page', page);
+    }
+
+    const search = query.toString();
+
+    return `/catalog/${props.item.type}/${encodeURIComponent(props.item.id)}${search ? `?${search}` : ''}`;
+};
+
+const colourFilter = ref(props.parents?.colour ?? null);
+
+// The server may answer with another tab — a colour can empty the open one —
+// so the control follows what came back rather than what was clicked.
+watch(() => props.parents?.colour ?? null, (colour) => (colourFilter.value = colour));
+
+watch(colourFilter, (colour) => {
+    const current = props.parents?.colour ?? null;
+
+    if (String(colour ?? '') === String(current ?? '')) {
+        return;
+    }
+
+    router.get(url(parentsHref(props.parents?.kind, colour)), {}, {
+        preserveScroll: true,
+        preserveState: true,
+    });
+});
+
+const parentColourOptions = computed(() =>
+    (props.parents?.colours ?? []).map((colour) => ({ value: colour.id, label: colour.name })),
+);
+
+const parentRows = computed(() => props.parents?.rows?.data ?? []);
 </script>
 
 <template>
@@ -158,6 +212,97 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                     </div>
                 </div>
 
+                <!-- What this item is part of, read out of the inventory
+                     backwards. Tabs are kinds of parent; a part can also be
+                     narrowed to one colour. -->
+                <div v-if="parents" class="card shadow-sm mb-4">
+                    <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                        <span>{{ t('item.appears_in') }}</span>
+
+                        <div v-if="parents.colours.length" class="ms-auto" style="min-width: 12rem">
+                            <SearchSelect
+                                id="parentColour"
+                                v-model="colourFilter"
+                                :options="parentColourOptions"
+                                :placeholder="t('catalog.any')"
+                            />
+                        </div>
+                    </div>
+
+                    <ul v-if="parents.kinds.length" class="nav nav-tabs px-2 pt-2">
+                        <li v-for="kind in parents.kinds" :key="kind.code" class="nav-item">
+                            <Link
+                                class="nav-link d-flex align-items-center gap-2"
+                                :class="{ active: kind.code === parents.kind }"
+                                :href="parentsHref(kind.code, parents.colour)"
+                                preserve-scroll
+                            >
+                                {{ kind.name }}
+                                <span class="badge text-bg-secondary">{{ kind.count }}</span>
+                            </Link>
+                        </li>
+                    </ul>
+
+                    <p v-if="!parentRows.length" class="text-body-secondary p-3 mb-0">
+                        {{ parents.colour === null ? t('item.appears_none') : t('item.appears_none_colour') }}
+                    </p>
+
+                    <div v-else class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <tbody>
+                                <tr v-for="row in parentRows" :key="`${row.type}/${row.id}`">
+                                    <td style="width: 4rem">
+                                        <Link :href="`/catalog/${row.type}/${encodeURIComponent(row.id)}`">
+                                            <ItemImage
+                                                :type="row.type"
+                                                :id="row.id"
+                                                :color-id="row.image_color_id"
+                                                :alt="row.name"
+                                            />
+                                        </Link>
+                                    </td>
+                                    <td>
+                                        <Link
+                                            :href="`/catalog/${row.type}/${encodeURIComponent(row.id)}`"
+                                            class="text-decoration-none"
+                                        >
+                                            <span class="line-clamp-2" :title="row.name">{{ row.name }}</span>
+                                        </Link>
+                                        <div class="d-flex align-items-center gap-1 mt-1">
+                                            <span class="badge text-bg-light border">{{ row.id }}</span>
+                                            <span v-if="row.year" class="badge text-bg-light">{{ row.year }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end fw-semibold">&times;{{ row.qty }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div v-if="parents.rows?.last_page > 1" class="card-body">
+                        <nav>
+                            <ul class="pagination pagination-sm justify-content-center flex-wrap mb-2">
+                                <li
+                                    v-for="link in parents.rows.links"
+                                    :key="link.label"
+                                    class="page-item"
+                                    :class="{ active: link.active, disabled: !link.url }"
+                                >
+                                    <Link
+                                        v-if="link.url"
+                                        class="page-link"
+                                        :href="link.url"
+                                        preserve-scroll
+                                        v-html="link.label"
+                                    />
+                                    <span v-else class="page-link" v-html="link.label" />
+                                </li>
+                            </ul>
+                        </nav>
+                        <p class="form-text text-center mb-0">{{ t('item.appears_order') }}</p>
+                    </div>
+                </div>
+
                 <div v-if="elementCodes.length" class="card shadow-sm">
                     <div class="card-header">{{ t('item.element_codes') }}</div>
                     <div class="table-responsive">
@@ -183,7 +328,7 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
                     </div>
                 </div>
 
-                <p v-if="!item.has_inventory" class="text-body-secondary">
+                <p v-if="!item.has_inventory && !parents" class="text-body-secondary">
                     {{ t('item.no_inventory') }}
                 </p>
             </div>

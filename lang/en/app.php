@@ -47,6 +47,10 @@ return [
         'element_codes' => 'LEGO element numbers',
         'no_inventory' => 'The catalog has no contents listed for this item.',
         'open' => 'Open',
+        'appears_in' => 'Part of',
+        'appears_none' => 'Nothing in the catalog lists this item.',
+        'appears_none_colour' => 'Nothing lists it in this colour.',
+        'appears_order' => 'By item number: a common brick is in tens of thousands of inventories, and any other order would have to read them all before showing the first row.',
     ],
 
     'lot' => [

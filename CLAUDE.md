@@ -186,6 +186,16 @@ request path reads the cache and records what is missing.
 - A theme filter matches the subtree by path prefix, not the exact node:
   picking "Star Wars" finds 1,059 sets rather than the 47 sitting exactly at
   that node.
+- **"Part of" reads the inventory backwards** (`ItemParents`), on the index
+  `(child_type, child_id, color_id)`. Finding is cheap; reading is not — part
+  4073 is in 34,000 inventories. So rows come out in the index's own order, by
+  the parent's item number, fifty to a page, and only those fifty have their
+  names looked up. **Never offer ordering by name or year here:** it joins every
+  parent before the first row can be shown, 2 s on 4073, and looks like any
+  other option. A colour filter is free, being the index's third column, and
+  makes the page faster rather than slower. Tab, colour and page live in the
+  query string (`in`, `in_color`, `in_page`), so "this brick, in black" is a
+  link.
 
 ## Accounting rules (the costliest place to get wrong)
 

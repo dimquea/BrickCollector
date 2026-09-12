@@ -7,6 +7,7 @@ use App\Catalog\Models\ItemType;
 use App\Catalog\Models\Theme;
 use App\Catalog\Images\ItemImages;
 use App\Catalog\Queries\ItemInventory;
+use App\Catalog\Queries\ItemParents;
 use App\Catalog\Queries\SearchItems;
 use App\Collection\Actions\AddToCollection;
 use App\Collection\Actions\ResizeLot;
@@ -70,8 +71,13 @@ class CatalogController extends Controller
         ]);
     }
 
-    public function show(string $type, string $id, ItemInventory $inventory): Response
-    {
+    public function show(
+        Request $request,
+        string $type,
+        string $id,
+        ItemInventory $inventory,
+        ItemParents $parents,
+    ): Response {
         $item = Item::with('theme', 'category')
             ->where('type', $type)
             ->where('id', $id)
@@ -104,7 +110,62 @@ class CatalogController extends Controller
             'elementCodes' => $this->elementCodes($item),
             'colours' => $item->type === 'P' ? $this->colours($item, $lots) : [],
             'lots' => $lots->values(),
+            'parents' => $this->parents($request, $item, $parents),
         ]);
+    }
+
+    /**
+     * What this item is part of: the kinds it turns up in, and one page of
+     * one kind.
+     *
+     * Null when it turns up nowhere and nothing is being filtered — there is
+     * no block to draw. Under a colour filter the block stays even when empty,
+     * or there would be no way back to another colour.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function parents(Request $request, Item $item, ItemParents $parents): ?array
+    {
+        $colour = null;
+
+        if ($item->type === 'P') {
+            $asked = $request->query('in_color');
+
+            $colour = $asked === null || $asked === '' || ! ctype_digit((string) $asked)
+                ? null
+                : (int) $asked;
+        }
+
+        $counts = $parents->kinds($item->type, $item->id, $colour);
+
+        if ($counts === [] && $colour === null) {
+            return null;
+        }
+
+        // The kind asked for, unless it holds nothing now — a colour filter
+        // can empty the tab that was open.
+        $kind = $request->query('in');
+        $kind = isset($counts[$kind]) ? $kind : array_key_first($counts);
+
+        $names = ItemType::whereIn('code', array_keys($counts))->pluck('name', 'code');
+
+        return [
+            'kind' => $kind,
+            'kinds' => collect($counts)
+                ->map(fn (int $count, string $code) => [
+                    'code' => $code,
+                    'name' => $names[$code] ?? $code,
+                    'count' => $count,
+                ])
+                ->values(),
+            'colour' => $colour,
+            'colours' => $item->type === 'P' ? $parents->colours($item->id) : [],
+            'rows' => $kind === null
+                ? []
+                : $parents
+                    ->page($item->type, $item->id, $kind, $colour, $counts[$kind], (int) $request->query('in_page', 1))
+                    ->appends($request->except('in_page')),
+        ];
     }
 
     /**
