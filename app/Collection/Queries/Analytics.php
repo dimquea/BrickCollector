@@ -116,7 +116,14 @@ class Analytics
             ->selectRaw("COALESCE(SUM(CASE WHEN {$loose} THEN ci.qty END), 0) as loose")
             ->selectRaw("COALESCE(SUM(CASE WHEN {$assembled} THEN ci.qty END), 0) as assemblies")
             ->selectRaw('COUNT(DISTINCT ci.item_id || \'/\' || ci.color_id) as unique_items')
-            ->selectRaw('COALESCE(SUM(ci.lost_qty), 0) as lost')
+            // «Потеряно» и «не хватает» — разные вопросы, а поле одно. В наборе
+            // деталь пропала; в сборке её может не хватать, чтобы модель была
+            // закончена, — кастом собирают из того, что есть, а недостающее
+            // заводят и помечают. Отличает их только место, поэтому здесь они
+            // и разделены: иначе одно число отвечало бы сразу на оба вопроса и
+            // ни на один.
+            ->selectRaw("COALESCE(SUM(CASE WHEN NOT ({$assembled}) THEN ci.lost_qty END), 0) as lost")
+            ->selectRaw("COALESCE(SUM(CASE WHEN {$assembled} THEN ci.lost_qty END), 0) as missing_assemblies")
             ->first();
 
         return [
@@ -126,6 +133,7 @@ class Analytics
             'assemblies' => (int) $row->assemblies,
             'unique' => (int) $row->unique_items,
             'lost' => (int) $row->lost,
+            'missing_assemblies' => (int) $row->missing_assemblies,
         ];
     }
 

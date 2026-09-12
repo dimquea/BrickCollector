@@ -326,4 +326,53 @@ class AssembliesTest extends TestCase
 
         $this->get('/images/assembly/'.$assembly->id)->assertNotFound();
     }
+
+    /**
+     * What an assembly is short of.
+     *
+     * A custom model is built from what is at hand, and what is not there yet
+     * is entered and marked, so the count adds up and the row reads as "still
+     * needed". A part can also genuinely go missing from an assembly; the
+     * number is the same either way, which is why the analytics keeps it apart
+     * from what was lost out of sets.
+     */
+    public function test_an_assembly_shows_what_it_is_short_of(): void
+    {
+        $assembly = $this->assembly();
+        $this->lot(3);
+
+        $this->postJson("/assemblies/{$assembly->id}/parts", [
+            'item_id' => 'brick', 'color_id' => 11, 'qty' => 3,
+        ])->assertOk();
+
+        $row = $this->rows($assembly)->first();
+
+        $this->patchJson("/lots/{$row->id}", ['lost_qty' => 2])->assertOk();
+
+        $this->get('/assemblies')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('assemblies.data.0.parts', 3)
+                ->where('assemblies.data.0.missing', 2));
+
+        // Одна сборка с недостачей, вторая без: фильтр оставляет первую.
+        $this->assembly('Sand crawler');
+
+        $this->get('/assemblies')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('assemblies.data', 2));
+
+        $this->get('/assemblies?missing=true')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('assemblies.data', 1)
+                ->where('assemblies.data.0.missing', 2));
+
+        $this->get('/analytics')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                // Потеря в сборке — не потеря из набора.
+                ->where('counts.parts.missing_assemblies', 2)
+                ->where('counts.parts.lost', 0));
+    }
 }

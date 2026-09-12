@@ -134,6 +134,12 @@ function remove() {
                             <span class="text-body-secondary">{{ t('item.parts') }}</span>
                             <span>{{ totals.parts ?? 0 }}</span>
                         </li>
+                        <li v-if="totals.lost" class="list-group-item d-flex justify-content-between gap-2">
+                            <span class="text-body-secondary" :title="t('assembly.missing_hint')">
+                                {{ t('assembly.missing') }}
+                            </span>
+                            <span class="text-warning-emphasis">{{ totals.lost }}</span>
+                        </li>
 
                         <EntryMetaRows :meta="meta" :dictionaries="dictionaries" :currency="currency" />
                     </ul>

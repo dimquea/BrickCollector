@@ -36,22 +36,31 @@ class AssembliesController extends Controller
 {
     public function index(Request $request, AssemblyImages $images): Response
     {
-        $filters = ListFilters::read($request, ['q' => ['string', 'max:120']]);
+        $filters = ListFilters::read($request, ['q' => ['string', 'max:120']], switches: ['missing']);
+
+        $rows = fn (string $column) => DB::table('collection_items')
+            ->whereColumn('collection_items.entry_id', 'collection_entries.id')
+            ->where('item_type', 'P')
+            ->where('counts', 1)
+            ->selectRaw("COALESCE(SUM({$column}), 0)");
 
         $query = Entry::whereNull('item_type')
             ->select('collection_entries.*')
-            ->selectSub(
-                DB::table('collection_items')
-                    ->whereColumn('collection_items.entry_id', 'collection_entries.id')
-                    ->where('item_type', 'P')
-                    ->where('counts', 1)
-                    ->selectRaw('COALESCE(SUM(qty), 0)'),
-                'parts_count',
-            );
+            ->selectSub($rows('qty'), 'parts_count')
+            // Сколько ещё нужно, чтобы модель была закончена — или сколько из
+            // неё потерялось. Поле одно, и различить их можно только зная, что
+            // это за модель.
+            ->selectSub($rows('lost_qty'), 'missing_count');
 
         if (($filters['q'] ?? null)) {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $filters['q']);
             $query->where('name', 'like', "%{$escaped}%");
+        }
+
+        // Вычисляемый статус уже посчитан на записи, поэтому фильтр — это
+        // условие по колонке, а не подзапрос на каждую карточку.
+        if (! empty($filters['missing'])) {
+            $query->where('flag_incomplete', true);
         }
 
         $assemblies = $query->orderBy('name')->paginate(Settings::perPage('assemblies'))->withQueryString();
@@ -63,6 +72,7 @@ class AssembliesController extends Controller
                 'id' => $entry->id,
                 'name' => $entry->name,
                 'parts' => (int) $entry->parts_count,
+                'missing' => (int) $entry->missing_count,
                 'has_image' => $images->has($entry->id),
                 'tags' => $entry->tags()->where('show_in_list', true)->get(['ref_tags.name', 'ref_tags.color']),
             ]),

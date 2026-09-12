@@ -15,15 +15,24 @@ const props = defineProps({
     assemblies: { type: Object, required: true },
 });
 
-const form = reactive({ q: props.filters.q ?? '' });
+const form = reactive({ q: props.filters.q ?? '', missing: Boolean(props.filters.missing) });
 
-watch(() => form.q, debounce(() => {
-    router.get(url('/assemblies'), form.q ? { q: form.q } : {}, {
-        preserveState: true,
-        preserveScroll: true,
-        replace: true,
-    });
-}, 300));
+function submit() {
+    const query = {};
+
+    if (form.q) {
+        query.q = form.q;
+    }
+
+    if (form.missing) {
+        query.missing = true;
+    }
+
+    router.get(url('/assemblies'), query, { preserveState: true, preserveScroll: true, replace: true });
+}
+
+watch(() => form.q, debounce(submit, 300));
+watch(() => form.missing, submit);
 
 const name = ref('');
 const creating = ref(false);
@@ -55,6 +64,10 @@ function create() {
                     <div class="col-12 col-lg-6">
                         <label for="q" class="form-label">{{ t('catalog.query') }}</label>
                         <input id="q" v-model="form.q" type="search" class="form-control" />
+                        <div class="form-check mt-2">
+                            <input id="missing" v-model="form.missing" class="form-check-input" type="checkbox" />
+                            <label class="form-check-label" for="missing">{{ t('assembly.missing') }}</label>
+                        </div>
                     </div>
 
                     <div class="col-12 col-lg-6">
@@ -94,6 +107,13 @@ function create() {
 
                 <div class="card-footer d-flex flex-wrap gap-1 align-items-center">
                     <span class="badge text-bg-success">{{ tChoice('assembly.parts', assembly.parts) }}</span>
+                    <span
+                        v-if="assembly.missing"
+                        class="badge text-bg-warning"
+                        :title="t('assembly.missing_hint')"
+                    >
+                        <i class="mdi mdi-alert-outline"></i> {{ assembly.missing }}
+                    </span>
                     <span
                         v-for="tag in assembly.tags"
                         :key="tag.name"

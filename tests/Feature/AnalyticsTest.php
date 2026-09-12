@@ -99,8 +99,10 @@ class AnalyticsTest extends TestCase
 
         $this->assertSame([
             // «В сборках» считается отдельно: деталь в сборке не куплена в
-            // составе чего-то и не лежит россыпью.
-            'total' => 21, 'in_sets' => 14, 'loose' => 7, 'assemblies' => 0, 'unique' => 1, 'lost' => 1,
+            // составе чего-то и не лежит россыпью. Недостача сборок — тоже:
+            // «потеряно» и «не хватает для модели» отвечают на разные вопросы.
+            'total' => 21, 'in_sets' => 14, 'loose' => 7, 'assemblies' => 0, 'unique' => 1,
+            'lost' => 1, 'missing_assemblies' => 0,
         ], $counts['parts']);
     }
 
