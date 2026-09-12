@@ -111,6 +111,7 @@ return [
         'placement' => 'Where it is',
         'total' => 'In collection',
         'in_sets' => 'In sets',
+        'in_sets_hint' => 'Lying in the set itself. Parts inside its minifigures are counted in the next column, not here, or they would be counted twice.',
         'in_minifigures' => 'In minifigures',
         'loose' => 'Loose',
         'lost' => 'Missing somewhere',

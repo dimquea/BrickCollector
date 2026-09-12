@@ -5,6 +5,7 @@ import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
+import AssemblyImage from '@/Components/AssemblyImage.vue';
 import ExternalLinks from '@/Components/ExternalLinks.vue';
 import { locale, t } from '@/i18n';
 
@@ -200,15 +201,30 @@ const lotDate = (lot) =>
                                     </tr>
                                 </template>
 
-                                <!-- An assembly has a name instead of a number. -->
+                                <!-- An assembly has a name instead of a number,
+                                     and a picture only if its owner gave it one. -->
                                 <template v-else-if="active === 'assemblies'">
                                     <tr v-for="row in assemblies" :key="row.entry_id">
-                                        <td class="ps-3">
+                                        <td style="width: 4rem">
+                                            <Link :href="`/assemblies/${row.entry_id}`">
+                                                <AssemblyImage
+                                                    :id="row.entry_id"
+                                                    :has-image="row.has_image"
+                                                    :alt="row.name"
+                                                />
+                                            </Link>
+                                        </td>
+                                        <td>
                                             <Link :href="`/assemblies/${row.entry_id}`" class="text-decoration-none">
                                                 {{ row.name || t('assembly.untitled') }}
                                             </Link>
                                         </td>
-                                        <td class="text-end fw-semibold">{{ row.qty }}</td>
+                                        <td class="text-end">
+                                            <span v-if="row.lost" class="badge text-bg-warning me-2">
+                                                <i class="mdi mdi-alert-outline"></i> {{ row.lost }}
+                                            </span>
+                                            <span class="fw-semibold">{{ row.qty }}</span>
+                                        </td>
                                     </tr>
                                 </template>
 

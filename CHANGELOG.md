@@ -20,6 +20,8 @@ the middle number moves when something is added, the last one when something is 
   narrowed by colour for a part.
 - **Parts in assemblies** are counted as a place of their own, in the list filter, on the
   part page and in the analytics.
+- **The parts list shows every place** — loose and in assemblies alongside sets and
+  minifigures, so a row adds up to the total instead of leaving pieces unaccounted for.
 - **Shortage as its own filter** in the parts list, combined with where the part is: "gone
   from a set" and "still needed for a model" are different questions.
 - **An assembly says what it is short of** — a badge in the list, a filter, and a line of

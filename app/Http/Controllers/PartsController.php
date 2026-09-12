@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\ResizeLot;
 use App\Collection\Actions\UpdateEntryMeta;
+use App\Collection\AssemblyImages;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Storage;
@@ -51,7 +52,7 @@ class PartsController extends Controller
         ]);
     }
 
-    public function show(string $id, int $color, PartTotals $totals): Response
+    public function show(string $id, int $color, PartTotals $totals, AssemblyImages $images): Response
     {
         $part = $totals->one($id, $color);
 
@@ -64,7 +65,11 @@ class PartsController extends Controller
             'part' => $part,
             'inEntries' => $places->inEntries(),
             'loose' => $places->loose(),
-            'assemblies' => $places->assemblies(),
+            // Картинка сборки — не из справочника: её загружает владелец, и
+            // знать о ней может только файл на диске.
+            'assemblies' => $places->assemblies()->map(fn (array $row) => $row + [
+                'has_image' => $images->has($row['entry_id']),
+            ]),
             'inMinifigures' => $places->inMinifigures(),
             'otherColours' => $totals->otherColours($id, $color),
             'missingIn' => $places->missingIn(),

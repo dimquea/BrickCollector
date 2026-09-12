@@ -142,8 +142,15 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             <th class="text-nowrap">{{ t('lot.item') }}</th>
                             <th class="text-nowrap">{{ t('lot.color') }}</th>
                             <th class="text-nowrap text-end">{{ t('parts.total') }}</th>
-                            <th class="text-nowrap text-end">{{ t('parts.in_sets') }}</th>
+                            <!-- Строка должна сходиться: итог — это сумма мест,
+                                 и без «отдельно» и «в сборках» две детали из
+                                 восьми оказывались нигде. -->
+                            <th class="text-nowrap text-end" :title="t('parts.in_sets_hint')">
+                                {{ t('parts.in_sets') }}
+                            </th>
                             <th class="text-nowrap text-end">{{ t('parts.in_minifigures') }}</th>
+                            <th class="text-nowrap text-end">{{ t('parts.loose') }}</th>
+                            <th class="text-nowrap text-end">{{ t('assembly.in_assemblies') }}</th>
                             <th class="text-nowrap text-end">{{ t('item.extras') }}</th>
                             <th class="text-nowrap text-end">{{ t('collection.lost') }}</th>
                         </tr>
@@ -220,6 +227,8 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             <td class="text-end fw-semibold">{{ part.total }}</td>
                             <td class="text-end">{{ part.in_sets || '' }}</td>
                             <td class="text-end">{{ part.in_minifigures || '' }}</td>
+                            <td class="text-end">{{ part.loose || '' }}</td>
+                            <td class="text-end">{{ part.in_assemblies || '' }}</td>
                             <td class="text-end text-body-secondary">{{ part.spares || '' }}</td>
                             <td class="text-end text-warning-emphasis">{{ part.lost || '' }}</td>
                         </tr>
