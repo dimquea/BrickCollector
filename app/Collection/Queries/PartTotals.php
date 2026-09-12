@@ -111,6 +111,19 @@ class PartTotals
                 DB::raw('COALESCE(SUM(CASE WHEN ci.is_extra = 1 THEN ci.qty END), 0) as spares'),
                 DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 THEN ci.lost_qty END), 0) as lost'),
 
+                // Недостача по местам. «Утеряно» значит разное в разных местах:
+                // из набора деталь пропала, а в сборке её может не хватать для
+                // того, чтобы модель была закончена. Одного числа на всю
+                // коллекцию мало — фильтр должен уметь спросить «где именно».
+                DB::raw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND (ci.parent_item_type = 'S'
+                    OR (ci.parent_item_type IS NULL AND e.item_type = 'S')) THEN ci.lost_qty END), 0) as lost_in_sets"),
+                DB::raw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type = 'M'
+                    THEN ci.lost_qty END), 0) as lost_in_minifigures"),
+                DB::raw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
+                    AND e.item_type = 'P' THEN ci.lost_qty END), 0) as lost_loose"),
+                DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
+                    AND e.item_type IS NULL THEN ci.lost_qty END), 0) as lost_in_assemblies'),
+
                 DB::raw('MAX(ci.is_alternate) as has_alternate'),
                 DB::raw('MAX(ci.is_counterpart) as has_counterpart'),
                 DB::raw('MAX(ci.is_extra) as has_extra'),
@@ -141,14 +154,28 @@ class PartTotals
 
         // Where a part sits is a property of the group, not of a row, so it
         // filters after the grouping.
-        match ($this->filters['placement'] ?? null) {
+        $placement = $this->filters['placement'] ?? null;
+
+        match ($placement) {
             'set' => $query->havingRaw('in_sets > 0'),
             'minifigure' => $query->havingRaw('in_minifigures > 0'),
             'loose' => $query->havingRaw('loose > 0'),
             'assembly' => $query->havingRaw('in_assemblies > 0'),
-            'lost' => $query->havingRaw('lost > 0'),
             default => null,
         };
+
+        // Недостача сужает выбранное место, а не заменяет его: «не хватает в
+        // сборках» и «утеряно в наборах» — разные вопросы, и оба нужны. Без
+        // места спрашивается про всю коллекцию сразу.
+        if (! empty($this->filters['lost'])) {
+            $query->havingRaw(match ($placement) {
+                'set' => 'lost_in_sets > 0',
+                'minifigure' => 'lost_in_minifigures > 0',
+                'loose' => 'lost_loose > 0',
+                'assembly' => 'lost_in_assemblies > 0',
+                default => 'lost > 0',
+            });
+        }
 
         return $query;
     }

@@ -112,6 +112,8 @@ return [
         'in_minifigures' => 'In minifigures',
         'loose' => 'Loose',
         'lost' => 'Missing somewhere',
+        'missing' => 'Something missing',
+        'missing_hint' => 'Gone from a set, or not there yet for an assembly. Together with "Where it is" it asks where exactly.',
         'filter_by_article' => 'Filter by this item number',
         'filter_by_colour' => 'Filter by this colour',
         'tab_entries' => 'In sets',

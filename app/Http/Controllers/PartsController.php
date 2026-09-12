@@ -35,11 +35,14 @@ class PartsController extends Controller
 {
     public function index(Request $request, PartTotals $totals): Response
     {
+        // Недостача — не место, а свойство: деталь может быть утеряна из
+        // набора и одновременно лежать россыпью. Отдельным переключателем она
+        // сужает выбранное место, а не заменяет его.
         $filters = ListFilters::read($request, [
             'q' => ['string', 'max:120'],
             'color_id' => ['integer'],
-            'placement' => ['string', 'in:set,minifigure,loose,assembly,lost'],
-        ]);
+            'placement' => ['string', 'in:set,minifigure,loose,assembly'],
+        ], switches: ['lost']);
 
         return Inertia::render('Parts/Index', [
             'filters' => $filters,

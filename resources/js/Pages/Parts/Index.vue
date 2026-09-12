@@ -20,24 +20,26 @@ const form = reactive({
     q: props.filters.q ?? '',
     color_id: props.filters.color_id ?? null,
     placement: props.filters.placement ?? null,
+    lost: Boolean(props.filters.lost),
 });
 
 function submit() {
     router.get(url('/parts'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
 
+/** Empty filters stay out of the URL so a bare /parts is a clean link. */
 function clean() {
     return Object.fromEntries(
-        Object.entries(form).filter(([, value]) => value !== null && value !== ''),
+        Object.entries(form).filter(([, value]) => value !== null && value !== '' && value !== false),
     );
 }
 
 function reset() {
-    Object.assign(form, { q: '', color_id: null, placement: null });
+    Object.assign(form, { q: '', color_id: null, placement: null, lost: false });
 }
 
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.color_id, form.placement], submit);
+watch(() => [form.color_id, form.placement, form.lost], submit);
 
 /** A badge or a colour dot in the table is also a way to narrow the list. */
 function filterByArticle(itemId) {
@@ -52,12 +54,13 @@ const colourOptions = computed(() =>
     props.colours.map((colour) => ({ value: colour.id, label: colour.name })),
 );
 
+// Where a part sits. What is missing is not a place — a brick can be gone from
+// a set and still lie loose in a drawer — so it filters alongside, not instead.
 const placements = [
     { value: 'set', label: 'parts.in_sets' },
     { value: 'minifigure', label: 'parts.in_minifigures' },
     { value: 'loose', label: 'parts.loose' },
     { value: 'assembly', label: 'assembly.in_assemblies' },
-    { value: 'lost', label: 'parts.lost' },
 ];
 
 const placementOptions = computed(() => placements.map((place) => ({ value: place.value, label: t(place.label) })));
@@ -112,6 +115,14 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                         <button type="button" class="btn btn-outline-secondary w-100 text-nowrap" @click="reset">
                             {{ t('catalog.reset') }}
                         </button>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input id="missing" v-model="form.lost" class="form-check-input" type="checkbox" />
+                            <label class="form-check-label" for="missing">{{ t('parts.missing') }}</label>
+                        </div>
+                        <div class="form-text">{{ t('parts.missing_hint') }}</div>
                     </div>
                 </div>
             </div>

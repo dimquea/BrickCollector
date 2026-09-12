@@ -147,6 +147,37 @@ class PartTotalsTest extends TestCase
     }
 
     /**
+     * Недостача — не место, а свойство места.
+     *
+     * Из набора деталь пропала, а в сборке её может не хватать, чтобы модель
+     * была закончена: одно и то же поле значит разное, и отличает их только то,
+     * где деталь лежит. Поэтому переключатель сужает выбранное место, а не
+     * заменяет его собой.
+     */
+    public function test_the_shortage_filter_scopes_to_where_the_part_is(): void
+    {
+        $set = $this->entry('S', 'set-a');
+        $assembly = Entry::create(['name' => 'Moon base']);
+
+        $this->lot($set, ['item_id' => 'brick', 'qty' => 4, 'lost_qty' => 1]);
+        $this->lot($assembly, [
+            'item_id' => 'other', 'qty' => 2, 'lost_qty' => 2, 'parent_item_type' => null,
+        ]);
+
+        $ids = fn (array $filters) => collect(
+            app(PartTotals::class)->filters($filters)->paginate()->items()
+        )->pluck('item_id')->all();
+
+        $this->assertSame(['brick', 'other'], $ids(['lost' => true]), 'без места — вся недостача');
+        $this->assertSame(['brick'], $ids(['lost' => true, 'placement' => 'set']));
+        $this->assertSame(['other'], $ids(['lost' => true, 'placement' => 'assembly']));
+        $this->assertSame([], $ids(['lost' => true, 'placement' => 'loose']));
+
+        // Место без недостачи по-прежнему отбирает всё, что там лежит.
+        $this->assertSame(['other'], $ids(['placement' => 'assembly']));
+    }
+
+    /**
      * The tab counting which copies hold a part must count that part, not
      * every part in the collection. Chaining orWhere without grouping it
      * escapes the constraints and reported 71 of a brick there were two of.
