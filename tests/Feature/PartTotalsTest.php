@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Collection\Actions\RecalculateEntryFlags;
 use App\Collection\Models\Entry;
 use App\Collection\Queries\PartPlaces;
 use App\Collection\Queries\PartTotals;
@@ -175,6 +176,62 @@ class PartTotalsTest extends TestCase
 
         // Место без недостачи по-прежнему отбирает всё, что там лежит.
         $this->assertSame(['other'], $ids(['placement' => 'assembly']));
+    }
+
+    /**
+     * Парная деталь, которой не хватает.
+     *
+     * Плитка со стикером — тот же кирпичик, что и чистая, описанный в описи
+     * дважды, поэтому в количество она не идёт: иначе в коллекции окажется на
+     * кирпичик больше, чем в коробке. Но пропасть она может, и до сих пор эта
+     * нехватка не была видна ниоткуда, кроме страницы самого набора: в зачёте
+     * у детали ноль, а список показывал только то, что держится хоть одной
+     * штукой.
+     */
+    public function test_a_counterpart_that_is_missing_is_still_listed(): void
+    {
+        $set = $this->entry('S', 'set-a');
+
+        $this->lot($set, ['item_id' => 'brick', 'qty' => 3]);
+        $this->lot($set, [
+            'item_id' => 'other', 'qty' => 1, 'lost_qty' => 1, 'counts' => 0, 'is_counterpart' => 1,
+        ]);
+
+        $part = app(PartTotals::class)->one('other', 11);
+
+        $this->assertNotNull($part, 'деталь видна, хотя в зачёте её ноль');
+        $this->assertSame(0, (int) $part->total);
+        $this->assertSame(1, (int) $part->lost);
+        $this->assertSame(1, (int) $part->lost_in_sets);
+
+        $ids = fn (array $filters) => collect(
+            app(PartTotals::class)->filters($filters)->paginate()->items()
+        )->pluck('item_id')->all();
+
+        $this->assertSame(['other'], $ids(['lost' => true]));
+        $this->assertSame(['other'], $ids(['lost' => true, 'placement' => 'set']));
+
+        // Набору недостаёт детали — значит, он некомплектен, хотя пропавшая
+        // строка в зачёт количества не идёт.
+        app(RecalculateEntryFlags::class)->handle($set);
+
+        $this->assertTrue($set->fresh()->flag_incomplete);
+    }
+
+    /** Потерянная запасная деталь набор целым быть не перестаёт. */
+    public function test_a_lost_spare_leaves_the_set_complete(): void
+    {
+        $set = $this->entry('S', 'set-a');
+
+        $this->lot($set, ['item_id' => 'brick', 'qty' => 4]);
+        $this->lot($set, [
+            'item_id' => 'brick', 'qty' => 2, 'lost_qty' => 1, 'counts' => 0, 'is_extra' => 1,
+        ]);
+
+        app(RecalculateEntryFlags::class)->handle($set);
+
+        $this->assertFalse($set->fresh()->flag_incomplete);
+        $this->assertSame(0, (int) app(PartTotals::class)->one('brick', 11)->lost);
     }
 
     /**

@@ -126,13 +126,23 @@ class Analytics
             ->selectRaw("COALESCE(SUM(CASE WHEN {$assembled} THEN ci.lost_qty END), 0) as missing_assemblies")
             ->first();
 
+        // Потери на парных строках считаются здесь же, отдельной строки в
+        // сводке они не заслуживают: для владельца это та же потерянная
+        // деталь. В зачёт количества парная строка не идёт, поэтому в основной
+        // запрос она не попадает — он весь про `counts = 1`.
+        $counterpart = (int) DB::table('collection_items as ci')
+            ->where('ci.item_type', 'P')
+            ->where('ci.counts', 0)
+            ->where('ci.is_counterpart', 1)
+            ->sum('ci.lost_qty');
+
         return [
             'total' => (int) $row->total,
             'in_sets' => (int) $row->in_sets,
             'loose' => (int) $row->loose,
             'assemblies' => (int) $row->assemblies,
             'unique' => (int) $row->unique_items,
-            'lost' => (int) $row->lost,
+            'lost' => (int) $row->lost + $counterpart,
             'missing_assemblies' => (int) $row->missing_assemblies,
         ];
     }

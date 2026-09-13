@@ -109,20 +109,35 @@ class PartTotals
                 DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
                     AND e.item_type IS NULL THEN ci.qty END), 0) as in_assemblies'),
                 DB::raw('COALESCE(SUM(CASE WHEN ci.is_extra = 1 THEN ci.qty END), 0) as spares'),
-                DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 THEN ci.lost_qty END), 0) as lost'),
+                // Недостача. Считается по строкам в зачёте и по парным: парная
+                // деталь — тот же кирпичик, описанный дважды, с наклейкой и
+                // без. В количество она не идёт, иначе в коллекции окажется на
+                // кирпичик больше, чем в коробке, — но пропасть она может, и
+                // тогда набору её недостаёт. Пока эта потеря не считалась
+                // нигде, деталь со стикером не показывалась в списке вовсе, и
+                // увидеть нехватку можно было, только открыв набор.
+                //
+                // Запасная в этот счёт не идёт: без неё набор остаётся полным.
+                // Альтернатива — тоже: это вариант, которого в коробке нет.
+                DB::raw('COALESCE(SUM(CASE WHEN (ci.counts = 1 OR ci.is_counterpart = 1)
+                    THEN ci.lost_qty END), 0) as lost'),
 
-                // Недостача по местам. «Утеряно» значит разное в разных местах:
-                // из набора деталь пропала, а в сборке её может не хватать для
+                // По местам: «утеряно» значит разное в разных местах. Из
+                // набора деталь пропала, а в сборке её может не хватать для
                 // того, чтобы модель была закончена. Одного числа на всю
                 // коллекцию мало — фильтр должен уметь спросить «где именно».
-                DB::raw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND (ci.parent_item_type = 'S'
-                    OR (ci.parent_item_type IS NULL AND e.item_type = 'S')) THEN ci.lost_qty END), 0) as lost_in_sets"),
-                DB::raw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type = 'M'
-                    THEN ci.lost_qty END), 0) as lost_in_minifigures"),
-                DB::raw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
-                    AND e.item_type = 'P' THEN ci.lost_qty END), 0) as lost_loose"),
-                DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
-                    AND e.item_type IS NULL THEN ci.lost_qty END), 0) as lost_in_assemblies'),
+                DB::raw("COALESCE(SUM(CASE WHEN (ci.counts = 1 OR ci.is_counterpart = 1)
+                    AND (ci.parent_item_type = 'S'
+                        OR (ci.parent_item_type IS NULL AND e.item_type = 'S'))
+                    THEN ci.lost_qty END), 0) as lost_in_sets"),
+                DB::raw("COALESCE(SUM(CASE WHEN (ci.counts = 1 OR ci.is_counterpart = 1)
+                    AND ci.parent_item_type = 'M' THEN ci.lost_qty END), 0) as lost_in_minifigures"),
+                DB::raw("COALESCE(SUM(CASE WHEN (ci.counts = 1 OR ci.is_counterpart = 1)
+                    AND ci.parent_item_type IS NULL AND e.item_type = 'P'
+                    THEN ci.lost_qty END), 0) as lost_loose"),
+                DB::raw('COALESCE(SUM(CASE WHEN (ci.counts = 1 OR ci.is_counterpart = 1)
+                    AND ci.parent_item_type IS NULL AND e.item_type IS NULL
+                    THEN ci.lost_qty END), 0) as lost_in_assemblies'),
 
                 DB::raw('MAX(ci.is_alternate) as has_alternate'),
                 DB::raw('MAX(ci.is_counterpart) as has_counterpart'),
@@ -150,23 +165,25 @@ class PartTotals
         // Parenthesised: a later havingRaw is joined with AND, and
         // "total > 0 OR spares > 0 AND in_sets > 0" binds the AND tighter than
         // the OR — every held part passed the placement filter.
-        $query->havingRaw('(total > 0 OR spares > 0)');
+        // ...или чего-то из неё недостаёт. Деталь, которая существует в наборе
+        // только парной строкой, в зачёте не держится ни одной штукой, и без
+        // этого условия её нехватку нельзя было увидеть из раздела деталей
+        // вообще — только открыв набор.
+        $query->havingRaw('(total > 0 OR spares > 0 OR lost > 0)');
 
         // Where a part sits is a property of the group, not of a row, so it
         // filters after the grouping.
         $placement = $this->filters['placement'] ?? null;
 
-        match ($placement) {
-            'set' => $query->havingRaw('in_sets > 0'),
-            'minifigure' => $query->havingRaw('in_minifigures > 0'),
-            'loose' => $query->havingRaw('loose > 0'),
-            'assembly' => $query->havingRaw('in_assemblies > 0'),
-            default => null,
-        };
-
         // Недостача сужает выбранное место, а не заменяет его: «не хватает в
         // сборках» и «утеряно в наборах» — разные вопросы, и оба нужны. Без
         // места спрашивается про всю коллекцию сразу.
+        //
+        // Когда спрашивают про недостачу в месте, сумма недостачи по этому
+        // месту — единственное нужное условие: она сама говорит, что речь об
+        // этом месте. Требовать вдобавок «и держится здесь» нельзя — деталь,
+        // которая есть в наборе только парной строкой, не держится нигде, а
+        // не хватает именно её.
         if (! empty($this->filters['lost'])) {
             $query->havingRaw(match ($placement) {
                 'set' => 'lost_in_sets > 0',
@@ -175,7 +192,17 @@ class PartTotals
                 'assembly' => 'lost_in_assemblies > 0',
                 default => 'lost > 0',
             });
+
+            return $query;
         }
+
+        match ($placement) {
+            'set' => $query->havingRaw('in_sets > 0'),
+            'minifigure' => $query->havingRaw('in_minifigures > 0'),
+            'loose' => $query->havingRaw('loose > 0'),
+            'assembly' => $query->havingRaw('in_assemblies > 0'),
+            default => null,
+        };
 
         return $query;
     }

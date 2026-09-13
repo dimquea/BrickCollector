@@ -18,7 +18,12 @@ class RecalculateEntryFlags
     {
         $row = DB::table('collection_items')
             ->where('entry_id', $entry->id)
-            ->where('counts', 1)
+            // Парная строка в количество не идёт — это тот же кирпичик, что и
+            // её пара, описанный с наклейкой. Но если её пометили утерянной,
+            // набору недостаёт детали, и он некомплектен. Запасная — другое
+            // дело: без неё набор остаётся полным. Альтернатива — тоже: это
+            // вариант, которого в коробке нет.
+            ->where(fn ($where) => $where->where('counts', 1)->orWhere('is_counterpart', 1))
             ->where('lost_qty', '>', 0)
             ->selectRaw("
                 COUNT(*) as any_missing,
