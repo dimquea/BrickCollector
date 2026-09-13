@@ -83,6 +83,37 @@ class IngressTest extends TestCase
     }
 
     /**
+     * Порядок списка живёт в адресе — а адрес под ингрессом переписывается.
+     *
+     * Значит, ссылки постранички должны нести и префикс, и выбранный порядок.
+     * Префикс проверяется на единственность: однажды он уже удваивался, и
+     * страница уходила в /api/hassio_ingress/…/api/hassio_ingress/….
+     */
+    public function test_pagination_keeps_the_chosen_order_under_a_prefix(): void
+    {
+        DB::table('bl_item_types')->insert(['code' => 'S', 'name' => 'Set']);
+
+        // Страница справочника — 48 строк; сорок девять дают вторую.
+        $items = [];
+
+        for ($index = 0; $index < 49; $index++) {
+            $items[] = [
+                'type' => 'S', 'id' => sprintf('set-%03d', $index), 'name' => sprintf('Set %03d', $index),
+                'year' => 2000 + $index, 'image_color_id' => 0, 'has_inventory' => 0,
+            ];
+        }
+
+        DB::table('bl_items')->insert($items);
+
+        $this->get('/catalog?sort=year&dir=desc', $this->headers())
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('results.links.1.url', fn (string $url) => substr_count($url, self::PREFIX) === 1
+                && str_starts_with($url, self::PREFIX.'/catalog')
+                && str_contains($url, 'sort=year')
+                && str_contains($url, 'dir=desc')));
+    }
+
+    /**
      * Ничего абсолютного.
      *
      * Аддон видят по внутреннему http-адресу, а браузер может прийти по https
