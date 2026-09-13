@@ -34,6 +34,19 @@ class Settings
         self::$cache = null;
     }
 
+    /**
+     * Оформление: «system», «light» или «dark».
+     *
+     * По умолчанию — следовать системе: у человека уже есть такая настройка на
+     * уровне телефона или монитора, и приложение не вправе решать за неё.
+     */
+    public static function theme(): string
+    {
+        $theme = self::get('theme', 'system');
+
+        return in_array($theme, ['system', 'light', 'dark'], true) ? $theme : 'system';
+    }
+
     /** ISO 4217 code used to render prices. Amounts are stored in minor units. */
     public static function currency(): string
     {

@@ -15,6 +15,7 @@ const props = defineProps({
     dictionaries: { type: Object, required: true },
     colors: { type: Array, default: () => [] },
     currency: { type: String, default: 'RUB' },
+    theme: { type: String, default: 'system' },
     links: { type: Array, default: () => [] },
     appearance: { type: Object, default: () => ({ lists: [] }) },
     catalog: { type: Object, default: () => ({}) },
@@ -23,6 +24,35 @@ const props = defineProps({
 const page = usePage();
 const supported = ref(page.props.supportedLocales ?? []);
 const currency = ref(props.currency);
+const theme = ref(props.theme);
+
+/**
+ * Тема применяется сразу, без перезагрузки: страница и так уже нарисована, и
+ * ждать от неё второго захода незачем. «Системное» снимает решение с себя и
+ * спрашивает устройство.
+ *
+ * Следить за переключением системы на ходу — дело скрипта в шапке документа:
+ * он ставит тему до первого кадра и слушает изменения, пока страница открыта.
+ */
+function applyTheme(value) {
+    const dark = value === 'system'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : value === 'dark';
+
+    document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+}
+
+async function saveTheme() {
+    try {
+        const { data } = await axios.patch(url('/settings'), { theme: theme.value });
+
+        applyTheme(theme.value);
+        notify(data.message, 'success', 2000);
+    } catch (error) {
+        theme.value = props.theme;
+        notify(error.response?.data?.message ?? t('errors.save_failed'));
+    }
+}
 
 function switchLocale(event) {
     const next = event.target.value;
@@ -103,6 +133,18 @@ const sections = [
                                     @blur="saveCurrency"
                                 />
                                 <div class="form-text">{{ t('settings.currency_hint') }}</div>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label for="theme" class="form-label">{{ t('theme.title') }}</label>
+                                <!-- Три варианта: обычный селект. Обёртка с
+                                     поиском — для фильтров и длинных списков. -->
+                                <select id="theme" v-model="theme" class="form-select" @change="saveTheme">
+                                    <option value="system">{{ t('theme.system') }}</option>
+                                    <option value="light">{{ t('theme.light') }}</option>
+                                    <option value="dark">{{ t('theme.dark') }}</option>
+                                </select>
+                                <div class="form-text">{{ t('theme.hint') }}</div>
                             </div>
                         </div>
 

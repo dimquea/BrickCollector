@@ -83,8 +83,10 @@ const src = computed(() => candidates.value[attempt.value] ?? null);
         :aria-label="alt"
         preserveAspectRatio="xMidYMid meet"
     >
-        <rect width="160" height="120" fill="#e9ecef" />
-        <circle cx="80" cy="52" r="22" fill="#dee2e6" />
+        <!-- Цвета — переменные Bootstrap: на тёмной теме заглушка должна быть
+             тёмной, иначе она светит на весь список. -->
+        <rect width="160" height="120" fill="var(--bs-secondary-bg)" />
+        <circle cx="80" cy="52" r="22" fill="var(--bs-tertiary-bg)" />
         <text
             x="80"
             y="60"
@@ -92,7 +94,7 @@ const src = computed(() => candidates.value[attempt.value] ?? null);
             font-family="system-ui, sans-serif"
             font-size="22"
             font-weight="600"
-            fill="#adb5bd"
+            fill="var(--bs-secondary-color)"
         >
             {{ type }}
         </text>

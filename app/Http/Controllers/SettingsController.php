@@ -47,6 +47,7 @@ class SettingsController extends Controller
                 'set_only' => $link->isSetOnly(),
             ]),
             'currency' => Settings::currency(),
+            'theme' => Settings::theme(),
             'appearance' => [
                 'lists' => collect(config('brickcollector.lists'))
                     ->map(fn (array $list, string $key) => [
@@ -104,6 +105,7 @@ class SettingsController extends Controller
 
         $validated = $request->validate([
             'currency' => ['nullable', 'string', 'size:3', 'alpha'],
+            'theme' => ['nullable', 'string', 'in:system,light,dark'],
             'locale' => ['nullable', 'string', 'in:'.implode(',', SetLocale::SUPPORTED)],
             'per_page' => ['array'],
             'per_page.*' => ['integer', 'min:6', 'max:200'],
@@ -128,6 +130,13 @@ class SettingsController extends Controller
 
         if (array_key_exists('currency', $validated)) {
             Settings::put('currency', strtoupper($validated['currency']));
+        }
+
+        // Тема живёт в настройках, а не в сессии: она про то, как человеку
+        // смотреть на приложение, и переживать перезапуск аддона должна так же,
+        // как валюта.
+        if (! empty($validated['theme'])) {
+            Settings::put('theme', $validated['theme']);
         }
 
         if (! empty($validated['locale'])) {

@@ -47,6 +47,14 @@ return [
         'remove_hint' => 'The assembly goes; its parts go back to the loose pile.',
     ],
 
+    'theme' => [
+        'title' => 'Theme',
+        'system' => 'System',
+        'light' => 'Light',
+        'dark' => 'Dark',
+        'hint' => 'System follows what the device is set to, and changes with it.',
+    ],
+
     'sort' => [
         'title' => 'Order',
         'default' => 'Default',
