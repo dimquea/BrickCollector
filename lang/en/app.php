@@ -10,8 +10,22 @@ return [
         'parts' => 'Parts',
         'minifigures' => 'Minifigures',
         'assemblies' => 'Assemblies',
+        'wishlist' => 'Wishlist',
         'analytics' => 'Analytics',
         'settings' => 'Settings',
+    ],
+
+    'wishlist' => [
+        'title' => 'Wishlist',
+        'found' => '{0} nothing here|:count item|:count items',
+        'add' => 'Add to the wishlist',
+        'added' => ':name added to the wishlist.',
+        'remove' => 'Remove from the wishlist',
+        'removed' => 'Removed from the wishlist.',
+        'in_list' => 'On the wishlist',
+        'empty' => 'Nothing on the wishlist yet.',
+        'empty_hint' => 'Find something in the catalogue.',
+        'colour_hint' => 'A part is wanted in a colour; sets and minifigures are not.',
     ],
 
     'assembly' => [
@@ -264,6 +278,7 @@ return [
         'list_sets' => 'Sets in the collection',
         'list_minifigures' => 'Minifigures in the collection',
         'list_assemblies' => 'Assemblies',
+        'list_wishlist' => 'Wishlist',
         'list_parts' => 'Parts in the collection',
         'list_table_hint' => 'Shown as a table, so there is no card size to choose.',
         'title' => 'Settings',

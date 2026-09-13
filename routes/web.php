@@ -9,6 +9,7 @@ use App\Http\Controllers\MinifiguresController;
 use App\Http\Controllers\PartsController;
 use App\Http\Controllers\SetsController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +107,15 @@ Route::post('/assemblies/{entry}/image', [AssembliesController::class, 'storeIma
     ->name('assemblies.image.store');
 Route::delete('/assemblies/{entry}/image', [AssembliesController::class, 'destroyImage'])
     ->name('assemblies.image.destroy');
+
+/*
+ * Желаемое — не раздел коллекции: им не владеют. Список без меты, строка
+ * которого ведёт обратно в справочник, поэтому своей детальной страницы у
+ * желания нет.
+ */
+Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+Route::post('/wishlist', [WishlistController::class, 'store'])->name('wishlist.store');
+Route::delete('/wishlist/{wish}', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
 
 // A lot belongs to a copy of anything, so it sits outside the sections.
 Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.lost');

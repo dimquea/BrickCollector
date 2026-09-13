@@ -46,6 +46,7 @@ return [
         'sets' => ['per_page' => 24, 'cards' => true],
         'minifigures' => ['per_page' => 24, 'cards' => true],
         'assemblies' => ['per_page' => 24, 'cards' => true],
+        'wishlist' => ['per_page' => 48, 'cards' => true],
         // Детали показываются таблицей, размер карточки к ним не применим.
         'parts' => ['per_page' => 50, 'cards' => false],
     ],

@@ -84,11 +84,12 @@ class ListAppearanceTest extends TestCase
         $this->get('/settings')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->has('appearance.lists', 5)
+                ->has('appearance.lists', 6)
                 ->where('appearance.lists.0.key', 'catalog')
                 ->where('appearance.lists.3.key', 'assemblies')
+                ->where('appearance.lists.4.key', 'wishlist')
                 // Детали показываются таблицей: размер карточки к ним не применим.
-                ->where('appearance.lists.4.key', 'parts')
-                ->where('appearance.lists.4.cards', false));
+                ->where('appearance.lists.5.key', 'parts')
+                ->where('appearance.lists.5.cards', false));
     }
 }

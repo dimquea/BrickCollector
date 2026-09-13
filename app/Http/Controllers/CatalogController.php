@@ -13,6 +13,7 @@ use App\Collection\Actions\AddToCollection;
 use App\Collection\Actions\MoveParts;
 use App\Collection\Actions\ResizeLot;
 use App\Collection\Models\Entry;
+use App\Collection\Models\Wish;
 use App\Collection\Queries\PartPlaces;
 use Illuminate\Http\RedirectResponse;
 use App\Support\ExternalLinks;
@@ -123,6 +124,13 @@ class CatalogController extends Controller
                 ? Entry::whereNull('item_type')->orderBy('name')->get(['id', 'name'])
                 : [],
             'parents' => $this->parents($request, $item, $parents),
+            // Уже в желаемом или нет — кнопка должна знать это сразу, не
+            // спрашивая отдельно. У детали желаний может быть несколько: её
+            // хотят в цвете, и цветов бывает больше одного.
+            'wishes' => Wish::where('item_type', $item->type)
+                ->where('item_id', $item->id)
+                ->get(['id', 'color_id'])
+                ->map(fn (Wish $wish) => ['id' => $wish->id, 'color_id' => $wish->color_id]),
         ]);
     }
 

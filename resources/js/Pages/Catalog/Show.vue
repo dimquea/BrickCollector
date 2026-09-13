@@ -25,12 +25,53 @@ const props = defineProps({
     assemblies: { type: Array, default: () => [] },
     // What this item is part of — null when nothing lists it.
     parents: { type: Object, default: null },
+    // Желания по этому предмету: у детали их может быть несколько, по одному
+    // на цвет.
+    wishes: { type: Array, default: () => [] },
 });
 
 const isPart = computed(() => props.item.type === 'P');
 
 const adding = ref(false);
 const dialog = ref(null);
+
+/*
+ * Желаемое. Деталь хотят в цвете, поэтому у неё рядом с кнопкой стоит выбор
+ * цвета, а у набора и фигурки выбирать нечего — там цвет всегда 0.
+ */
+const wishColour = ref(props.item.image_color_id ?? 0);
+
+// Те же цвета, что предлагает окно добавления: известные по кодам элементов,
+// плюс уже имеющиеся и цвет картинки.
+const wishColourOptions = computed(() =>
+    props.colours.map((colour) => ({ value: colour.id, label: colour.name })),
+);
+
+const wish = computed(() => {
+    const colour = isPart.value ? Number(wishColour.value) : 0;
+
+    return props.wishes.find((row) => row.color_id === colour) ?? null;
+});
+
+const wishing = ref(false);
+
+function toggleWish() {
+    wishing.value = true;
+
+    const options = { preserveScroll: true, onFinish: () => (wishing.value = false) };
+
+    if (wish.value) {
+        router.delete(url(`/wishlist/${wish.value.id}`), options);
+
+        return;
+    }
+
+    router.post(url('/wishlist'), {
+        type: props.item.type,
+        id: props.item.id,
+        color_id: isPart.value ? Number(wishColour.value) : null,
+    }, options);
+}
 
 // A part needs a colour and a quantity, and may go onto a lot already held,
 // so it asks first. Anything else is added as one whole thing straight away.
@@ -131,15 +172,35 @@ const parentRows = computed(() => props.parents?.rows?.data ?? []);
                         class="card-img-top p-3"
                     />
 
-                    <div class="card-body">
+                    <div class="card-body d-grid gap-2">
                         <button
                             type="button"
-                            class="btn btn-primary w-100"
+                            class="btn btn-primary"
                             :disabled="adding"
                             @click="addToCollection()"
                         >
                             <i class="mdi mdi-plus"></i>
                             {{ t('collection.add') }}
+                        </button>
+
+                        <!-- Деталь хотят в цвете, поэтому у неё рядом с кнопкой
+                             стоит выбор; у набора и фигурки выбирать нечего. -->
+                        <SearchSelect
+                            v-if="isPart && wishColourOptions.length"
+                            id="wishColour"
+                            v-model="wishColour"
+                            :options="wishColourOptions"
+                        />
+
+                        <button
+                            type="button"
+                            class="btn"
+                            :class="wish ? 'btn-outline-danger' : 'btn-outline-primary'"
+                            :disabled="wishing"
+                            @click="toggleWish"
+                        >
+                            <i class="mdi" :class="wish ? 'mdi-heart-remove-outline' : 'mdi-heart-outline'"></i>
+                            {{ wish ? t('wishlist.remove') : t('wishlist.add') }}
                         </button>
                     </div>
 
