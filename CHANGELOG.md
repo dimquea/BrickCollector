@@ -3,6 +3,34 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.2.0 — 2026-09-13
+
+### Added
+
+- **A wishlist** — a section for what the collection does not hold but you want. A list and
+  nothing more: no quantity, no price, no storage, since those describe a thing you own. A
+  row leads back to the catalogue, where everything about the item already is. A part is
+  wanted in a colour; a set or a minifigure is not. Pictures of wished items are cached the
+  way the collection's are.
+- **Lists can be ordered** — by item number, name, year, and by how much is held where that
+  is cheap to count, with a direction beside it. The choice lives in the address, so it
+  survives filtering and paging and can be sent to someone as a link; an absent parameter
+  means the list's own order, and old links are untouched.
+- **A dark interface** — system, light or dark, chosen in the settings. System follows what
+  the device is set to and changes with it, including on a schedule of its own.
+
+### Fixed
+
+- Adding a part offered a new lot and the lots already held, but never the assemblies,
+  though 1.1.0 says it does: the catalogue page had the list and the dialog knew how to draw
+  it, and nothing carried it from one to the other.
+- A part a set is missing only as a counterpart — the same brick listed twice, with a
+  sticker and without — was counted nowhere. The parts section did not list it, its page
+  answered 404, the shortage filter could not find it, and the set was not marked incomplete
+  unless something else was gone. The one place it showed was the set's own page.
+- Options in a select's dropdown took a fixed dark grey rather than the theme's colour, so
+  on a dark interface everything but the highlighted row looked disabled.
+
 ## 1.1.0 — 2026-09-12
 
 ### Added
