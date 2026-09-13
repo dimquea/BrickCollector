@@ -16,6 +16,25 @@
 }
 
 /*
+ * Выпадающий список Tom Select не красит текст.
+ *
+ * Его тема задаёт списку и полю жёсткий цвет #343a40, а цветом темы красит
+ * только активный пункт — и только внутри `.form-select`, класса, которого у
+ * нашей обёртки нет. На тёмном оформлении выходило тёмное на тёмном: активный
+ * пункт читался, остальные выглядели выключенными. Выделять активный достаточно
+ * фоном, менять ради этого цвет текста незачем.
+ */
+.ts-dropdown,
+.ts-control,
+.ts-control input,
+.ts-dropdown .option,
+.ts-dropdown .active,
+.ts-dropdown .active.create,
+.ts-dropdown .create {
+    color: var(--bs-body-color);
+}
+
+/*
  * A picture in a table row keeps its size. img-fluid lets it shrink with its
  * column, and a table squeezed onto a phone narrows the picture column first —
  * at 320px down to nothing. A fixed width is a minimum the column can not go
