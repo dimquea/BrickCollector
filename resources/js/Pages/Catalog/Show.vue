@@ -22,6 +22,7 @@ const props = defineProps({
     // A part only: what the add dialog offers.
     colours: { type: Array, default: () => [] },
     lots: { type: Array, default: () => [] },
+    assemblies: { type: Array, default: () => [] },
     // What this item is part of — null when nothing lists it.
     parents: { type: Object, default: null },
 });
@@ -334,6 +335,13 @@ const parentRows = computed(() => props.parents?.rows?.data ?? []);
             </div>
         </div>
 
-        <AddPartDialog v-if="isPart" ref="dialog" :item="item" :colours="colours" :lots="lots" />
+        <AddPartDialog
+            v-if="isPart"
+            ref="dialog"
+            :item="item"
+            :colours="colours"
+            :lots="lots"
+            :assemblies="assemblies"
+        />
     </AppLayout>
 </template>
