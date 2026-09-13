@@ -6,6 +6,7 @@ import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
+import SortControl from '@/Components/SortControl.vue';
 import { debounce } from '@/support/debounce';
 import { masonry } from '@/support/cards';
 import { t, tChoice } from '@/i18n';
@@ -13,11 +14,22 @@ import { t, tChoice } from '@/i18n';
 const props = defineProps({
     cardSize: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
+    sort: { type: Object, default: () => ({}) },
     figures: { type: Object, required: true },
     themes: { type: Array, default: () => [] },
     years: { type: Array, default: () => [] },
     tags: { type: Array, default: () => [] },
 });
+
+const sortOptions = computed(() => [
+    { value: 'id', label: t('sort.id') },
+    { value: 'name', label: t('sort.name') },
+    { value: 'year', label: t('sort.year') },
+    { value: 'parts', label: t('sort.parts') },
+]);
+
+// Обычный порядок раздела — по названию — показывается пустым полем.
+const chosenSort = props.sort.by === 'name' ? null : props.sort.by ?? null;
 
 const form = reactive({
     q: props.filters.q ?? '',
@@ -25,6 +37,8 @@ const form = reactive({
     year: props.filters.year ?? null,
     tag_id: props.filters.tag_id ?? null,
     placement: props.filters.placement ?? null,
+    sort: chosenSort,
+    dir: props.sort.dir ?? 'asc',
 });
 
 function submit() {
@@ -32,17 +46,25 @@ function submit() {
 }
 
 function clean() {
-    return Object.fromEntries(
+    const query = Object.fromEntries(
         Object.entries(form).filter(([, value]) => value !== null && value !== ''),
     );
+
+    if (query.dir === 'asc') {
+        delete query.dir;
+    }
+
+    return query;
 }
 
 function reset() {
-    Object.assign(form, { q: '', theme_id: null, year: null, tag_id: null, placement: null });
+    Object.assign(form, {
+        q: '', theme_id: null, year: null, tag_id: null, placement: null, sort: null, dir: 'asc',
+    });
 }
 
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.theme_id, form.year, form.tag_id, form.placement], submit);
+watch(() => [form.theme_id, form.year, form.tag_id, form.placement, form.sort, form.dir], submit);
 
 /**
  * A figure is the same figure whether it came in a set or on its own, so the
@@ -102,7 +124,10 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
                         />
                     </div>
 
-                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                    <!-- На узком экране столбцы встают друг под другом, и
+                         кнопка оказывалась посреди фильтров. Там она уходит в
+                         конец; на широком остаётся на месте. -->
+                    <div class="col-12 col-lg-2 d-flex align-items-end order-last order-lg-0">
                         <button type="button" class="btn btn-outline-secondary w-100 text-nowrap" @click="reset">
                             {{ t('catalog.reset') }}
                         </button>
@@ -139,6 +164,14 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
                             :placeholder="t('catalog.any')"
                         />
                         <div class="form-text">{{ t('minifigures.tag_hint') }}</div>
+                    </div>
+
+                    <!-- Порядок — отдельной строкой внизу: он отвечает не на
+                         «что показать», а на «в каком виде». Разрыв явный,
+                         иначе строка встала бы в остаток предыдущей. -->
+                    <div class="w-100"></div>
+                    <div class="col-12 col-lg-4">
+                        <SortControl v-model:by="form.sort" v-model:dir="form.dir" :options="sortOptions" />
                     </div>
                 </div>
             </div>

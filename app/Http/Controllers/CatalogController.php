@@ -18,6 +18,7 @@ use Illuminate\Http\RedirectResponse;
 use App\Support\ExternalLinks;
 use App\Support\Settings;
 use App\Http\ListFilters;
+use App\Http\ListSort;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +37,11 @@ class CatalogController extends Controller
             'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
         ], switches: ['has_inventory']);
 
-        $results = $search->filters($filters)->paginate(Settings::perPage('catalog'));
+        // «default» — не поле, а отсутствие выбора: справочник тогда работает
+        // по-своему, релевантностью при поиске и артикулом без него.
+        $sort = ListSort::read($request, ['id', 'name', 'year'], 'default');
+
+        $results = $search->filters($filters)->sort($sort)->paginate(Settings::perPage('catalog'));
 
         $images = app(ItemImages::class)->availability(
             collect($results->items())
@@ -47,6 +52,7 @@ class CatalogController extends Controller
         return Inertia::render('Catalog/Index', [
             'cardSize' => Settings::cardSize('catalog'),
             'filters' => $filters,
+            'sort' => $sort,
             'results' => $results->through(fn (Item $item) => [
                 'type' => $item->type,
                 'id' => $item->id,

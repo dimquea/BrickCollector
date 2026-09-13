@@ -22,9 +22,20 @@ class SearchEntries
     /** @var string[] */
     private array $types = [];
 
+    /** @var array{by: string, dir: string}|null */
+    private ?array $sort = null;
+
     public function filters(array $filters): self
     {
         $this->filters = $filters;
+
+        return $this;
+    }
+
+    /** @param array{by: string, dir: string}|null $sort */
+    public function sort(?array $sort): self
+    {
+        $this->sort = $sort;
 
         return $this;
     }
@@ -105,7 +116,32 @@ class SearchEntries
             }
         }
 
-        return $query->orderByDesc('e.id')->paginate($perPage)->withQueryString();
+        $dir = ($this->sort['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+
+        // Содержимое считается подзапросом: оно нужно только для порядка, и
+        // тащить его в выборку каждой карточки незачем. Тип подставляется из
+        // кода, а не из запроса.
+        $held = fn (string $type) => "(select COALESCE(SUM(ci.qty), 0) from collection_items ci
+            where ci.entry_id = e.id and ci.item_type = '{$type}' and ci.counts = 1)";
+
+        match ($this->sort['by'] ?? null) {
+            'id' => $query->orderBy('e.item_id', $dir),
+            'name' => $query->orderBy('i.name', $dir),
+            'year' => $query->orderBy('i.year', $dir),
+            'parts' => $query->orderByRaw($held('P').' '.$dir),
+            'figures' => $query->orderByRaw($held('M').' '.$dir),
+            default => null,
+        };
+
+        // Порядок заведения: и обычный порядок раздела, и устойчивый разрыв
+        // ничьих для всех прочих полей. Когда поле не выбрано, направление
+        // работает по нему — иначе переключатель не делал бы ничего.
+        $chosen = in_array($this->sort['by'] ?? null, ['id', 'name', 'year', 'parts', 'figures'], true);
+
+        return $query
+            ->orderBy('e.id', $chosen ? 'desc' : $dir)
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /** Choosing a theme includes everything under it, as in the catalog. */

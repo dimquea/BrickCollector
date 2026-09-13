@@ -6,6 +6,7 @@ import Link from '@/Components/AppLink.vue';
 import { debounce } from '@/support/debounce';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
+import SortControl from '@/Components/SortControl.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import { masonry } from '@/support/cards';
 import { t, tChoice } from '@/i18n';
@@ -13,6 +14,7 @@ import { t, tChoice } from '@/i18n';
 const props = defineProps({
     cardSize: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
+    sort: { type: Object, default: () => ({}) },
     results: { type: Object, required: true },
     itemTypes: { type: Array, default: () => [] },
     themes: { type: Array, default: () => [] },
@@ -21,12 +23,24 @@ const props = defineProps({
 
 const typeOptions = computed(() => props.itemTypes.map((type) => ({ value: type.code, label: type.name })));
 
+const sortOptions = computed(() => [
+    { value: 'id', label: t('sort.id') },
+    { value: 'name', label: t('sort.name') },
+    { value: 'year', label: t('sort.year') },
+]);
+
+// Порядок раздела показывается пустым полем: он и так свой у каждого списка, а
+// в адресе ему делать нечего.
+const chosenSort = sortOptions.value.some((option) => option.value === props.sort.by) ? props.sort.by : null;
+
 const form = reactive({
     q: props.filters.q ?? '',
     type: props.filters.type ?? null,
     theme_id: props.filters.theme_id ?? null,
     year: props.filters.year ?? null,
     has_inventory: Boolean(props.filters.has_inventory),
+    sort: chosenSort,
+    dir: props.sort.dir ?? 'asc',
 });
 
 function submit() {
@@ -35,18 +49,27 @@ function submit() {
 
 /** Empty filters stay out of the URL so a bare /catalog is a clean link. */
 function clean() {
-    return Object.fromEntries(
+    const query = Object.fromEntries(
         Object.entries(form).filter(([, value]) => value !== null && value !== '' && value !== false),
     );
+
+    // «По возрастанию» — это и есть обычное направление.
+    if (query.dir === 'asc') {
+        delete query.dir;
+    }
+
+    return query;
 }
 
 function reset() {
-    Object.assign(form, { q: '', type: null, theme_id: null, year: null, has_inventory: false });
+    Object.assign(form, {
+        q: '', type: null, theme_id: null, year: null, has_inventory: false, sort: null, dir: 'asc',
+    });
 }
 
 // Typing fires a request per keystroke otherwise.
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.type, form.theme_id, form.year, form.has_inventory], submit);
+watch(() => [form.type, form.theme_id, form.year, form.has_inventory, form.sort, form.dir], submit);
 
 const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: theme.path }));
 </script>
@@ -106,7 +129,11 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         />
                     </div>
 
-                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                    <!-- На узком экране столбцы встают друг под другом, и
+                         кнопка оказывалась посреди фильтров, читаясь как
+                         разделитель, а не как действие над ними. Там она уходит
+                         в конец; на широком остаётся на месте. -->
+                    <div class="col-12 col-lg-2 d-flex align-items-end order-last order-lg-0">
                         <button type="button" class="btn btn-outline-secondary w-100 text-nowrap" @click="reset">
                             {{ t('catalog.reset') }}
                         </button>
@@ -124,6 +151,15 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                                 {{ t('catalog.only_with_inventory') }}
                             </label>
                         </div>
+                    </div>
+
+                    <!-- Порядок — отдельной строкой внизу: он отвечает не на
+                         «что показать», а на «в каком виде», и в одном ряду с
+                         фильтрами читался как ещё один фильтр. Разрыв явный,
+                         иначе строка встала бы в остаток предыдущей. -->
+                    <div class="w-100"></div>
+                    <div class="col-12 col-lg-4">
+                        <SortControl v-model:by="form.sort" v-model:dir="form.dir" :options="sortOptions" />
                     </div>
                 </div>
             </div>

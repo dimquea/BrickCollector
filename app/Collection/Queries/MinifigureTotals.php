@@ -19,6 +19,9 @@ class MinifigureTotals
     /** @var array<string, mixed> */
     private array $filters = [];
 
+    /** @var array{by: string, dir: string}|null */
+    private ?array $sort = null;
+
     public function filters(array $filters): self
     {
         $this->filters = $filters;
@@ -26,9 +29,36 @@ class MinifigureTotals
         return $this;
     }
 
+    /** @param array{by: string, dir: string}|null $sort */
+    public function sort(?array $sort): self
+    {
+        $this->sort = $sort;
+
+        return $this;
+    }
+
     public function paginate(int $perPage = 24): LengthAwarePaginator
     {
-        return $this->base()->orderBy('name')->paginate($perPage)->withQueryString();
+        $query = $this->base();
+        $dir = ($this->sort['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+
+        // «Из скольких деталей собрана» читается из описи справочника, а не из
+        // строк коллекции: там одна и та же фигурка встречается многажды, и
+        // сумма по ним отвечала бы на другой вопрос — «сколько деталей во всех
+        // моих экземплярах этой фигурки».
+        $parts = "(select COALESCE(SUM(inv.qty), 0) from bl_inventory inv
+            where inv.parent_type = 'M' and inv.parent_id = ci.item_id and inv.child_type = 'P'
+                and inv.is_extra = 0 and inv.is_alternate = 0 and inv.is_counterpart = 0)";
+
+        match ($this->sort['by'] ?? null) {
+            'id' => $query->orderBy('ci.item_id', $dir),
+            'name' => $query->orderBy('name', $dir),
+            'year' => $query->orderBy('i.year', $dir),
+            'parts' => $query->orderByRaw($parts.' '.$dir),
+            default => null,
+        };
+
+        return $query->orderBy('name')->paginate($perPage)->withQueryString();
     }
 
     public function one(string $itemId): ?object

@@ -16,6 +16,7 @@ use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Http\ListFilters;
+use App\Http\ListSort;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -42,11 +43,13 @@ class MinifiguresController extends Controller
         ]);
 
         $facets = $totals->facets();
+        $sort = ListSort::read($request, ['id', 'name', 'year', 'parts'], 'name');
 
         return Inertia::render('Minifigures/Index', [
             'cardSize' => Settings::cardSize('minifigures'),
             'filters' => $filters,
-            'figures' => $totals->filters($filters)->paginate(Settings::perPage('minifigures')),
+            'sort' => $sort,
+            'figures' => $totals->filters($filters)->sort($sort)->paginate(Settings::perPage('minifigures')),
             'themes' => $facets['themes'],
             'years' => $facets['years'],
             'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),

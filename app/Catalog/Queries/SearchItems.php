@@ -33,9 +33,20 @@ class SearchItems
     /** @var array<string, mixed> */
     private array $filters = [];
 
+    /** @var array{by: string, dir: string}|null */
+    private ?array $sort = null;
+
     public function filters(array $filters): self
     {
         $this->filters = $filters;
+
+        return $this;
+    }
+
+    /** @param array{by: string, dir: string}|null $sort */
+    public function sort(?array $sort): self
+    {
+        $this->sort = $sort;
 
         return $this;
     }
@@ -80,11 +91,28 @@ class SearchItems
             $query->where('i.has_inventory', 1);
         }
 
-        // bm25() returns a negative score, best first, so plain ascending
-        // order is most-relevant first.
-        $term !== ''
-            ? $query->orderBy('k.rank')->orderBy('i.type')->orderBy('i.id')
-            : $query->orderBy('i.type')->orderBy('i.id');
+        $columns = ['id' => 'i.id', 'name' => 'i.name', 'year' => 'i.year'];
+        $by = $this->sort['by'] ?? null;
+
+        if (isset($columns[$by])) {
+            // Выбранный порядок берёт верх над релевантностью: о нём попросили
+            // прямо, а ранг — это лишь догадка о том, что человеку нужнее.
+            $query->orderBy($columns[$by], ($this->sort['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc');
+        } elseif ($term !== '') {
+            // bm25() returns a negative score, best first, so plain ascending
+            // order is most-relevant first.
+            $query->orderBy('k.rank');
+        }
+
+        // Тип и артикул: обычный порядок справочника и одновременно устойчивый
+        // разрыв ничьих — без него одинаковые по ключу строки переставляются
+        // между страницами. Когда поле не выбрано и ничего не искали,
+        // направление работает по нему: иначе переключатель ничего не делал бы.
+        $plain = ! isset($columns[$by]) && $term === '' && ($this->sort['dir'] ?? 'asc') === 'desc'
+            ? 'desc'
+            : 'asc';
+
+        $query->orderBy('i.type', $plain)->orderBy('i.id', $plain);
 
         return $query->paginate($perPage)->withQueryString();
     }

@@ -16,6 +16,7 @@ use App\Collection\Queries\PartTotals;
 use App\Support\ExternalLinks;
 use App\Support\Settings;
 use App\Http\ListFilters;
+use App\Http\ListSort;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,9 +46,12 @@ class PartsController extends Controller
             'placement' => ['string', 'in:set,minifigure,loose,assembly'],
         ], switches: ['lost']);
 
+        $sort = ListSort::read($request, ['name', 'id', 'total'], 'name');
+
         return Inertia::render('Parts/Index', [
             'filters' => $filters,
-            'parts' => $totals->filters($filters)->paginate(Settings::perPage('parts')),
+            'sort' => $sort,
+            'parts' => $totals->filters($filters)->sort($sort)->paginate(Settings::perPage('parts')),
             'colours' => $totals->colours(),
         ]);
     }

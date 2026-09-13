@@ -22,6 +22,9 @@ class PartTotals
     /** @var array<string, mixed> */
     private array $filters = [];
 
+    /** @var array{by: string, dir: string}|null */
+    private ?array $sort = null;
+
     public function filters(array $filters): self
     {
         $this->filters = $filters;
@@ -29,9 +32,31 @@ class PartTotals
         return $this;
     }
 
+    /** @param array{by: string, dir: string}|null $sort */
+    public function sort(?array $sort): self
+    {
+        $this->sort = $sort;
+
+        return $this;
+    }
+
     public function paginate(int $perPage = 50): LengthAwarePaginator
     {
-        return $this->base()
+        $query = $this->base();
+        $dir = ($this->sort['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+
+        match ($this->sort['by'] ?? null) {
+            'id' => $query->orderBy('ci.item_id', $dir),
+            'name' => $query->orderBy('i.name', $dir),
+            // Колонка из выборки: группировка уже посчитана, и повторять её
+            // выражение в порядке незачем.
+            'total' => $query->orderByRaw('total '.$dir),
+            default => null,
+        };
+
+        // Название, артикул, цвет: обычный порядок раздела и устойчивый разрыв
+        // ничьих для всех остальных.
+        return $query
             ->orderBy('i.name')
             ->orderBy('ci.item_id')
             ->orderBy('c.name')

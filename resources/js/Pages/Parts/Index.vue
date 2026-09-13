@@ -7,20 +7,33 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
+import SortControl from '@/Components/SortControl.vue';
 import { debounce } from '@/support/debounce';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
     filters: { type: Object, default: () => ({}) },
+    sort: { type: Object, default: () => ({}) },
     parts: { type: Object, required: true },
     colours: { type: Array, default: () => [] },
 });
+
+const sortOptions = computed(() => [
+    { value: 'name', label: t('sort.name') },
+    { value: 'id', label: t('sort.id') },
+    { value: 'total', label: t('sort.total') },
+]);
+
+// Обычный порядок раздела — по названию — показывается пустым полем.
+const chosenSort = props.sort.by === 'name' ? null : props.sort.by ?? null;
 
 const form = reactive({
     q: props.filters.q ?? '',
     color_id: props.filters.color_id ?? null,
     placement: props.filters.placement ?? null,
     lost: Boolean(props.filters.lost),
+    sort: chosenSort,
+    dir: props.sort.dir ?? 'asc',
 });
 
 function submit() {
@@ -29,17 +42,23 @@ function submit() {
 
 /** Empty filters stay out of the URL so a bare /parts is a clean link. */
 function clean() {
-    return Object.fromEntries(
+    const query = Object.fromEntries(
         Object.entries(form).filter(([, value]) => value !== null && value !== '' && value !== false),
     );
+
+    if (query.dir === 'asc') {
+        delete query.dir;
+    }
+
+    return query;
 }
 
 function reset() {
-    Object.assign(form, { q: '', color_id: null, placement: null, lost: false });
+    Object.assign(form, { q: '', color_id: null, placement: null, lost: false, sort: null, dir: 'asc' });
 }
 
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.color_id, form.placement, form.lost], submit);
+watch(() => [form.color_id, form.placement, form.lost, form.sort, form.dir], submit);
 
 /** A badge or a colour dot in the table is also a way to narrow the list. */
 function filterByArticle(itemId) {
@@ -111,7 +130,10 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                         />
                     </div>
 
-                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                    <!-- На узком экране столбцы встают друг под другом, и
+                         кнопка оказывалась посреди фильтров. Там она уходит в
+                         конец; на широком остаётся на месте. -->
+                    <div class="col-12 col-lg-2 d-flex align-items-end order-last order-lg-0">
                         <button type="button" class="btn btn-outline-secondary w-100 text-nowrap" @click="reset">
                             {{ t('catalog.reset') }}
                         </button>
@@ -123,6 +145,14 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             <label class="form-check-label" for="missing">{{ t('parts.missing') }}</label>
                         </div>
                         <div class="form-text">{{ t('parts.missing_hint') }}</div>
+                    </div>
+
+                    <!-- Порядок — отдельной строкой внизу: он отвечает не на
+                         «что показать», а на «в каком виде». Разрыв явный,
+                         иначе строка встала бы в остаток предыдущей. -->
+                    <div class="w-100"></div>
+                    <div class="col-12 col-lg-4">
+                        <SortControl v-model:by="form.sort" v-model:dir="form.dir" :options="sortOptions" />
                     </div>
                 </div>
             </div>

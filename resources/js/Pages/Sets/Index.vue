@@ -5,6 +5,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
+import SortControl from '@/Components/SortControl.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
 import { debounce } from '@/support/debounce';
@@ -14,6 +15,7 @@ import { t, tChoice } from '@/i18n';
 const props = defineProps({
     cardSize: { type: Object, default: () => ({}) },
     filters: { type: Object, default: () => ({}) },
+    sort: { type: Object, default: () => ({}) },
     entries: { type: Object, required: true },
     itemTypes: { type: Array, default: () => [] },
     themes: { type: Array, default: () => [] },
@@ -25,6 +27,18 @@ const props = defineProps({
 const page = usePage();
 const flash = computed(() => page.props.flash);
 
+const sortOptions = computed(() => [
+    { value: 'id', label: t('sort.id') },
+    { value: 'name', label: t('sort.name') },
+    { value: 'year', label: t('sort.year') },
+    { value: 'parts', label: t('sort.parts') },
+    { value: 'figures', label: t('sort.figures') },
+]);
+
+// Обычный порядок раздела — по заведению — показывается пустым полем: в адресе
+// ему делать нечего.
+const chosenSort = sortOptions.value.some((option) => option.value === props.sort.by) ? props.sort.by : null;
+
 const form = reactive({
     q: props.filters.q ?? '',
     type: props.filters.type ?? null,
@@ -34,6 +48,8 @@ const form = reactive({
     tag_id: props.filters.tag_id ?? null,
     incomplete: Boolean(props.filters.incomplete),
     missing_figs: Boolean(props.filters.missing_figs),
+    sort: chosenSort,
+    dir: props.sort.dir ?? 'desc',
 });
 
 function submit() {
@@ -42,21 +58,33 @@ function submit() {
 
 /** Empty filters stay out of the URL so a bare /sets is a clean link. */
 function clean() {
-    return Object.fromEntries(
+    const query = Object.fromEntries(
         Object.entries(form).filter(([, value]) => value !== null && value !== '' && value !== false),
     );
+
+    // Последнее заведённое сверху — обычный порядок этого раздела, и «по
+    // убыванию» для него подразумевается.
+    if (query.dir === (query.sort ? 'asc' : 'desc')) {
+        delete query.dir;
+    }
+
+    return query;
 }
 
 function reset() {
     Object.assign(form, {
         q: '', type: null, theme_id: null, year: null,
         status_id: null, tag_id: null, incomplete: false, missing_figs: false,
+        sort: null, dir: 'desc',
     });
 }
 
 watch(() => form.q, debounce(submit, 300));
 watch(
-    () => [form.type, form.theme_id, form.year, form.status_id, form.tag_id, form.incomplete, form.missing_figs],
+    () => [
+        form.type, form.theme_id, form.year, form.status_id, form.tag_id,
+        form.incomplete, form.missing_figs, form.sort, form.dir,
+    ],
     submit,
 );
 
@@ -131,7 +159,10 @@ const shows = (list) => list.length > 1;
                         />
                     </div>
 
-                    <div class="col-12 col-lg-2 d-flex align-items-end">
+                    <!-- На узком экране столбцы встают друг под другом, и
+                         кнопка оказывалась посреди фильтров. Там она уходит в
+                         конец; на широком остаётся на месте. -->
+                    <div class="col-12 col-lg-2 d-flex align-items-end order-last order-lg-0">
                         <button type="button" class="btn btn-outline-secondary w-100 text-nowrap" @click="reset">
                             {{ t('catalog.reset') }}
                         </button>
@@ -180,6 +211,14 @@ const shows = (list) => list.length > 1;
                                 {{ t('collection.missing_figs') }}
                             </label>
                         </div>
+                    </div>
+
+                    <!-- Порядок — отдельной строкой внизу: он отвечает не на
+                         «что показать», а на «в каком виде». Разрыв явный,
+                         иначе строка встала бы в остаток предыдущей. -->
+                    <div class="w-100"></div>
+                    <div class="col-12 col-lg-4">
+                        <SortControl v-model:by="form.sort" v-model:dir="form.dir" :options="sortOptions" />
                     </div>
                 </div>
             </div>

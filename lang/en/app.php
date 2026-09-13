@@ -47,6 +47,19 @@ return [
         'remove_hint' => 'The assembly goes; its parts go back to the loose pile.',
     ],
 
+    'sort' => [
+        'title' => 'Order',
+        'default' => 'Default',
+        'asc' => 'Ascending',
+        'desc' => 'Descending',
+        'id' => 'Item number',
+        'name' => 'Name',
+        'year' => 'Year',
+        'parts' => 'Parts',
+        'figures' => 'Minifigures',
+        'total' => 'In collection',
+    ],
+
     'home' => [
         'title' => 'Welcome',
         'tagline' => 'Self-hosted LEGO collection manager.',

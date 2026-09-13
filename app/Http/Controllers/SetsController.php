@@ -17,6 +17,7 @@ use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Http\ListFilters;
+use App\Http\ListSort;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,7 +44,14 @@ class SetsController extends Controller
             'tag_id' => ['integer'],
         ], switches: ['incomplete', 'missing_figs']);
 
-        $entries = $search->filters($filters)->ofTypes(self::TYPES)->paginate(Settings::perPage('sets'));
+        // «added» — не поле, а порядок заведения: последнее заведённое сверху.
+        // Пока коллекция наполняется, это самый полезный порядок.
+        $sort = ListSort::read($request, ['id', 'name', 'year', 'parts', 'figures'], 'added', 'desc');
+
+        $entries = $search->filters($filters)
+            ->sort($sort)
+            ->ofTypes(self::TYPES)
+            ->paginate(Settings::perPage('sets'));
 
         // Type, theme and year come from what is owned, not from the catalog:
         // a filter that can only return nothing is worse than no filter.
@@ -52,6 +60,7 @@ class SetsController extends Controller
         return Inertia::render('Sets/Index', [
             'cardSize' => Settings::cardSize('sets'),
             'filters' => $filters,
+            'sort' => $sort,
             'entries' => $entries->through(fn (Entry $entry) => $this->card($entry)),
             'itemTypes' => $facets['types'],
             'themes' => $facets['themes'],
