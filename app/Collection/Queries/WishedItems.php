@@ -4,6 +4,7 @@ namespace App\Collection\Queries;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -41,6 +42,17 @@ class WishedItems
 
     public function paginate(int $perPage = 48): LengthAwarePaginator
     {
+        return $this->ordered()->paginate($perPage)->withQueryString();
+    }
+
+    /** Весь список разом, без страниц: выгрузка отдаёт то же, что показано. */
+    public function all(): Collection
+    {
+        return $this->ordered()->get();
+    }
+
+    private function ordered(): Builder
+    {
         $query = $this->base()->select([
             'w.id as wish_id',
             'w.item_type as type',
@@ -66,7 +78,7 @@ class WishedItems
 
         // Порядок добавления: последнее желание сверху. Он же разрыв ничьих —
         // без него строки с одинаковым ключом переставляются между страницами.
-        return $query->orderByDesc('w.id')->paginate($perPage)->withQueryString();
+        return $query->orderByDesc('w.id');
     }
 
     /**

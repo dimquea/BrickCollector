@@ -4,6 +4,8 @@ namespace App\Collection\Queries;
 
 use App\Collection\Models\Entry;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -49,6 +51,21 @@ class SearchEntries
     }
 
     public function paginate(int $perPage = 24): LengthAwarePaginator
+    {
+        return $this->query()->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Все копии разом, без страниц: выгрузка отдаёт то же, что показано.
+     *
+     * @return Collection<int, Entry>
+     */
+    public function all(): Collection
+    {
+        return $this->query()->get();
+    }
+
+    private function query(): Builder
     {
         $query = Entry::query()
             ->from('collection_entries as e')
@@ -138,10 +155,7 @@ class SearchEntries
         // работает по нему — иначе переключатель не делал бы ничего.
         $chosen = in_array($this->sort['by'] ?? null, ['id', 'name', 'year', 'parts', 'figures'], true);
 
-        return $query
-            ->orderBy('e.id', $chosen ? 'desc' : $dir)
-            ->paginate($perPage)
-            ->withQueryString();
+        return $query->orderBy('e.id', $chosen ? 'desc' : $dir);
     }
 
     /** Choosing a theme includes everything under it, as in the catalog. */

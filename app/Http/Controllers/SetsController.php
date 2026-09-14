@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\UpdateEntryMeta;
+use App\Collection\Export\BrickLinkXml;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Status;
@@ -19,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use App\Http\ListFilters;
 use App\Http\ListSort;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,18 +37,8 @@ class SetsController extends Controller
 
     public function index(Request $request, SearchEntries $search): Response
     {
-        $filters = ListFilters::read($request, [
-            'q' => ['string', 'max:120'],
-            'type' => ['string', 'in:'.implode(',', self::TYPES)],
-            'theme_id' => ['integer'],
-            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
-            'status_id' => ['integer'],
-            'tag_id' => ['integer'],
-        ], switches: ['incomplete', 'missing_figs']);
-
-        // «added» — не поле, а порядок заведения: последнее заведённое сверху.
-        // Пока коллекция наполняется, это самый полезный порядок.
-        $sort = ListSort::read($request, ['id', 'name', 'year', 'parts', 'figures'], 'added', 'desc');
+        $filters = $this->filters($request);
+        $sort = $this->sort($request);
 
         $entries = $search->filters($filters)
             ->sort($sort)
@@ -68,6 +60,31 @@ class SetsController extends Controller
             'statuses' => $this->statuses(),
             'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),
         ]);
+    }
+
+    /**
+     * Опись коллекции в BrickLink XML, по текущему фильтру.
+     *
+     * Одинаковые копии сворачиваются в одну строку с количеством: опись
+     * отвечает на «сколько у меня», а не «какие это экземпляры». Всё, чем копии
+     * различаются, — день покупки, цена, коробка — в этот формат не идёт вовсе.
+     */
+    public function export(Request $request, SearchEntries $search): HttpResponse
+    {
+        $copies = $search->filters($this->filters($request))
+            ->sort($this->sort($request))
+            ->ofTypes(self::TYPES)
+            ->all();
+
+        $items = $copies
+            ->groupBy(fn (Entry $entry) => $entry->item_type.'/'.$entry->item_id)
+            ->map(fn ($group) => [
+                'type' => $group->first()->item_type,
+                'id' => $group->first()->item_id,
+                'qty' => $group->count(),
+            ]);
+
+        return BrickLinkXml::download(BrickLinkXml::inventory($items), 'sets', 'inventory');
     }
 
     public function show(Entry $entry, EntryContents $contents): Response|RedirectResponse
@@ -151,6 +168,35 @@ class SetsController extends Controller
         $entry->delete();
 
         return to_route('sets.index')->with('flash', ['message' => __('app.collection.removed')]);
+    }
+
+    /**
+     * Список и выгрузка спрашивают об одном и том же, поэтому и фильтр читают
+     * одними правилами: разойдись они, выгрузка отдала бы не то, что на экране.
+     *
+     * @return array<string, mixed>
+     */
+    private function filters(Request $request): array
+    {
+        return ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'type' => ['string', 'in:'.implode(',', self::TYPES)],
+            'theme_id' => ['integer'],
+            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
+            'status_id' => ['integer'],
+            'tag_id' => ['integer'],
+        ], switches: ['incomplete', 'missing_figs']);
+    }
+
+    /**
+     * «added» — не поле, а порядок заведения: последнее заведённое сверху.
+     * Пока коллекция наполняется, это самый полезный порядок.
+     *
+     * @return array{by: string, dir: string}
+     */
+    private function sort(Request $request): array
+    {
+        return ListSort::read($request, ['id', 'name', 'year', 'parts', 'figures'], 'added', 'desc');
     }
 
     /**

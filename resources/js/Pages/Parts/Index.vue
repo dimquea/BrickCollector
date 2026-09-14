@@ -8,6 +8,7 @@ import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
+import ExportButton from '@/Components/ExportButton.vue';
 import { debounce } from '@/support/debounce';
 import { t, tChoice } from '@/i18n';
 
@@ -68,6 +69,17 @@ function clean() {
 
     return query;
 }
+
+// Выгружается ровно то, что на экране: адрес собирается из тех же фильтров.
+const exportHref = computed(() => {
+    const query = new URLSearchParams(clean()).toString();
+
+    return query ? `/parts/export?${query}` : '/parts/export';
+});
+
+// «Есть недостача» меняет смысл выгрузки: не «вот что у меня есть», а «вот
+// чего мне не хватает».
+const exportMode = computed(() => (form.lost ? 'wanted' : 'inventory'));
 
 function reset() {
     Object.assign(form, {
@@ -181,8 +193,14 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                          «что показать», а на «в каком виде». Разрыв явный,
                          иначе строка встала бы в остаток предыдущей. -->
                     <div class="w-100"></div>
-                    <div class="col-12 col-lg-4">
-                        <SortControl v-model:by="form.sort" v-model:dir="form.dir" :options="sortOptions" />
+                    <div class="col-12 col-lg-4 d-flex align-items-end gap-2">
+                        <ExportButton :href="exportHref" :mode="exportMode" />
+                        <SortControl
+                            v-model:by="form.sort"
+                            v-model:dir="form.dir"
+                            :options="sortOptions"
+                            class="flex-grow-1"
+                        />
                     </div>
                 </div>
             </div>

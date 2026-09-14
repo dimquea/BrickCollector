@@ -10,6 +10,7 @@ import EntryMetaForm from '@/Components/EntryMetaForm.vue';
 import EntryMetaBadges from '@/Components/EntryMetaBadges.vue';
 import EntryMetaRows from '@/Components/EntryMetaRows.vue';
 import EntryNote from '@/Components/EntryNote.vue';
+import ExportButton from '@/Components/ExportButton.vue';
 import AssemblyPartsDialog from '@/Components/AssemblyPartsDialog.vue';
 import AssemblyContentsDialog from '@/Components/AssemblyContentsDialog.vue';
 import { patchField } from '@/support/save';
@@ -221,6 +222,22 @@ function remove() {
                                     >
                                         <i class="mdi mdi-playlist-edit"></i> {{ t('assembly.edit_parts') }}
                                     </button>
+
+                                    <!-- Опись — чтобы собрать такую же, недостача — чтобы
+                                         дособрать эту. Второй кнопки нет, когда достраивать
+                                         нечего. -->
+                                    <ExportButton
+                                        v-if="parts.length"
+                                        :href="`/assemblies/${entry.id}/export/inventory`"
+                                        mode="inventory"
+                                        :label="t('export.inventory')"
+                                    />
+                                    <ExportButton
+                                        v-if="totals.lost"
+                                        :href="`/assemblies/${entry.id}/export/shortage`"
+                                        mode="wanted"
+                                        :label="t('export.shortage')"
+                                    />
                                 </div>
                             </div>
                         </div>

@@ -39,6 +39,17 @@ class MinifigureTotals
 
     public function paginate(int $perPage = 24): LengthAwarePaginator
     {
+        return $this->ordered()->paginate($perPage)->withQueryString();
+    }
+
+    /** Весь список разом, без страниц: выгрузка отдаёт то же, что показано. */
+    public function all(): Collection
+    {
+        return $this->ordered()->get();
+    }
+
+    private function ordered(): Builder
+    {
         $query = $this->base();
         $dir = ($this->sort['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
 
@@ -58,7 +69,7 @@ class MinifigureTotals
             default => null,
         };
 
-        return $query->orderBy('name')->paginate($perPage)->withQueryString();
+        return $query->orderBy('name');
     }
 
     public function one(string $itemId): ?object

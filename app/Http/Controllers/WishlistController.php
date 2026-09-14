@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Catalog\Images\ItemImages;
 use App\Catalog\Models\Item;
 use App\Catalog\Models\ItemType;
+use App\Collection\Export\BrickLinkXml;
 use App\Collection\Models\Wish;
 use App\Collection\Queries\WishedItems;
 use App\Http\ListFilters;
@@ -12,6 +13,7 @@ use App\Http\ListSort;
 use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,15 +28,8 @@ class WishlistController extends Controller
 {
     public function index(Request $request, WishedItems $wished, ItemImages $images): Response
     {
-        $filters = ListFilters::read($request, [
-            'q' => ['string', 'max:120'],
-            'type' => ['string', 'in:'.implode(',', ItemType::BROWSABLE)],
-            'theme_id' => ['integer'],
-            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
-        ]);
-
-        // «added» — не поле, а порядок добавления: последнее желание сверху.
-        $sort = ListSort::read($request, ['id', 'name', 'year'], 'added', 'desc');
+        $filters = $this->filters($request);
+        $sort = $this->sort($request);
 
         $items = $wished->filters($filters)->sort($sort)->paginate(Settings::perPage('wishlist'));
 
@@ -70,6 +65,51 @@ class WishlistController extends Controller
             'themes' => $facets['themes'],
             'years' => $facets['years'],
         ]);
+    }
+
+    /**
+     * Желаемое в BrickLink XML — списком желаемого, иначе и быть не может.
+     *
+     * Количества у желания нет: хотят вещь, а не пять её штук. MINQTY поэтому
+     * всегда единица — меньше нельзя, а больше взять неоткуда.
+     */
+    public function export(Request $request, WishedItems $wished): HttpResponse
+    {
+        $rows = $wished->filters($this->filters($request))->sort($this->sort($request))->all();
+
+        return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+            'type' => $row->type,
+            'id' => $row->item_id,
+            // Цвет осмыслен только у детали, и только если известен.
+            'color' => $row->type === 'P' && (int) $row->color_id > 0 ? (int) $row->color_id : null,
+            'qty' => 1,
+        ])), 'wishlist', 'wanted');
+    }
+
+    /**
+     * Список и выгрузка читают фильтр одними правилами: разойдись они, выгрузка
+     * отдала бы не то, что на экране.
+     *
+     * @return array<string, mixed>
+     */
+    private function filters(Request $request): array
+    {
+        return ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'type' => ['string', 'in:'.implode(',', ItemType::BROWSABLE)],
+            'theme_id' => ['integer'],
+            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
+        ]);
+    }
+
+    /**
+     * «added» — не поле, а порядок добавления: последнее желание сверху.
+     *
+     * @return array{by: string, dir: string}
+     */
+    private function sort(Request $request): array
+    {
+        return ListSort::read($request, ['id', 'name', 'year'], 'added', 'desc');
     }
 
     /**

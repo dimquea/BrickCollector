@@ -46,6 +46,9 @@ Route::post('/catalog/{type}/{id}/add', [CatalogController::class, 'addToCollect
  * minifigures get sections of their own.
  */
 Route::get('/sets', [SetsController::class, 'index'])->name('sets.index');
+// Выгрузка объявляется раньше /sets/{entry}, иначе «export» прочитался бы как
+// номер экземпляра.
+Route::get('/sets/export', [SetsController::class, 'export'])->name('sets.export');
 Route::get('/sets/{entry}', [SetsController::class, 'show'])->name('sets.show');
 Route::patch('/sets/{entry}', [SetsController::class, 'update'])->name('sets.update');
 Route::delete('/sets/{entry}', [SetsController::class, 'destroy'])->name('sets.destroy');
@@ -60,6 +63,7 @@ Route::delete('/sets/{entry}', [SetsController::class, 'destroy'])->name('sets.d
  * /parts/{id}/{color} and would be read as a part called "copy".
  */
 Route::get('/parts', [PartsController::class, 'index'])->name('parts.index');
+Route::get('/parts/export', [PartsController::class, 'export'])->name('parts.export');
 Route::get('/parts/copy/{entry}', [PartsController::class, 'copy'])->name('parts.copy');
 Route::patch('/parts/copy/{entry}', [PartsController::class, 'update'])->name('parts.update');
 Route::patch('/parts/copy/{entry}/qty', [PartsController::class, 'resize'])->name('parts.resize');
@@ -76,6 +80,7 @@ Route::get('/parts/{id}/{color}', [PartsController::class, 'show'])
  * The copy route is declared first, or "copy" would be read as a figure id.
  */
 Route::get('/minifigures', [MinifiguresController::class, 'index'])->name('minifigures.index');
+Route::get('/minifigures/export', [MinifiguresController::class, 'export'])->name('minifigures.export');
 Route::get('/minifigures/copy/{entry}', [MinifiguresController::class, 'copy'])->name('minifigures.copy');
 Route::patch('/minifigures/copy/{entry}', [MinifiguresController::class, 'update'])->name('minifigures.update');
 Route::delete('/minifigures/copy/{entry}', [MinifiguresController::class, 'destroy'])->name('minifigures.destroy');
@@ -96,6 +101,11 @@ Route::get('/assemblies/{entry}', [AssembliesController::class, 'show'])->name('
 Route::patch('/assemblies/{entry}', [AssembliesController::class, 'update'])->name('assemblies.update');
 Route::delete('/assemblies/{entry}', [AssembliesController::class, 'destroy'])->name('assemblies.destroy');
 
+// Опись — чтобы собрать такую же, недостача — чтобы дособрать эту.
+Route::get('/assemblies/{entry}/export/{kind}', [AssembliesController::class, 'export'])
+    ->where('kind', 'inventory|shortage')
+    ->name('assemblies.export');
+
 Route::get('/assemblies/{entry}/loose', [AssembliesController::class, 'loose'])->name('assemblies.loose');
 Route::post('/assemblies/{entry}/parts', [AssembliesController::class, 'addPart'])->name('assemblies.parts.add');
 Route::patch('/assemblies/{entry}/parts/{item}', [AssembliesController::class, 'updatePart'])
@@ -114,6 +124,7 @@ Route::delete('/assemblies/{entry}/image', [AssembliesController::class, 'destro
  * желания нет.
  */
 Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+Route::get('/wishlist/export', [WishlistController::class, 'export'])->name('wishlist.export');
 Route::post('/wishlist', [WishlistController::class, 'store'])->name('wishlist.store');
 Route::delete('/wishlist/{wish}', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
 

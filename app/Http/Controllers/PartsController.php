@@ -6,11 +6,13 @@ use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\ResizeLot;
 use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\AssemblyImages;
+use App\Collection\Export\BrickLinkXml;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Storage;
 use App\Collection\Models\Tag;
 use App\Collection\Queries\EntryContents;
+use App\Collection\Queries\LostSources;
 use App\Collection\Queries\PartPlaces;
 use App\Collection\Queries\PartTotals;
 use App\Support\ExternalLinks;
@@ -20,6 +22,7 @@ use App\Http\ListSort;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,17 +40,8 @@ class PartsController extends Controller
 {
     public function index(Request $request, PartTotals $totals): Response
     {
-        // Недостача — не место, а свойство: деталь может быть утеряна из
-        // набора и одновременно лежать россыпью. Отдельным переключателем она
-        // сужает выбранное место, а не заменяет его.
-        $filters = ListFilters::read($request, [
-            'q' => ['string', 'max:120'],
-            'color_id' => ['integer'],
-            'placement' => ['string', 'in:set,minifigure,loose,assembly'],
-            'tag_id' => ['integer'],
-        ], switches: ['lost']);
-
-        $sort = ListSort::read($request, ['name', 'id', 'total'], 'name');
+        $filters = $this->filters($request);
+        $sort = $this->sort($request);
 
         return Inertia::render('Parts/Index', [
             'filters' => $filters,
@@ -66,6 +60,57 @@ class PartsController extends Controller
                 ->orderBy('sort')
                 ->get(['id', 'name', 'color']),
         ]);
+    }
+
+    /**
+     * Детали в BrickLink XML, по текущему фильтру.
+     *
+     * Без «есть недостача» это опись того, чем владеют. С ней — список
+     * желаемого: сколько штук недостаёт и откуда они пропали.
+     */
+    public function export(Request $request, PartTotals $totals, LostSources $lost): HttpResponse
+    {
+        $filters = $this->filters($request);
+        $rows = $totals->filters($filters)->sort($this->sort($request))->all();
+        $placement = $filters['placement'] ?? null;
+
+        if (! empty($filters['lost'])) {
+            $sources = $lost->parts();
+
+            $missing = match ($placement) {
+                'set' => 'lost_in_sets',
+                'minifigure' => 'lost_in_minifigures',
+                'loose' => 'lost_loose',
+                'assembly' => 'lost_in_assemblies',
+                default => 'lost',
+            };
+
+            return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+                'type' => 'P',
+                'id' => $row->item_id,
+                'color' => (int) $row->color_id,
+                'qty' => (int) $row->{$missing},
+                'remarks' => $sources->get($row->item_id.'/'.(int) $row->color_id),
+            ])), 'parts', 'wanted');
+        }
+
+        // Количество берётся по выбранному месту: фильтр «отдельно» обещает
+        // свободные детали, и выгрузить по нему весь запас, включая лежащий в
+        // наборах, значило бы ответить не на заданный вопрос.
+        $held = match ($placement) {
+            'set' => 'in_sets',
+            'minifigure' => 'in_minifigures',
+            'loose' => 'loose',
+            'assembly' => 'in_assemblies',
+            default => 'total',
+        };
+
+        return BrickLinkXml::download(BrickLinkXml::inventory($rows->map(fn (object $row) => [
+            'type' => 'P',
+            'id' => $row->item_id,
+            'color' => (int) $row->color_id,
+            'qty' => (int) $row->{$held},
+        ])), 'parts', 'inventory');
     }
 
     public function show(string $id, int $color, PartTotals $totals, AssemblyImages $images): Response
@@ -209,5 +254,31 @@ class PartsController extends Controller
             : to_route('parts.index');
 
         return $destination->with('flash', ['message' => __('app.collection.removed')]);
+    }
+
+    /**
+     * Недостача — не место, а свойство: деталь может быть утеряна из набора и
+     * одновременно лежать россыпью. Отдельным переключателем она сужает
+     * выбранное место, а не заменяет его.
+     *
+     * Список и выгрузка читают фильтр одними правилами: разойдись они, выгрузка
+     * отдала бы не то, что на экране.
+     *
+     * @return array<string, mixed>
+     */
+    private function filters(Request $request): array
+    {
+        return ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'color_id' => ['integer'],
+            'placement' => ['string', 'in:set,minifigure,loose,assembly'],
+            'tag_id' => ['integer'],
+        ], switches: ['lost']);
+    }
+
+    /** @return array{by: string, dir: string} */
+    private function sort(Request $request): array
+    {
+        return ListSort::read($request, ['name', 'id', 'total'], 'name');
     }
 }

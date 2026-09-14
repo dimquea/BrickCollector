@@ -82,6 +82,13 @@ return [
         'total' => 'In collection',
     ],
 
+    'export' => [
+        'as_inventory' => 'Will be exported as an inventory',
+        'as_wanted' => 'Will be exported as a wanted list',
+        'inventory' => 'Export the inventory',
+        'shortage' => 'Export what is missing',
+    ],
+
     'home' => [
         'title' => 'Welcome',
         'tagline' => 'Self-hosted LEGO collection manager.',

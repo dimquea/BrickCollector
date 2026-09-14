@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Collection\Actions\MoveParts;
 use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\AssemblyImages;
+use App\Collection\Export\BrickLinkXml;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Item;
 use App\Collection\Models\Source;
@@ -17,6 +18,7 @@ use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -176,6 +178,46 @@ class AssembliesController extends Controller
 
         return to_route('assemblies.index')
             ->with('flash', ['message' => __('app.assembly.returned')]);
+    }
+
+    /**
+     * Сборка в BrickLink XML: опись — чтобы собрать такую же, недостача — чтобы
+     * дособрать эту.
+     *
+     * Опись считает деталь целиком, вместе с помеченной недостающей: модель
+     * состоит из стольких деталей, сколько в неё заложено, и тот, кто собирает
+     * такую же, должен купить все. Недостача — ровно вторая половина ответа.
+     */
+    public function export(Entry $entry, string $kind): HttpResponse
+    {
+        abort_unless($entry->isAssembly(), 404);
+
+        $rows = DB::table('collection_items')
+            ->where('entry_id', $entry->id)
+            ->where('item_type', 'P')
+            ->whereNull('parent_id')
+            ->whereRaw('(counts = 1 OR is_counterpart = 1)')
+            ->orderBy('item_id')
+            ->get(['item_id', 'color_id', 'qty', 'lost_qty']);
+
+        if ($kind === 'shortage') {
+            return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+                'type' => 'P',
+                'id' => $row->item_id,
+                'color' => (int) $row->color_id,
+                'qty' => (int) $row->lost_qty,
+                // Откуда недостаёт: номера у сборки нет, назвать её можно только
+                // именем, которое ей дали.
+                'remarks' => $entry->name,
+            ])), 'assembly', 'wanted');
+        }
+
+        return BrickLinkXml::download(BrickLinkXml::inventory($rows->map(fn (object $row) => [
+            'type' => 'P',
+            'id' => $row->item_id,
+            'color' => (int) $row->color_id,
+            'qty' => (int) $row->qty,
+        ])), 'assembly', 'inventory');
     }
 
     /** Loose parts available to build with, for the dialog. */

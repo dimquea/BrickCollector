@@ -6,6 +6,7 @@ import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
+import ExportButton from '@/Components/ExportButton.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
 import { debounce } from '@/support/debounce';
@@ -70,6 +71,13 @@ function clean() {
 
     return query;
 }
+
+// Выгружается ровно то, что на экране: адрес собирается из тех же фильтров.
+const exportHref = computed(() => {
+    const query = new URLSearchParams(clean()).toString();
+
+    return query ? `/sets/export?${query}` : '/sets/export';
+});
 
 function reset() {
     Object.assign(form, {
@@ -217,8 +225,14 @@ const shows = (list) => list.length > 1;
                          «что показать», а на «в каком виде». Разрыв явный,
                          иначе строка встала бы в остаток предыдущей. -->
                     <div class="w-100"></div>
-                    <div class="col-12 col-lg-4">
-                        <SortControl v-model:by="form.sort" v-model:dir="form.dir" :options="sortOptions" />
+                    <div class="col-12 col-lg-4 d-flex align-items-end gap-2">
+                        <ExportButton :href="exportHref" mode="inventory" />
+                        <SortControl
+                            v-model:by="form.sort"
+                            v-model:dir="form.dir"
+                            :options="sortOptions"
+                            class="flex-grow-1"
+                        />
                     </div>
                 </div>
             </div>

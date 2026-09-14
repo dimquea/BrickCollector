@@ -42,6 +42,17 @@ class PartTotals
 
     public function paginate(int $perPage = 50): LengthAwarePaginator
     {
+        return $this->ordered()->paginate($perPage)->withQueryString();
+    }
+
+    /** Весь список разом, без страниц: выгрузка отдаёт то же, что показано. */
+    public function all(): Collection
+    {
+        return $this->ordered()->get();
+    }
+
+    private function ordered(): Builder
+    {
         $query = $this->base();
         $dir = ($this->sort['dir'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
 
@@ -59,9 +70,7 @@ class PartTotals
         return $query
             ->orderBy('i.name')
             ->orderBy('ci.item_id')
-            ->orderBy('c.name')
-            ->paginate($perPage)
-            ->withQueryString();
+            ->orderBy('c.name');
     }
 
     /** One part in one colour, or null when none is held. */

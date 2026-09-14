@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\UpdateEntryMeta;
+use App\Collection\Export\BrickLinkXml;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Storage;
 use App\Collection\Models\Tag;
 use App\Collection\Queries\EntryContents;
+use App\Collection\Queries\LostSources;
 use App\Collection\Queries\MinifigurePlaces;
 use App\Collection\Queries\MinifigureTotals;
 use App\Support\ExternalLinks;
@@ -18,6 +20,7 @@ use Illuminate\Http\RedirectResponse;
 use App\Http\ListFilters;
 use App\Http\ListSort;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,16 +37,10 @@ class MinifiguresController extends Controller
 {
     public function index(Request $request, MinifigureTotals $totals): Response
     {
-        $filters = ListFilters::read($request, [
-            'q' => ['string', 'max:120'],
-            'theme_id' => ['integer'],
-            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
-            'tag_id' => ['integer'],
-            'placement' => ['string', 'in:set,loose'],
-        ], switches: ['lost']);
+        $filters = $this->filters($request);
 
         $facets = $totals->facets();
-        $sort = ListSort::read($request, ['id', 'name', 'year', 'parts'], 'name');
+        $sort = $this->sort($request);
 
         return Inertia::render('Minifigures/Index', [
             'cardSize' => Settings::cardSize('minifigures'),
@@ -54,6 +51,46 @@ class MinifiguresController extends Controller
             'years' => $facets['years'],
             'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),
         ]);
+    }
+
+    /**
+     * Фигурки в BrickLink XML, по текущему фильтру.
+     *
+     * Без «потеряны» это опись: сколько фигурок в коллекции. С «потеряны» —
+     * список желаемого: сколько их недостаёт и каким наборам.
+     */
+    public function export(Request $request, MinifigureTotals $totals, LostSources $lost): HttpResponse
+    {
+        $filters = $this->filters($request);
+        $rows = $totals->filters($filters)->sort($this->sort($request))->all();
+
+        if (! empty($filters['lost'])) {
+            $sources = $lost->minifigures();
+
+            return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+                'type' => 'M',
+                'id' => $row->item_id,
+                'qty' => (int) $row->lost,
+                // Чему её недостаёт: в магазине это разница между «взять одну»
+                // и «взять три».
+                'remarks' => $sources->get((string) $row->item_id),
+            ])), 'minifigures', 'wanted');
+        }
+
+        // Количество берётся по выбранному месту: фильтр «отдельно» обещает
+        // фигурок, которыми владеют сами по себе, и выгрузить по нему заодно
+        // сидящих в наборах значило бы ответить не на заданный вопрос.
+        $held = match ($filters['placement'] ?? null) {
+            'set' => 'in_sets',
+            'loose' => 'loose',
+            default => 'total',
+        };
+
+        return BrickLinkXml::download(BrickLinkXml::inventory($rows->map(fn (object $row) => [
+            'type' => 'M',
+            'id' => $row->item_id,
+            'qty' => (int) $row->{$held},
+        ])), 'minifigures', 'inventory');
     }
 
     public function show(string $id, MinifigureTotals $totals): Response
@@ -152,6 +189,29 @@ class MinifiguresController extends Controller
 
         return to_route('minifigures.show', $itemId)
             ->with('flash', ['message' => __('app.collection.removed')]);
+    }
+
+    /**
+     * Список и выгрузка спрашивают об одном и том же, поэтому и фильтр читают
+     * одними правилами: разойдись они, выгрузка отдала бы не то, что на экране.
+     *
+     * @return array<string, mixed>
+     */
+    private function filters(Request $request): array
+    {
+        return ListFilters::read($request, [
+            'q' => ['string', 'max:120'],
+            'theme_id' => ['integer'],
+            'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
+            'tag_id' => ['integer'],
+            'placement' => ['string', 'in:set,loose'],
+        ], switches: ['lost']);
+    }
+
+    /** @return array{by: string, dir: string} */
+    private function sort(Request $request): array
+    {
+        return ListSort::read($request, ['id', 'name', 'year', 'parts'], 'name');
     }
 
     /** @return array<int, array<string, mixed>> */
