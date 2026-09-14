@@ -176,6 +176,29 @@ class IngressTest extends TestCase
     }
 
     /**
+     * «Назад» в никуда.
+     *
+     * Когда ни предыдущей страницы в сессии, ни Referer нет, back() падает на
+     * корень и отдаёт голое «http://хост» — адрес без пути. Прежде такой
+     * пропускался как «нечего переписывать», и наружу уходил ровно тот
+     * абсолютный редирект, который браузер под ингрессом блокирует.
+     */
+    public function test_a_redirect_to_the_bare_root_is_relative_too(): void
+    {
+        DB::table('bl_item_types')->insert(['code' => 'S', 'name' => 'Set']);
+        DB::table('bl_items')->insert([
+            'type' => 'S', 'id' => 'falcon', 'name' => 'Falcon',
+            'image_color_id' => 0, 'has_inventory' => 0,
+        ]);
+
+        $response = $this->post('/wishlist', ['type' => 'S', 'id' => 'falcon'], $this->headers());
+
+        $response->assertRedirect();
+
+        $this->assertSame(self::PREFIX.'/', (string) $response->headers->get('Location'));
+    }
+
+    /**
      * Заголовок переписывает корень всех ссылок на странице, поэтому верить ему
      * можно только там, где его больше некому прислать.
      */

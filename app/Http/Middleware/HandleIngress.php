@@ -90,8 +90,17 @@ class HandleIngress
         // этого места, адресовано нам самим.
         $path = parse_url($location, PHP_URL_PATH);
 
-        if ($path === false || $path === null) {
+        if ($path === false) {
             return $response;
+        }
+
+        // Адрес без пути — это корень: back() падает на него, когда ни
+        // предыдущей страницы в сессии, ни Referer нет, и отдаёт голое
+        // «http://хост». Пропустив такой адрес как «нечего переписывать», мы
+        // оставляли ровно тот абсолютный редирект, из-за которого всё и
+        // затевалось.
+        if ($path === null || $path === '') {
+            $path = '/';
         }
 
         $query = parse_url($location, PHP_URL_QUERY);
