@@ -37,6 +37,7 @@ const form = reactive({
     year: props.filters.year ?? null,
     tag_id: props.filters.tag_id ?? null,
     placement: props.filters.placement ?? null,
+    lost: Boolean(props.filters.lost),
     sort: chosenSort,
     dir: props.sort.dir ?? 'asc',
 });
@@ -59,12 +60,16 @@ function clean() {
 
 function reset() {
     Object.assign(form, {
-        q: '', theme_id: null, year: null, tag_id: null, placement: null, sort: null, dir: 'asc',
+        q: '', theme_id: null, year: null, tag_id: null, placement: null, lost: false,
+        sort: null, dir: 'asc',
     });
 }
 
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.theme_id, form.year, form.tag_id, form.placement, form.sort, form.dir], submit);
+watch(
+    () => [form.theme_id, form.year, form.tag_id, form.placement, form.lost, form.sort, form.dir],
+    submit,
+);
 
 /**
  * A figure is the same figure whether it came in a set or on its own, so the
@@ -164,6 +169,17 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
                             :placeholder="t('catalog.any')"
                         />
                         <div class="form-text">{{ t('minifigures.tag_hint') }}</div>
+                    </div>
+
+                    <!-- Число потерянных считалось и рисовалось бейджем на
+                         карточке, а отобрать по нему было нельзя: увидеть
+                         пропажу можно было, только открыв набор. -->
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input id="lost" v-model="form.lost" class="form-check-input" type="checkbox" />
+                            <label class="form-check-label" for="lost">{{ t('minifigures.lost') }}</label>
+                        </div>
+                        <div class="form-text">{{ t('minifigures.lost_hint') }}</div>
                     </div>
 
                     <!-- Порядок — отдельной строкой внизу: он отвечает не на

@@ -180,6 +180,8 @@ return [
         'in_sets_badge' => 'in :count set|in :count sets',
         'loose_badge' => ':count on its own|:count on their own',
         'tag_hint' => 'Tags belong to a copy owned on its own; a figure inside a set does not inherit tags from it.',
+        'lost' => 'Missing',
+        'lost_hint' => 'Figures a set of yours is missing. A figure owned on its own is never marked missing — if it is gone, it is not in the collection.',
         'tab_parts' => 'Parts',
         'tab_entries' => 'In sets',
         'tab_copies' => 'On their own',

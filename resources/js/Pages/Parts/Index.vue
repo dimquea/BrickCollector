@@ -16,6 +16,8 @@ const props = defineProps({
     sort: { type: Object, default: () => ({}) },
     parts: { type: Object, required: true },
     colours: { type: Array, default: () => [] },
+    // Только теги, проставленные партиям: остальные ничего не нашли бы.
+    tags: { type: Array, default: () => [] },
 });
 
 const sortOptions = computed(() => [
@@ -31,9 +33,23 @@ const form = reactive({
     q: props.filters.q ?? '',
     color_id: props.filters.color_id ?? null,
     placement: props.filters.placement ?? null,
+    tag_id: props.filters.tag_id ?? null,
     lost: Boolean(props.filters.lost),
     sort: chosenSort,
     dir: props.sort.dir ?? 'asc',
+});
+
+// Тег принадлежит партии, поэтому спрашивать о нём есть смысл только там, где
+// речь о партиях. При смене места выбранный тег сбрасывается — иначе он остался
+// бы в адресе невидимым и молча сужал список.
+const tagOptions = computed(() => props.tags.map((tag) => ({ value: tag.id, label: tag.name })));
+
+const showsTags = computed(() => form.placement === 'loose' && props.tags.length > 0);
+
+watch(() => form.placement, (placement) => {
+    if (placement !== 'loose') {
+        form.tag_id = null;
+    }
 });
 
 function submit() {
@@ -54,11 +70,13 @@ function clean() {
 }
 
 function reset() {
-    Object.assign(form, { q: '', color_id: null, placement: null, lost: false, sort: null, dir: 'asc' });
+    Object.assign(form, {
+        q: '', color_id: null, placement: null, tag_id: null, lost: false, sort: null, dir: 'asc',
+    });
 }
 
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.color_id, form.placement, form.lost, form.sort, form.dir], submit);
+watch(() => [form.color_id, form.placement, form.tag_id, form.lost, form.sort, form.dir], submit);
 
 /** A badge or a colour dot in the table is also a way to narrow the list. */
 function filterByArticle(itemId) {
@@ -126,6 +144,18 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             id="placement"
                             v-model="form.placement"
                             :options="placementOptions"
+                            :placeholder="t('catalog.any')"
+                        />
+                    </div>
+
+                    <!-- Тег принадлежит партии, поэтому спрашивать о нём есть
+                         смысл только там, где речь о партиях. -->
+                    <div v-if="showsTags" class="col-12 col-lg-3">
+                        <label for="tag" class="form-label">{{ t('collection.tags') }}</label>
+                        <SearchSelect
+                            id="tag"
+                            v-model="form.tag_id"
+                            :options="tagOptions"
                             :placeholder="t('catalog.any')"
                         />
                     </div>

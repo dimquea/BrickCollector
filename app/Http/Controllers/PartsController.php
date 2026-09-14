@@ -44,6 +44,7 @@ class PartsController extends Controller
             'q' => ['string', 'max:120'],
             'color_id' => ['integer'],
             'placement' => ['string', 'in:set,minifigure,loose,assembly'],
+            'tag_id' => ['integer'],
         ], switches: ['lost']);
 
         $sort = ListSort::read($request, ['name', 'id', 'total'], 'name');
@@ -53,6 +54,17 @@ class PartsController extends Controller
             'sort' => $sort,
             'parts' => $totals->filters($filters)->sort($sort)->paginate(Settings::perPage('parts')),
             'colours' => $totals->colours(),
+            // Только те теги, которые кому-то из партий действительно
+            // проставлены: предлагать тег, заведомо дающий пустой список, —
+            // обещание, которого фильтр не выполнит.
+            'tags' => Tag::whereExists(fn ($query) => $query
+                ->from('entry_tags')
+                ->join('collection_entries as e', 'e.id', '=', 'entry_tags.entry_id')
+                ->whereColumn('entry_tags.tag_id', 'ref_tags.id')
+                ->where('e.item_type', 'P')
+                ->selectRaw('1'))
+                ->orderBy('sort')
+                ->get(['id', 'name', 'color']),
         ]);
     }
 

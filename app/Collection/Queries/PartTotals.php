@@ -183,6 +183,28 @@ class PartTotals
             $query->where('ci.color_id', $this->filters['color_id']);
         }
 
+        // Тег принадлежит партии, а не детали, поэтому отбор идёт по парам
+        // «артикул + цвет», встречающимся в помеченных партиях, — и уже потому
+        // означает «среди свободных»: теги есть только у того, чем владеют
+        // отдельно.
+        //
+        // Условие связывает подзапрос с парой, а не со строкой: отбери мы
+        // строки, из счётчиков пропали бы вхождения в наборы, и деталь
+        // показала бы «в коллекции 2» вместо «12».
+        if (($this->filters['tag_id'] ?? null) !== null && $this->filters['tag_id'] !== '') {
+            $query->whereExists(fn ($sub) => $sub
+                ->from('collection_items as tagged')
+                ->join('collection_entries as owner', 'owner.id', '=', 'tagged.entry_id')
+                ->join('entry_tags', 'entry_tags.entry_id', '=', 'owner.id')
+                ->whereColumn('tagged.item_id', 'ci.item_id')
+                ->whereColumn('tagged.color_id', 'ci.color_id')
+                ->whereNull('tagged.parent_id')
+                ->where('tagged.item_type', 'P')
+                ->where('owner.item_type', 'P')
+                ->where('entry_tags.tag_id', $this->filters['tag_id'])
+                ->selectRaw('1'));
+        }
+
         // A part whose every occurrence is an alternate or a counterpart is
         // not in the collection at all: the alternate is the version that was
         // not used, and a counterpart is another lot counted elsewhere. Spares
