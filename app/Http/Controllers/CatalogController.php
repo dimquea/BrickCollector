@@ -98,8 +98,27 @@ class CatalogController extends Controller
         // has either.
         $lots = $item->type === 'P' ? PartPlaces::lots($item->id) : collect();
 
+        // Цвет, в котором смотрят деталь. Приходит из адреса — со страницы
+        // детали, из состава набора, из желаемого — и держит всю карточку:
+        // картинку, внешние ссылки, окно добавления и желание. Прежде цвет знало
+        // одно лишь желание, и карточка, открытая в Reddish Brown, предлагала
+        // добавить деталь в Dark Tan — том цвете, в каком она нарисована.
+        $asked = $request->query('color');
+        $asked = $item->type === 'P' && ctype_digit((string) $asked) ? (int) $asked : null;
+
+        $colours = $item->type === 'P' ? $this->colours($item, $lots, $asked) : [];
+
+        // Цвет, которого справочник не знает, отбрасывается: адрес правят руками
+        // и пересылают, и ?color=нечто заслуживает обычной карточки, а не отказа
+        // и не картинки, которой нет.
+        $offered = array_map(static fn (array $row) => (int) $row['id'], $colours);
+
+        $colour = $asked !== null && in_array($asked, $offered, true)
+            ? $asked
+            : (int) $item->image_color_id;
+
         return Inertia::render('Catalog/Show', [
-            'links' => ExternalLinks::for($item->type, $item->id, $item->image_color_id),
+            'links' => ExternalLinks::for($item->type, $item->id, $colour),
             'item' => [
                 'type' => $item->type,
                 'id' => $item->id,
@@ -116,7 +135,8 @@ class CatalogController extends Controller
             'inventory' => $tree,
             'totals' => $inventory->summarise($tree),
             'elementCodes' => $this->elementCodes($item),
-            'colours' => $item->type === 'P' ? $this->colours($item, $lots) : [],
+            'colour' => $colour,
+            'colours' => $colours,
             'lots' => $lots->values(),
             // A part can also go straight into an assembly: bought for the
             // model being built, not for the drawer.
@@ -319,9 +339,10 @@ class CatalogController extends Controller
      * leave every other one impossible to record.
      *
      * @param  Collection<int, array<string, mixed>>  $lots
+     * @param  int|null  $asked  цвет, в котором пришли смотреть
      * @return array<int, array<string, mixed>>
      */
-    private function colours(Item $item, Collection $lots): array
+    private function colours(Item $item, Collection $lots, ?int $asked = null): array
     {
         $known = DB::table('bl_element_codes')
             ->where('item_type', 'P')
@@ -335,6 +356,13 @@ class CatalogController extends Controller
             $query->whereIn('id', $known
                 ->merge($lots->pluck('color_id'))
                 ->push((int) $item->image_color_id)
+                // Цвет, в котором пришли, предлагается даже когда кода элемента
+                // на него нет: в наборе деталь в этом цвете есть, раз оттуда
+                // пришли. Числа, которого справочник не знает, соединение не
+                // вернёт, и оно отсеется само. Ноль — цвет, а не пустота,
+                // поэтому отсеивается только null.
+                ->push($asked)
+                ->filter(fn ($id) => $id !== null)
                 ->unique()
                 ->values());
         }

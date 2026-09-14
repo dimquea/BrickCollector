@@ -23,6 +23,8 @@ const props = defineProps({
     elementCodes: { type: Array, default: () => [] },
     // A part only: what the add dialog offers.
     colours: { type: Array, default: () => [] },
+    // Цвет, в котором смотрят предмет: пришёл из адреса или это цвет картинки.
+    colour: { type: Number, default: 0 },
     lots: { type: Array, default: () => [] },
     assemblies: { type: Array, default: () => [] },
     // What this item is part of — null when nothing lists it.
@@ -38,15 +40,22 @@ const adding = ref(false);
 const dialog = ref(null);
 
 /*
- * Желаемое. Деталь хотят в цвете, поэтому у неё рядом с кнопкой стоит выбор
- * цвета, а у набора и фигурки выбирать нечего — там цвет всегда 0.
+ * Цвет, в котором смотрят деталь.
+ *
+ * Один на всю карточку: картинка, внешние ссылки, окно добавления и желание
+ * отвечают за один и тот же цвет. Прежде его знало только желание, и карточка,
+ * открытая со страницы детали в Reddish Brown, предлагала добавить Dark Tan.
+ *
+ * У набора и фигурки выбирать нечего — там цвет всегда 0.
  */
-const wishColour = ref(props.item.image_color_id ?? 0);
+const colour = ref(props.colour);
 
-// Те же цвета, что предлагает окно добавления: известные по кодам элементов,
-// плюс уже имеющиеся и цвет картинки.
-const wishColourOptions = computed(() =>
-    props.colours.map((colour) => ({ value: colour.id, label: colour.name, rgb: colour.rgb })),
+watch(() => props.colour, (value) => (colour.value = value));
+
+// Известные по кодам элементов, плюс уже имеющиеся, цвет картинки и тот, в
+// котором пришли.
+const colourOptions = computed(() =>
+    props.colours.map((row) => ({ value: row.id, label: row.name, rgb: row.rgb })),
 );
 
 // Своя копия: кнопка меняет вид сразу по ответу, не уходя со страницы. Возврат
@@ -57,9 +66,9 @@ const wishes = ref([...props.wishes]);
 watch(() => props.wishes, (value) => (wishes.value = [...value]));
 
 const wish = computed(() => {
-    const colour = isPart.value ? Number(wishColour.value) : 0;
+    const wanted = isPart.value ? Number(colour.value) : 0;
 
-    return wishes.value.find((row) => row.color_id === colour) ?? null;
+    return wishes.value.find((row) => row.color_id === wanted) ?? null;
 });
 
 const wishing = ref(false);
@@ -78,7 +87,7 @@ async function toggleWish() {
             const { data } = await axios.post(url('/wishlist'), {
                 type: props.item.type,
                 id: props.item.id,
-                color_id: isPart.value ? Number(wishColour.value) : null,
+                color_id: isPart.value ? Number(colour.value) : null,
             });
 
             wishes.value = [...wishes.value, data.wish];
@@ -95,7 +104,8 @@ async function toggleWish() {
 // so it asks first. Anything else is added as one whole thing straight away.
 function addToCollection(colorId = null) {
     if (isPart.value) {
-        dialog.value.open(colorId);
+        // Без явного цвета — тот, в котором смотрят карточку.
+        dialog.value.open(colorId ?? colour.value);
 
         return;
     }
@@ -117,15 +127,26 @@ const hasParts = computed(() => props.inventory.some((lot) => lot.type === 'P'))
  * each change is a visit. The state stays with the page, which is what makes a
  * link to "this brick, in black" work.
  */
-const parentsHref = (kind, colour, page = 1) => {
+const cardHref = ({
+    colorId = colour.value,
+    kind = props.parents?.kind,
+    inColour = props.parents?.colour,
+    page = 1,
+} = {}) => {
     const query = new URLSearchParams();
+
+    // Цвет картинки в адрес не пишется: это и есть «просто карточка», и ссылка
+    // на неё должна остаться короткой.
+    if (isPart.value && Number(colorId) !== Number(props.item.image_color_id)) {
+        query.set('color', colorId);
+    }
 
     if (kind) {
         query.set('in', kind);
     }
 
-    if (colour !== null && colour !== undefined && colour !== '') {
-        query.set('in_color', colour);
+    if (inColour !== null && inColour !== undefined && inColour !== '') {
+        query.set('in_color', inColour);
     }
 
     if (page > 1) {
@@ -136,6 +157,19 @@ const parentsHref = (kind, colour, page = 1) => {
 
     return `/catalog/${props.item.type}/${encodeURIComponent(props.item.id)}${search ? `?${search}` : ''}`;
 };
+
+const parentsHref = (kind, inColour, page = 1) => cardHref({ kind, inColour, page });
+
+// Цвет живёт в адресе по той же причине, что и вкладка: ссылку «2445 в Reddish
+// Brown» пересылают, а внешние ссылки и картинку из кэша считает сервер —
+// разойдись они с выбором, кнопка BrickLink повела бы не в тот цвет.
+watch(colour, (value) => {
+    if (Number(value) === Number(props.colour)) {
+        return;
+    }
+
+    router.get(url(cardHref({ colorId: value })), {}, { preserveScroll: true, preserveState: true });
+});
 
 const colourFilter = ref(props.parents?.colour ?? null);
 
@@ -185,12 +219,23 @@ const parentRows = computed(() => props.parents?.rows?.data ?? []);
                     <ItemImage
                         :type="item.type"
                         :id="item.id"
-                        :color-id="item.image_color_id"
+                        :color-id="Number(colour)"
                         :alt="item.name"
                         class="card-img-top p-3"
                     />
 
                     <div class="card-body d-grid gap-2">
+                        <!-- Цвет всей карточки, а не одного лишь желания: в нём
+                             и картинка, и внешние ссылки, и окно добавления.
+                             Поэтому он стоит первым, до кнопок, а не между
+                             ними. У набора и фигурки выбирать нечего. -->
+                        <SearchSelect
+                            v-if="isPart && colourOptions.length"
+                            id="colour"
+                            v-model="colour"
+                            :options="colourOptions"
+                        />
+
                         <button
                             type="button"
                             class="btn btn-primary"
@@ -200,15 +245,6 @@ const parentRows = computed(() => props.parents?.rows?.data ?? []);
                             <i class="mdi mdi-plus"></i>
                             {{ t('collection.add') }}
                         </button>
-
-                        <!-- Деталь хотят в цвете, поэтому у неё рядом с кнопкой
-                             стоит выбор; у набора и фигурки выбирать нечего. -->
-                        <SearchSelect
-                            v-if="isPart && wishColourOptions.length"
-                            id="wishColour"
-                            v-model="wishColour"
-                            :options="wishColourOptions"
-                        />
 
                         <button
                             type="button"

@@ -88,7 +88,10 @@ const typeOptions = computed(() => props.itemTypes.map((type) => ({ value: type.
 const themeOptions = computed(() => props.themes.map((theme) => ({ value: theme.id, label: theme.path })));
 const yearOptions = computed(() => props.years.map((year) => ({ value: year, label: String(year) })));
 
-const href = (item) => `/catalog/${item.type}/${encodeURIComponent(item.id)}`;
+// Деталь хотят в цвете — карточка должна открыться в нём же, а не в том, в
+// каком деталь нарисована в справочнике.
+const href = (item) => `/catalog/${item.type}/${encodeURIComponent(item.id)}`
+    + (item.type === 'P' && item.color_id ? `?color=${item.color_id}` : '');
 
 /**
  * Убирает желание, не сходя со страницы.

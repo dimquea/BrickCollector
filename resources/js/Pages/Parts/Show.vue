@@ -75,7 +75,7 @@ const lotDate = (lot) =>
                         <span>{{ part.name }}</span>
                     </div>
 
-                    <Link :href="`/catalog/P/${encodeURIComponent(part.item_id)}`">
+                    <Link :href="`/catalog/P/${encodeURIComponent(part.item_id)}?color=${part.color_id}`">
                         <ItemImage
                             type="P"
                             :id="part.item_id"
@@ -121,7 +121,7 @@ const lotDate = (lot) =>
                             {{ t('collection.lost') }}: {{ part.lost }}
                         </span>
                         <Link
-                            :href="`/catalog/P/${encodeURIComponent(part.item_id)}`"
+                            :href="`/catalog/P/${encodeURIComponent(part.item_id)}?color=${part.color_id}`"
                             class="btn btn-sm btn-link ms-auto p-0"
                         >
                             {{ t('collection.open_in_catalog') }}

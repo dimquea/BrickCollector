@@ -33,7 +33,7 @@ const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
 const href = (lot) =>
     lot.counts || lot.is_extra
         ? `/parts/${encodeURIComponent(lot.item_id)}/${lot.color_id}`
-        : `/catalog/P/${encodeURIComponent(lot.item_id)}`;
+        : `/catalog/P/${encodeURIComponent(lot.item_id)}?color=${lot.color_id}`;
 </script>
 
 <template>
