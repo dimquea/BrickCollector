@@ -228,12 +228,15 @@ onBeforeUnmount(() => {
                             <i class="mdi mdi-camera-outline"></i>
                             {{ t('recognition.camera') }}
                         </label>
+                        <!-- Прячется клипом, а не display:none: у снятого с
+                             отрисовки поля браузеры пропускают capture мимо
+                             ушей, и «снять камерой» открывает выбор файла. -->
                         <input
                             id="photoCamera"
                             type="file"
                             accept="image/*"
                             capture="environment"
-                            class="d-none"
+                            class="visually-hidden"
                             @change="choose"
                         />
                     </div>
