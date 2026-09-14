@@ -219,6 +219,29 @@ class PartLotsTest extends TestCase
                 ->where('loose.0.qty', 2));
     }
 
+    /**
+     * Тег ставят партии, и до сих пор узнать о нём можно было, только открыв
+     * её саму. Показываются все теги, а не только помеченные «показывать в
+     * списке»: тот флаг про карточки, а здесь мы вытаскиваем наружу скрытое.
+     */
+    public function test_the_part_page_shows_the_tags_of_its_lots(): void
+    {
+        DB::table('ref_tags')->insert([
+            ['id' => 1, 'name' => 'Б/У', 'color' => 'secondary', 'sort' => 1, 'show_in_list' => 0],
+        ]);
+
+        $this->add(['qty' => 2, 'color_id' => 10]);
+
+        DB::table('entry_tags')->insert(['entry_id' => Entry::first()->id, 'tag_id' => 1]);
+
+        $this->get('/parts/track/10')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('loose.0.tags', 1)
+                ->where('loose.0.tags.0.name', 'Б/У')
+                ->where('loose.0.tags.0.color', 'secondary'));
+    }
+
     public function test_the_catalogue_offers_the_known_colours_and_the_lots_held(): void
     {
         $this->add(['qty' => 2, 'color_id' => 10]);

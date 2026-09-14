@@ -75,12 +75,28 @@ class PartsController extends Controller
         abort_if($part === null, 404);
 
         $places = new PartPlaces($id, $color);
+        $loose = $places->loose();
+
+        // Теги партий — одним запросом на всю вкладку. Показываются все, а не
+        // только помеченные «показывать в списке»: тот флаг про карточки в
+        // списках, а здесь мы как раз вытаскиваем наружу то, что иначе видно
+        // только на странице самой партии.
+        $tags = DB::table('entry_tags')
+            ->join('ref_tags as t', 't.id', '=', 'entry_tags.tag_id')
+            ->whereIn('entry_tags.entry_id', $loose->pluck('entry_id'))
+            ->orderBy('t.sort')
+            ->get(['entry_tags.entry_id', 't.name', 't.color'])
+            ->groupBy('entry_id');
 
         return Inertia::render('Parts/Show', [
             'links' => ExternalLinks::for('P', $id, $color),
             'part' => $part,
             'inEntries' => $places->inEntries(),
-            'loose' => $places->loose(),
+            'loose' => $loose->map(fn (array $lot) => $lot + [
+                'tags' => collect($tags->get($lot['entry_id'], []))
+                    ->map(fn ($tag) => ['name' => $tag->name, 'color' => $tag->color])
+                    ->values(),
+            ]),
             // Картинка сборки — не из справочника: её загружает владелец, и
             // знать о ней может только файл на диске.
             'assemblies' => $places->assemblies()->map(fn (array $row) => $row + [

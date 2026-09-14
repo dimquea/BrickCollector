@@ -191,6 +191,19 @@ const lotDate = (lot) =>
                                             >
                                                 {{ [lot.storage, lot.source].filter(Boolean).join(' · ') }}
                                             </div>
+
+                                            <!-- Теги партии: иначе о них можно
+                                                 узнать, только открыв её. -->
+                                            <div v-if="lot.tags?.length" class="d-flex flex-wrap gap-1 mt-1">
+                                                <span
+                                                    v-for="tag in lot.tags"
+                                                    :key="tag.name"
+                                                    class="badge"
+                                                    :class="`text-bg-${tag.color}`"
+                                                >
+                                                    {{ tag.name }}
+                                                </span>
+                                            </div>
                                         </td>
                                         <td class="text-end">
                                             <span v-if="lot.lost" class="badge text-bg-warning me-2">
