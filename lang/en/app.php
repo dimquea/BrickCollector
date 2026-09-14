@@ -99,7 +99,6 @@ return [
         'unavailable' => 'The service does not answer',
         'search' => 'Search by photo',
         'file' => 'Photo file',
-        'camera' => 'Take a photo',
         'warning' => 'The photo will be sent to Brickognize, an outside service, and will stay with it.',
         'find' => 'Search',
         'searching' => 'Searching…',

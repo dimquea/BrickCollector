@@ -209,37 +209,21 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="modal-body">
+                    <!-- Отдельной кнопки «снять камерой» здесь нет намеренно.
+                         Под панелью Home Assistant приложение живёт в iframe,
+                         которому камера не разрешена, и capture там молча
+                         оборачивается тем же выбором файла — обещать съёмку
+                         значило бы обещать то, чего в аддоне не произойдёт.
+                         Системный выбор на телефоне и так предлагает снять. -->
                     <label for="photoFile" class="form-label">{{ t('recognition.file') }}</label>
-                    <div class="d-flex flex-wrap gap-2 align-items-start">
-                        <input
-                            id="photoFile"
-                            ref="picker"
-                            type="file"
-                            accept="image/*"
-                            class="form-control"
-                            style="min-width: 12rem"
-                            @change="choose"
-                        />
-
-                        <!-- Съёмка — тот же выбор файла с подсказкой браузеру
-                             открыть камеру. На телефоне это камера, на
-                             настольном — обычное окно выбора. -->
-                        <label class="btn btn-outline-secondary text-nowrap mb-0" for="photoCamera">
-                            <i class="mdi mdi-camera-outline"></i>
-                            {{ t('recognition.camera') }}
-                        </label>
-                        <!-- Прячется клипом, а не display:none: у снятого с
-                             отрисовки поля браузеры пропускают capture мимо
-                             ушей, и «снять камерой» открывает выбор файла. -->
-                        <input
-                            id="photoCamera"
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            class="visually-hidden"
-                            @change="choose"
-                        />
-                    </div>
+                    <input
+                        id="photoFile"
+                        ref="picker"
+                        type="file"
+                        accept="image/*"
+                        class="form-control"
+                        @change="choose"
+                    />
 
                     <div v-if="preview" class="text-center my-3">
                         <img :src="preview" :alt="t('recognition.search')" class="img-fluid rounded" style="max-height: 14rem" />
@@ -260,37 +244,41 @@ onBeforeUnmount(() => {
                             <ColorDot :rgb="colour.rgb" :name="colour.name" />
                         </p>
 
+                        <!-- Кликается вся строка, отдельной кнопки нет: на узком
+                             экране она не влезала и растягивала модалку вбок.
+                             Кнопка, а не div со слушателем, — чтобы строка
+                             доставалась и с клавиатуры; внутри только строчная
+                             разметка, блочной кнопке нельзя. -->
                         <div class="list-group list-group-flush">
-                            <div v-for="item in items" :key="`${item.type}/${item.id}`" class="list-group-item px-0">
-                                <div class="d-flex gap-3 align-items-center">
-                                    <ItemImage
-                                        :type="item.type"
-                                        :id="item.id"
-                                        :color-id="item.type === 'P' && colour ? colour.id : item.image_color_id"
-                                        :alt="item.name"
-                                        style="width: 4rem"
-                                    />
+                            <button
+                                v-for="item in items"
+                                :key="`${item.type}/${item.id}`"
+                                type="button"
+                                class="list-group-item list-group-item-action d-flex gap-3 align-items-center px-0"
+                                :title="t('recognition.open')"
+                                @click="openItem(item)"
+                            >
+                                <ItemImage
+                                    :type="item.type"
+                                    :id="item.id"
+                                    :color-id="item.type === 'P' && colour ? colour.id : item.image_color_id"
+                                    :alt="item.name"
+                                    style="width: 4rem"
+                                />
 
-                                    <div class="flex-grow-1">
-                                        <div class="line-clamp-2" :title="item.name">{{ item.name }}</div>
-                                        <div class="d-flex align-items-center gap-1 mt-1">
-                                            <span class="badge text-bg-light border">{{ item.id }}</span>
-                                            <span
-                                                class="badge text-bg-light"
-                                                :title="t('recognition.score')"
-                                            >{{ Math.round(item.score * 100) }}%</span>
-                                        </div>
-                                    </div>
+                                <span class="flex-grow-1 text-start">
+                                    <span class="d-block line-clamp-2">{{ item.name }}</span>
+                                    <span class="d-flex align-items-center gap-1 mt-1">
+                                        <span class="badge text-bg-light border">{{ item.id }}</span>
+                                        <span
+                                            class="badge text-bg-light"
+                                            :title="t('recognition.score')"
+                                        >{{ Math.round(item.score * 100) }}%</span>
+                                    </span>
+                                </span>
 
-                                    <button
-                                        type="button"
-                                        class="btn btn-sm btn-outline-primary text-nowrap"
-                                        @click="openItem(item)"
-                                    >
-                                        {{ t('recognition.open') }}
-                                    </button>
-                                </div>
-                            </div>
+                                <i class="mdi mdi-chevron-right text-body-secondary flex-shrink-0"></i>
+                            </button>
                         </div>
                     </template>
 
