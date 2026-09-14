@@ -36,6 +36,15 @@ own purchase details.
 many you have in total, how many sit in sets, how many inside minifigures, how
 many loose — and which copies each of them came from.
 
+**Loose parts.** A part bought on its own is a lot: a date, a price, a drawer, a
+page of its own and a quantity you can change. Adding one asks how many, in
+which colour, and whether it starts a new lot or tops up one already held.
+
+**Assemblies.** A model of your own making — a group of loose parts with a name,
+a photo and notes. Parts move in from the loose pile and back out again, so the
+collection holds the same bricks either way, and an assembly knows what it is
+still short of.
+
 **Your own notes.** Purchase date, price, source and storage place; tags and
 statuses you define yourself; a free-form note. Only the two statuses that ship
 with the application — box and instructions — cannot be deleted.
@@ -44,6 +53,15 @@ with the application — box and instructions — cannot be deleted.
 theme and by release year. The numbers are links: click one and the section
 opens filtered to exactly what was counted.
 
+**A wishlist.** What the collection does not hold but you want, added from the
+catalogue — a part in a colour, since that is how a part is wanted. A list and
+nothing more: a price and a storage place describe something you already own.
+
+**Export.** Any list, exactly as you have filtered it, as BrickLink XML: what
+you hold as an inventory, what you are missing as a wanted list with the sets it
+is missing from written in the remarks. An assembly exports both — what it is
+made of, and what it still needs.
+
 **Elsewhere.** Buttons to BrickLink, Rebrickable and Brickset on every detail
 page, plus two blocks for whatever else you use. The addresses are patterns you
 can edit.
@@ -51,6 +69,10 @@ can edit.
 **Two languages.** English and Russian, switchable in the settings. Catalogue
 names stay as BrickLink writes them — that is the data, and that is what search
 matches.
+
+**The look.** Light, dark, or whatever the device is set to. Lists order
+themselves by item number, name, year or how much is held, and the order lives
+in the address, so a filtered and sorted list is a link you can send to someone.
 
 ## Installing
 

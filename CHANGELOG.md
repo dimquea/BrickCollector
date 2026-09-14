@@ -3,6 +3,45 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.3.0 — 2026-09-14
+
+### Added
+
+- **Export to BrickLink XML** — a button beside the ordering in every list, and what comes
+  out is exactly what the filter shows. What you hold goes out as an inventory counted in
+  QTY; what is missing goes out as a wanted list asked for in MINQTY, carrying the sets it
+  is missing from in the remarks. Sets, minifigures, parts and the wishlist each export
+  their own list; an assembly exports what it is made of, and separately what it still
+  needs. The hint on the button says which of the two is about to happen — the files look
+  alike and BrickLink reads them very differently.
+- **Two more filters** — minifigures a set is missing, and parts by a tag put on a loose
+  lot. Both were recorded and neither could be asked for: a missing figure showed as a
+  badge, but finding one meant opening sets one by one, and a tag showed only on the page
+  of the lot it was put on.
+- **Lot tags on the part page** — the "loose" tab names what is on each lot, so what is
+  second-hand or set aside is visible without opening the lot itself.
+
+### Changed
+
+- **A colour option shows its colour.** Every colour select carries the same swatch as the
+  tables do, in the dropdown and in the field: Dark Bluish Gray and Light Bluish Gray tell
+  apart by name only on a second reading.
+- Adding or removing a wish no longer navigates anywhere — the button changes on the
+  answer, and the page stays where it was.
+
+### Fixed
+
+- **The catalogue card had no colour of its own.** Opening a part from its own page landed
+  on the card in the colour the part is drawn in, not the one just being looked at; and the
+  select on the card was read by the wish button alone, so choosing a colour there changed
+  neither the picture, nor the links out, nor the colour the add dialog opened in. The
+  colour now lives in the address and governs all of them.
+- Under Home Assistant every redirect went out as an absolute address, which the panel
+  refuses. Adding to the wishlist failed there, and the message about what had happened sat
+  in the session until some later page showed it. Redirects are relative now, including the
+  one that carries no path at all.
+- Removing a wish twice answered 404 for an action that had in fact succeeded.
+
 ## 1.2.0 — 2026-09-13
 
 ### Added
