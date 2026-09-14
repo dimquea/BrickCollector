@@ -157,21 +157,17 @@ class IngressTest extends TestCase
      */
     public function test_a_redirect_back_is_relative_even_when_it_names_another_host(): void
     {
-        DB::table('bl_item_types')->insert(['code' => 'S', 'name' => 'Set']);
-        DB::table('bl_items')->insert([
-            'type' => 'S', 'id' => 'falcon', 'name' => 'Falcon',
-            'image_color_id' => 0, 'has_inventory' => 0,
-        ]);
+        $assembly = Entry::create(['name' => 'Moon base']);
 
-        $response = $this->post('/wishlist', ['type' => 'S', 'id' => 'falcon'], $this->headers([
-            'Referer' => 'http://192.168.0.10/catalog/S/falcon',
+        $response = $this->delete('/assemblies/'.$assembly->id.'/image', [], $this->headers([
+            'Referer' => 'http://192.168.0.10/assemblies/'.$assembly->id,
         ]));
 
         $response->assertRedirect();
 
         $location = (string) $response->headers->get('Location');
 
-        $this->assertStringStartsWith(self::PREFIX.'/catalog/S/falcon', $location);
+        $this->assertStringStartsWith(self::PREFIX.'/assemblies/'.$assembly->id, $location);
         $this->assertStringNotContainsString('192.168.0.10', $location);
     }
 
@@ -185,13 +181,9 @@ class IngressTest extends TestCase
      */
     public function test_a_redirect_to_the_bare_root_is_relative_too(): void
     {
-        DB::table('bl_item_types')->insert(['code' => 'S', 'name' => 'Set']);
-        DB::table('bl_items')->insert([
-            'type' => 'S', 'id' => 'falcon', 'name' => 'Falcon',
-            'image_color_id' => 0, 'has_inventory' => 0,
-        ]);
+        $assembly = Entry::create(['name' => 'Moon base']);
 
-        $response = $this->post('/wishlist', ['type' => 'S', 'id' => 'falcon'], $this->headers());
+        $response = $this->delete('/assemblies/'.$assembly->id.'/image', [], $this->headers());
 
         $response->assertRedirect();
 

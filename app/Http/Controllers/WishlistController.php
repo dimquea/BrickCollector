@@ -10,7 +10,7 @@ use App\Collection\Queries\WishedItems;
 use App\Http\ListFilters;
 use App\Http\ListSort;
 use App\Support\Settings;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,7 +72,15 @@ class WishlistController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * Отвечает JSON, а не редиректом.
+     *
+     * Желание добавляют и убирают, не сходя со страницы справочника: кнопка
+     * меняет вид по ответу, и уводить человека никуда не нужно. Прежний возврат
+     * «назад» под Home Assistant вдобавок промахивался — в сессии предыдущей
+     * страницы нет, и он падал на корень, выбрасывая на главную.
+     */
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'type' => ['required', 'string', 'size:1'],
@@ -90,13 +98,16 @@ class WishlistController extends Controller
 
         // Повторное нажатие — не ошибка, а просто ничего: у желания нет
         // количества, и второе такое же ничего к списку не прибавляет.
-        Wish::firstOrCreate([
+        $wish = Wish::firstOrCreate([
             'item_type' => $item->type,
             'item_id' => $item->id,
             'color_id' => $colour,
         ]);
 
-        return back()->with('flash', ['message' => __('app.wishlist.added', ['name' => $item->name])]);
+        return response()->json([
+            'message' => __('app.wishlist.added', ['name' => $item->name]),
+            'wish' => ['id' => $wish->id, 'color_id' => $wish->color_id],
+        ]);
     }
 
     /**
@@ -107,10 +118,10 @@ class WishlistController extends Controller
      * действие, которое на самом деле удалось. Желания нет — значит, всё в
      * порядке.
      */
-    public function destroy(int $wish): RedirectResponse
+    public function destroy(int $wish): JsonResponse
     {
         Wish::find($wish)?->delete();
 
-        return back()->with('flash', ['message' => __('app.wishlist.removed')]);
+        return response()->json(['message' => __('app.wishlist.removed')]);
     }
 }

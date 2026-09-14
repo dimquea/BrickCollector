@@ -1,7 +1,9 @@
 <script setup>
+import axios from 'axios';
 import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
+import { notify } from '@/support/toasts';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
@@ -79,8 +81,22 @@ const yearOptions = computed(() => props.years.map((year) => ({ value: year, lab
 
 const href = (item) => `/catalog/${item.type}/${encodeURIComponent(item.id)}`;
 
-function remove(item) {
-    router.delete(url(`/wishlist/${item.wish_id}`), { preserveScroll: true });
+/**
+ * Убирает желание, не сходя со страницы.
+ *
+ * Запрос идёт в стороне от навигации, а список потом перечитывается частично:
+ * возврат «назад» здесь промахивался — под Home Assistant в сессии предыдущей
+ * страницы нет, и он выбрасывал на главную.
+ */
+async function remove(item) {
+    try {
+        const { data } = await axios.delete(url(`/wishlist/${item.wish_id}`));
+
+        notify(data.message, 'success', 2000);
+        router.reload({ only: ['items'], preserveScroll: true });
+    } catch (error) {
+        notify(error.response?.data?.message ?? t('errors.save_failed'));
+    }
 }
 
 /** Фильтр с одним вариантом ничего не сужает. */

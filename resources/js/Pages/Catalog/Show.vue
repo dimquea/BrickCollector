@@ -1,7 +1,9 @@
 <script setup>
+import axios from 'axios';
 import { url } from '@/support/base';
 import { computed, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
+import { notify } from '@/support/toasts';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
@@ -47,30 +49,46 @@ const wishColourOptions = computed(() =>
     props.colours.map((colour) => ({ value: colour.id, label: colour.name })),
 );
 
+// Своя копия: кнопка меняет вид сразу по ответу, не уходя со страницы. Возврат
+// «назад» здесь промахивался — под Home Assistant в сессии предыдущей страницы
+// нет, и он выбрасывал на главную.
+const wishes = ref([...props.wishes]);
+
+watch(() => props.wishes, (value) => (wishes.value = [...value]));
+
 const wish = computed(() => {
     const colour = isPart.value ? Number(wishColour.value) : 0;
 
-    return props.wishes.find((row) => row.color_id === colour) ?? null;
+    return wishes.value.find((row) => row.color_id === colour) ?? null;
 });
 
 const wishing = ref(false);
 
-function toggleWish() {
+async function toggleWish() {
     wishing.value = true;
 
-    const options = { preserveScroll: true, onFinish: () => (wishing.value = false) };
+    try {
+        if (wish.value) {
+            const { id } = wish.value;
+            const { data } = await axios.delete(url(`/wishlist/${id}`));
 
-    if (wish.value) {
-        router.delete(url(`/wishlist/${wish.value.id}`), options);
+            wishes.value = wishes.value.filter((row) => row.id !== id);
+            notify(data.message, 'success', 2000);
+        } else {
+            const { data } = await axios.post(url('/wishlist'), {
+                type: props.item.type,
+                id: props.item.id,
+                color_id: isPart.value ? Number(wishColour.value) : null,
+            });
 
-        return;
+            wishes.value = [...wishes.value, data.wish];
+            notify(data.message, 'success', 2000);
+        }
+    } catch (error) {
+        notify(error.response?.data?.message ?? t('errors.save_failed'));
+    } finally {
+        wishing.value = false;
     }
-
-    router.post(url('/wishlist'), {
-        type: props.item.type,
-        id: props.item.id,
-        color_id: isPart.value ? Number(wishColour.value) : null,
-    }, options);
 }
 
 // A part needs a colour and a quantity, and may go onto a lot already held,

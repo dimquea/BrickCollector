@@ -54,10 +54,11 @@ class WishlistTest extends TestCase
 
     public function test_an_item_is_wished_from_the_catalogue(): void
     {
-        $this->from('/catalog/S/falcon')
-            ->post('/wishlist', ['type' => 'S', 'id' => 'falcon'])
-            ->assertRedirect('/catalog/S/falcon')
-            ->assertSessionHas('flash');
+        // Ответ — JSON, а не редирект: желание добавляют, не сходя со страницы
+        // справочника, и кнопка меняет вид по ответу.
+        $this->postJson('/wishlist', ['type' => 'S', 'id' => 'falcon'])
+            ->assertOk()
+            ->assertJsonPath('wish.color_id', 0);
 
         $wish = Wish::first();
 
@@ -143,10 +144,7 @@ class WishlistTest extends TestCase
     {
         $this->post('/wishlist', ['type' => 'S', 'id' => 'falcon']);
 
-        $this->from('/wishlist')
-            ->delete('/wishlist/'.Wish::first()->id)
-            ->assertRedirect('/wishlist')
-            ->assertSessionHas('flash');
+        $this->deleteJson('/wishlist/'.Wish::first()->id)->assertOk();
 
         $this->assertSame(0, Wish::count());
     }
