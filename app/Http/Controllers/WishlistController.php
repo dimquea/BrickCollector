@@ -99,9 +99,17 @@ class WishlistController extends Controller
         return back()->with('flash', ['message' => __('app.wishlist.added', ['name' => $item->name])]);
     }
 
-    public function destroy(Wish $wish): RedirectResponse
+    /**
+     * Убирает желание.
+     *
+     * Принимает номер, а не готовую строку: по двойному клику второй запрос
+     * приходит за тем, чего уже нет, и связывание модели ответило бы 404 на
+     * действие, которое на самом деле удалось. Желания нет — значит, всё в
+     * порядке.
+     */
+    public function destroy(int $wish): RedirectResponse
     {
-        $wish->delete();
+        Wish::find($wish)?->delete();
 
         return back()->with('flash', ['message' => __('app.wishlist.removed')]);
     }

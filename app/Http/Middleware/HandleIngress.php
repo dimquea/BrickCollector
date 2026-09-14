@@ -58,7 +58,7 @@ class HandleIngress
         // приходит к нам без префикса.
         Paginator::currentPathResolver(fn () => $prefix.$request->getPathInfo());
 
-        return $this->makeRedirectRelative($next($request), $prefix, $request);
+        return $this->makeRedirectRelative($next($request), $prefix);
     }
 
     /**
@@ -70,21 +70,24 @@ class HandleIngress
      * худшем просто не дойдёт. Относительный Location разрешён и делает ровно
      * то, что нужно.
      */
-    private function makeRedirectRelative(Response $response, string $prefix, Request $request): Response
+    private function makeRedirectRelative(Response $response, string $prefix): Response
     {
         if (! $response->isRedirection() || ! $response->headers->has('Location')) {
             return $response;
         }
 
         $location = (string) $response->headers->get('Location');
-        $host = parse_url($location, PHP_URL_HOST);
 
-        // Уводит наружу — не наше дело: картинки, например, отправляют браузер
-        // прямо на BrickLink, и префикс там был бы бессмыслицей.
-        if ($host !== null && $host !== $request->getHost()) {
-            return $response;
-        }
-
+        // Хост в Location не проверяется, и это важно. Прежде переписывались
+        // только адреса с нашим хостом, а back() берёт адрес из сессии или из
+        // Referer — там стоит хост, которым нас видит Home Assistant, а не тот,
+        // которым запрос пришёл к нам. Такой редирект уходил абсолютным, браузер
+        // его блокировал, а флаг успеха оставался в сессии и всплывал позже, на
+        // следующей открытой странице.
+        //
+        // Единственный редирект наружу — картинка на BrickLink, и её маршрут
+        // объявлен вне группы web: сюда он не попадает. Всё, что доходит до
+        // этого места, адресовано нам самим.
         $path = parse_url($location, PHP_URL_PATH);
 
         if ($path === false || $path === null) {

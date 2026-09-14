@@ -146,6 +146,36 @@ class IngressTest extends TestCase
     }
 
     /**
+     * «Назад» под ингрессом.
+     *
+     * back() берёт адрес из сессии или из Referer, а там стоит тот хост,
+     * которым приложение видит Home Assistant, — не тот, которым запрос пришёл
+     * к нам. Прежнее правило переписывало Location только при совпадении
+     * хостов, поэтому такой редирект уходил абсолютным на http://192.168.0.10,
+     * браузер его блокировал, а флаг успеха оставался в сессии и всплывал
+     * позже, при открытии другого раздела.
+     */
+    public function test_a_redirect_back_is_relative_even_when_it_names_another_host(): void
+    {
+        DB::table('bl_item_types')->insert(['code' => 'S', 'name' => 'Set']);
+        DB::table('bl_items')->insert([
+            'type' => 'S', 'id' => 'falcon', 'name' => 'Falcon',
+            'image_color_id' => 0, 'has_inventory' => 0,
+        ]);
+
+        $response = $this->post('/wishlist', ['type' => 'S', 'id' => 'falcon'], $this->headers([
+            'Referer' => 'http://192.168.0.10/catalog/S/falcon',
+        ]));
+
+        $response->assertRedirect();
+
+        $location = (string) $response->headers->get('Location');
+
+        $this->assertStringStartsWith(self::PREFIX.'/catalog/S/falcon', $location);
+        $this->assertStringNotContainsString('192.168.0.10', $location);
+    }
+
+    /**
      * Заголовок переписывает корень всех ссылок на странице, поэтому верить ему
      * можно только там, где его больше некому прислать.
      */
