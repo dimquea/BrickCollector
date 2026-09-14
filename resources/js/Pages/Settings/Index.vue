@@ -16,6 +16,7 @@ const props = defineProps({
     colors: { type: Array, default: () => [] },
     currency: { type: String, default: 'RUB' },
     theme: { type: String, default: 'system' },
+    photoSearch: { type: Boolean, default: false },
     links: { type: Array, default: () => [] },
     appearance: { type: Object, default: () => ({ lists: [] }) },
     catalog: { type: Object, default: () => ({}) },
@@ -71,6 +72,41 @@ async function saveCurrency() {
     } catch (error) {
         currency.value = props.currency;
         notify(error.response?.data?.message ?? t('errors.save_failed'));
+    }
+}
+
+/*
+ * Поиск по фото — единственная возможность приложения, отправляющая наружу
+ * данные человека, поэтому включается вручную и с открытым текстом о том, что
+ * происходит со снимком.
+ */
+const photoSearch = ref(props.photoSearch);
+const checking = ref(false);
+const available = ref(null);
+
+async function savePhotoSearch() {
+    try {
+        const { data } = await axios.patch(url('/settings'), { photo_search: photoSearch.value });
+
+        notify(data.message, 'success', 2000);
+    } catch (error) {
+        photoSearch.value = props.photoSearch;
+        notify(error.response?.data?.message ?? t('errors.save_failed'));
+    }
+}
+
+/** Пустой запрос без данных: ответ полезно знать до того, как включить. */
+async function checkRecognition() {
+    checking.value = true;
+
+    try {
+        const { data } = await axios.get(url('/settings/recognition'));
+
+        available.value = data.available;
+    } catch {
+        available.value = false;
+    } finally {
+        checking.value = false;
     }
 }
 
@@ -213,6 +249,66 @@ const sections = [
                         <p class="text-body-secondary small">{{ t('links.hint') }}</p>
 
                         <LinkEditor :rows="links" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button
+                        class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#settingsRecognition"
+                    >
+                        <i class="mdi mdi-image-search-outline me-2"></i>
+                        {{ t('recognition.title') }}
+                    </button>
+                </h2>
+                <div id="settingsRecognition" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <div class="form-check form-switch">
+                            <input
+                                id="photoSearch"
+                                v-model="photoSearch"
+                                class="form-check-input"
+                                type="checkbox"
+                                role="switch"
+                                @change="savePhotoSearch"
+                            />
+                            <label class="form-check-label" for="photoSearch">
+                                {{ t('recognition.enable') }}
+                            </label>
+                        </div>
+
+                        <div class="alert alert-light border small d-flex gap-2 mt-3">
+                            <i class="mdi mdi-information-outline flex-shrink-0"></i>
+                            <span>
+                                {{ t('recognition.hint') }}
+                                <a
+                                    href="https://brickognize.com/terms-of-service/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >{{ t('recognition.terms') }}</a>
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            :disabled="checking"
+                            @click="checkRecognition"
+                        >
+                            <i class="mdi mdi-lan-connect"></i>
+                            {{ t('recognition.check') }}
+                        </button>
+                        <span
+                            v-if="available !== null"
+                            class="ms-2 small"
+                            :class="available ? 'text-success' : 'text-warning-emphasis'"
+                        >
+                            {{ available ? t('recognition.available') : t('recognition.unavailable') }}
+                        </span>
                     </div>
                 </div>
             </div>

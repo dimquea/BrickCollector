@@ -3,8 +3,8 @@
 *[Русская версия](README.ru.md)*
 
 A self-hosted manager for a LEGO® collection, with the BrickLink catalogue
-inside it. Runs on your own machine or as a Home Assistant add-on. Nothing
-leaves the house.
+inside it. Runs on your own machine or as a Home Assistant add-on. Your
+collection stays there.
 
 It answers the questions a collection actually raises. Do I already have this
 set? How many black 2×4 bricks are there, and which boxes are they in? Which
@@ -62,6 +62,11 @@ you hold as an inventory, what you are missing as a wanted list with the sets it
 is missing from written in the remarks. An assembly exports both — what it is
 made of, and what it still needs.
 
+**Search by photo.** Photograph a brick or pick a picture, and the catalogue
+finds it. It works through [Brickognize][bg], an outside service: the image is
+sent there, so the feature is off by default. Read [its terms][bgterms] before
+turning it on.
+
 **Elsewhere.** Buttons to BrickLink, Rebrickable and Brickset on every detail
 page, plus two blocks for whatever else you use. The addresses are patterns you
 can edit.
@@ -108,6 +113,7 @@ on the open internet as it stands.
 
 The catalogue comes from [rgriebl/brickstore-database][db], which republishes
 the BrickLink catalogue several times a day. Item pictures come from BrickLink.
+Recognising an item from a picture is [Brickognize][bg].
 
 LEGO® is a trademark of the LEGO Group, which does not sponsor, authorise or
 endorse this project.
@@ -128,3 +134,5 @@ Vue, Inertia, Tom Select and the Material Design Icons font inside it. They are
 MIT and Apache-2.0, and their own licences come along with them.
 
 [db]: https://github.com/rgriebl/brickstore-database
+[bg]: https://brickognize.com
+[bgterms]: https://brickognize.com/terms-of-service/

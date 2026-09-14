@@ -47,6 +47,18 @@ class Settings
         return in_array($theme, ['system', 'light', 'dark'], true) ? $theme : 'system';
     }
 
+    /**
+     * Искать ли деталь по фотографии.
+     *
+     * Единственная возможность приложения, которая отправляет наружу данные
+     * пользователя: снимок уходит в чужую службу и остаётся у неё. Поэтому
+     * выключена, пока её не включат руками, — умолчание здесь не вопрос вкуса.
+     */
+    public static function photoSearch(): bool
+    {
+        return self::get('photo_search') === '1';
+    }
+
     /** ISO 4217 code used to render prices. Amounts are stored in minor units. */
     public static function currency(): string
     {

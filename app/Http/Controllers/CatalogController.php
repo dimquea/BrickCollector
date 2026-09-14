@@ -76,6 +76,10 @@ class CatalogController extends Controller
             // root matches its whole subtree, so nothing becomes unreachable.
             'themes' => Theme::where('depth', 0)->orderBy('path')->get(['id', 'path']),
             'years' => $this->years(),
+            // Кнопка поиска по фото появляется только с согласия: снимок уходит
+            // наружу, и предлагать её не спросив было бы обещанием, которого
+            // приложение в остальном не даёт.
+            'photoSearch' => Settings::photoSearch(),
         ]);
     }
 

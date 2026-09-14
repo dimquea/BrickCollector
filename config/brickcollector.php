@@ -76,4 +76,18 @@ return [
         'https://img.bricklink.com/ItemImage/{type}N/{color}/{id}.png'
     ),
 
+    /*
+     * Распознавание предмета по фотографии — служба Brickognize.
+     *
+     * Адрес живёт здесь, а не в коде: в их описании OpenAPI блока servers нет
+     * вовсе, так что он выяснен на живом обращении и может смениться. Тогда это
+     * будет переменная окружения, а не выпуск новой версии.
+     *
+     * Таймаут отдельный и небольшой: ответ считает нейросеть, несколько секунд
+     * здесь норма, но человек в это время стоит над телефоном и ждёт.
+     */
+    'recognition_url' => env('BRICKCOLLECTOR_RECOGNITION_URL', 'https://api.brickognize.com'),
+
+    'recognition_timeout' => (int) env('BRICKCOLLECTOR_RECOGNITION_TIMEOUT', 20),
+
 ];

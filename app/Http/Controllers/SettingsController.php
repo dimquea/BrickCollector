@@ -48,6 +48,7 @@ class SettingsController extends Controller
             ]),
             'currency' => Settings::currency(),
             'theme' => Settings::theme(),
+            'photoSearch' => Settings::photoSearch(),
             'appearance' => [
                 'lists' => collect(config('brickcollector.lists'))
                     ->map(fn (array $list, string $key) => [
@@ -106,6 +107,7 @@ class SettingsController extends Controller
         $validated = $request->validate([
             'currency' => ['nullable', 'string', 'size:3', 'alpha'],
             'theme' => ['nullable', 'string', 'in:system,light,dark'],
+            'photo_search' => ['nullable', 'boolean'],
             'locale' => ['nullable', 'string', 'in:'.implode(',', SetLocale::SUPPORTED)],
             'per_page' => ['array'],
             'per_page.*' => ['integer', 'min:6', 'max:200'],
@@ -137,6 +139,12 @@ class SettingsController extends Controller
         // как валюта.
         if (! empty($validated['theme'])) {
             Settings::put('theme', $validated['theme']);
+        }
+
+        // Согласие на отправку снимков наружу: хранится наравне с остальным,
+        // потому что это выбор человека, а не настройка развёртывания.
+        if (array_key_exists('photo_search', $validated)) {
+            Settings::put('photo_search', $validated['photo_search'] ? '1' : '0');
         }
 
         if (! empty($validated['locale'])) {

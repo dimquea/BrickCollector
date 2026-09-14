@@ -7,6 +7,7 @@ use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\MinifiguresController;
 use App\Http\Controllers\PartsController;
+use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\SetsController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\WishlistController;
@@ -27,6 +28,10 @@ Route::get('/', fn () => Inertia::render('Home', [
  * The catalog: everything BrickLink knows about, read-only.
  */
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+
+// Поиск по фотографии. Снимок уходит в чужую службу, поэтому маршрут живёт под
+// настройкой и без неё отвечает 404 — даже если адрес набрали руками.
+Route::post('/catalog/recognise', [RecognitionController::class, 'identify'])->name('catalog.recognise');
 
 Route::get('/catalog/{type}/{id}', [CatalogController::class, 'show'])
     ->where('type', '[A-Z]')
@@ -147,6 +152,11 @@ Route::post('/settings/catalog', [SettingsController::class, 'refreshCatalog'])
 
 Route::get('/settings/catalog', [SettingsController::class, 'catalogStatus'])
     ->name('settings.catalog.status');
+
+// Отвечает ли служба распознавания: пустой запрос без данных, поэтому доступен
+// и до того, как функцию включили.
+Route::get('/settings/recognition', [RecognitionController::class, 'health'])
+    ->name('settings.recognition.status');
 
 Route::patch('/settings/links/{link}', [SettingsController::class, 'updateLink'])
     ->name('settings.links.update');

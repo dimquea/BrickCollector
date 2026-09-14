@@ -89,6 +89,27 @@ return [
         'shortage' => 'Export what is missing',
     ],
 
+    'recognition' => [
+        'title' => 'Search by photo',
+        'enable' => 'Identify a part from a photo',
+        'hint' => 'The photo is sent to Brickognize, an outside service, and recognised there. Under its terms whatever is uploaded stays with it indefinitely and may be used to train models, which is why this is off by default.',
+        'terms' => 'Brickognize terms',
+        'check' => 'Check the connection',
+        'available' => 'The service answers',
+        'unavailable' => 'The service does not answer',
+        'search' => 'Search by photo',
+        'file' => 'Photo file',
+        'camera' => 'Take a photo',
+        'warning' => 'The photo will be sent to Brickognize, an outside service, and will stay with it.',
+        'find' => 'Search',
+        'searching' => 'Searching…',
+        'nothing' => 'Nothing similar was found. Try a closer shot against a plain background.',
+        'open' => 'Open in the catalogue',
+        'failed' => 'The service did not answer. Try again later.',
+        'score' => 'Confidence',
+        'colour_guess' => 'Colour, most likely',
+    ],
+
     'home' => [
         'title' => 'Welcome',
         'tagline' => 'Self-hosted LEGO collection manager.',

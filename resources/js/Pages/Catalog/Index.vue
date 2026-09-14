@@ -1,6 +1,6 @@
 <script setup>
 import { url } from '@/support/base';
-import { computed, reactive, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import { debounce } from '@/support/debounce';
@@ -8,6 +8,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
 import ItemImage from '@/Components/ItemImage.vue';
+import PhotoSearchDialog from '@/Components/PhotoSearchDialog.vue';
 import { masonry } from '@/support/cards';
 import { t, tChoice } from '@/i18n';
 
@@ -19,7 +20,11 @@ const props = defineProps({
     itemTypes: { type: Array, default: () => [] },
     themes: { type: Array, default: () => [] },
     years: { type: Array, default: () => [] },
+    // Поиск по фото включают в настройках: без согласия кнопки нет.
+    photoSearch: { type: Boolean, default: false },
 });
+
+const photoDialog = ref(null);
 
 const typeOptions = computed(() => props.itemTypes.map((type) => ({ value: type.code, label: type.name })));
 
@@ -158,12 +163,33 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                          фильтрами читался как ещё один фильтр. Разрыв явный,
                          иначе строка встала бы в остаток предыдущей. -->
                     <div class="w-100"></div>
-                    <div class="col-12 col-lg-4">
-                        <SortControl v-model:by="form.sort" v-model:dir="form.dir" :options="sortOptions" />
+                    <div class="col-12 col-lg-4 d-flex align-items-end gap-2">
+                        <!-- Поиск по фото — действие над справочником, а не ещё
+                             один фильтр, поэтому стоит в нижней строке рядом с
+                             порядком. -->
+                        <button
+                            v-if="photoSearch"
+                            type="button"
+                            class="btn btn-outline-secondary text-nowrap"
+                            :title="t('recognition.search')"
+                            @click="photoDialog.open()"
+                        >
+                            <i class="mdi mdi-image-search-outline"></i>
+                            <span class="ms-1 d-none d-sm-inline">{{ t('recognition.search') }}</span>
+                        </button>
+
+                        <SortControl
+                            v-model:by="form.sort"
+                            v-model:dir="form.dir"
+                            :options="sortOptions"
+                            class="flex-grow-1"
+                        />
                     </div>
                 </div>
             </div>
         </div>
+
+        <PhotoSearchDialog v-if="photoSearch" ref="photoDialog" />
 
         <p v-if="results.data.length === 0" class="text-body-secondary">
             {{ t('catalog.nothing_found') }}
