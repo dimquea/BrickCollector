@@ -14,7 +14,7 @@ import TomSelect from 'tom-select';
  */
 const props = defineProps({
     modelValue: { type: [String, Number, null], default: null },
-    options: { type: Array, required: true },   // [{ value, label }]
+    options: { type: Array, required: true },   // [{ value, label, rgb? }]
     placeholder: { type: String, default: '' },
     id: { type: String, default: undefined },
 });
@@ -24,13 +24,44 @@ const emit = defineEmits(['update:modelValue']);
 const el = ref(null);
 let instance = null;
 
+const toOption = (option) => ({
+    value: String(option.value),
+    text: option.label,
+    rgb: option.rgb ?? null,
+});
+
+/**
+ * Точка цвета — та же, что в таблицах, но собранная строкой: свои строки Tom
+ * Select рисует сам и принимает только готовую разметку, а не компонент.
+ *
+ * Цвет приходит из справочника, но попадает прямо в атрибут style, поэтому
+ * пропускается через «только шестнадцатеричные»: проверить дешевле, чем
+ * доверять. Не цвет — не точка, и опции без него (теги, места, годы)
+ * рисуются как раньше.
+ */
+function swatch(rgb) {
+    const hex = String(rgb ?? '').replace(/[^0-9a-fA-F]/g, '');
+
+    if (hex.length !== 6) {
+        return '';
+    }
+
+    return '<span class="rounded-circle border d-inline-block align-middle me-1 flex-shrink-0"'
+        + ` style="width: 0.75rem; height: 0.75rem; background: #${hex}"></span>`;
+}
+
+const row = (data, escape) => `<div>${swatch(data.rgb)}${escape(data.text)}</div>`;
+
 onMounted(() => {
     instance = new TomSelect(el.value, {
-        options: props.options.map((o) => ({ value: String(o.value), text: o.label })),
+        options: props.options.map(toOption),
         items: props.modelValue == null ? [] : [String(props.modelValue)],
         placeholder: props.placeholder,
         allowEmptyOption: true,
         maxOptions: 500,
+        // И в списке, и в самом поле: выбранный цвет должен читаться так же,
+        // как он читался при выборе.
+        render: { option: row, item: row },
         onChange: (value) => emit('update:modelValue', value === '' ? null : value),
     });
 });
@@ -65,7 +96,7 @@ watch(
 
         instance.clearOptions();
         instance.addOption({ value: '', text: '' });
-        instance.addOptions(options.map((option) => ({ value: String(option.value), text: option.label })));
+        instance.addOptions(options.map(toOption));
         instance.refreshOptions(false);
         instance.setValue(chosen, true);
     },

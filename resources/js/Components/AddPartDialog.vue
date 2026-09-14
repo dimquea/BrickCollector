@@ -35,7 +35,9 @@ const form = reactive({ qty: 1, color_id: null, target: 'new' });
 const errors = ref({});
 const sending = ref(false);
 
-const colourOptions = computed(() => props.colours.map((colour) => ({ value: colour.id, label: colour.name })));
+const colourOptions = computed(() =>
+    props.colours.map((colour) => ({ value: colour.id, label: colour.name, rgb: colour.rgb })),
+);
 
 // Only a lot of the chosen colour can take more; the server refuses any other.
 // An assembly takes any colour, being a list of parts rather than a pile of

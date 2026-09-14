@@ -46,7 +46,7 @@ const wishColour = ref(props.item.image_color_id ?? 0);
 // Те же цвета, что предлагает окно добавления: известные по кодам элементов,
 // плюс уже имеющиеся и цвет картинки.
 const wishColourOptions = computed(() =>
-    props.colours.map((colour) => ({ value: colour.id, label: colour.name })),
+    props.colours.map((colour) => ({ value: colour.id, label: colour.name, rgb: colour.rgb })),
 );
 
 // Своя копия: кнопка меняет вид сразу по ответу, не уходя со страницы. Возврат
@@ -157,7 +157,7 @@ watch(colourFilter, (colour) => {
 });
 
 const parentColourOptions = computed(() =>
-    (props.parents?.colours ?? []).map((colour) => ({ value: colour.id, label: colour.name })),
+    (props.parents?.colours ?? []).map((colour) => ({ value: colour.id, label: colour.name, rgb: colour.rgb })),
 );
 
 const parentRows = computed(() => props.parents?.rows?.data ?? []);

@@ -33,7 +33,9 @@ const colours = ref([]);
 const loading = ref(false);
 const taking = reactive({});
 
-const colourOptions = computed(() => colours.value.map((colour) => ({ value: colour.id, label: colour.name })));
+const colourOptions = computed(() =>
+    colours.value.map((colour) => ({ value: colour.id, label: colour.name, rgb: colour.rgb })),
+);
 
 async function load() {
     loading.value = true;

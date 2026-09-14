@@ -99,8 +99,10 @@ function filterByColour(colorId) {
     form.color_id = colorId;
 }
 
+// С точкой цвета, как в таблице ниже: названия вроде «Dark Bluish Gray» и
+// «Light Bluish Gray» на слух не различить, а на вид — сразу.
 const colourOptions = computed(() =>
-    props.colours.map((colour) => ({ value: colour.id, label: colour.name })),
+    props.colours.map((colour) => ({ value: colour.id, label: colour.name, rgb: colour.rgb })),
 );
 
 // Where a part sits. What is missing is not a place — a brick can be gone from
