@@ -3,6 +3,19 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.4.1 — 2026-09-15
+
+### Fixed
+
+- **The import could not reach an assembly.** 1.4.0 read a BrickLink XML file into the
+  collection or the wishlist, but not into the third place parts live — which is exactly where a
+  parts list for a model of your own belongs. The switch gains a way into an assembly, with the
+  assemblies beside it and a new one at the top. A new assembly takes the name of the file, since
+  a parts list is usually named after its model. Parts go in the way they already do from the
+  catalogue, entered as a lot and moved, so the same part in the same colour folds into one line
+  and the loose pile is left exactly as it was. Only parts go in, and a new assembly is created
+  only once one of them does: an import where nothing fits leaves no empty assembly behind.
+
 ## 1.4.0 — 2026-09-15
 
 ### Added

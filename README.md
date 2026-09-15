@@ -63,9 +63,9 @@ is missing from written in the remarks. An assembly exports both — what it is
 made of, and what it still needs.
 
 **Import.** The other direction: a BrickLink XML file, read and shown before
-anything is created. Tick what to take, say whether it goes into the collection
-or the wishlist, and fill in what you know about the purchase — once for
-everything, or line by line.
+anything is created. Tick what to take and say where it goes — into the
+collection, the wishlist or an assembly; for the collection, fill in what you
+know about the purchase, once for everything or line by line.
 
 **Search by photo.** Photograph a brick or pick a picture, and the catalogue
 finds it. It works through [Brickognize][bg], an outside service: the image is
