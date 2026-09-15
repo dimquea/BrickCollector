@@ -3,6 +3,22 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.4.2 — 2026-09-15
+
+### Fixed
+
+- **Filtering loose parts by a tag looked as if it did nothing.** The filter picks the parts that
+  have a lot with that tag, and the row went on counting the whole part — right for the total, but
+  a part with two loose lots, only one of them tagged, showed every loose piece as though all were
+  tagged. Under a tag the loose column now reads "11 (12)": what the tagged lots hold, then
+  everything loose, with a hint on the cell. The row still adds up to its total, and an export
+  under a tag takes only the tagged lots, so filtering "for sale" no longer puts an untagged lot up
+  for sale as well.
+- **A hint with two similar placeholders came out garbled.** Translations filled their
+  placeholders one after another, so a short one ate the start of a longer one: ":tag" inside
+  ":tagged" turned a hint into nonsense. They are filled in one pass now, longest first, the way
+  Laravel does it on the server.
+
 ## 1.4.1 — 2026-09-15
 
 ### Fixed
