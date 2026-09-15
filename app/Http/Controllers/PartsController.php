@@ -105,6 +105,13 @@ class PartsController extends Controller
             default => 'total',
         };
 
+        // Под фильтром по тегу — только помеченные партии. Отфильтровали «На
+        // продажу» и выгрузили: в файл не должна уехать партия той же детали,
+        // которую продавать не собирались.
+        if (($filters['tag_id'] ?? null) !== null) {
+            $held = 'loose_tagged';
+        }
+
         return BrickLinkXml::download(BrickLinkXml::inventory($rows->map(fn (object $row) => [
             'type' => 'P',
             'id' => $row->item_id,

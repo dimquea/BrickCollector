@@ -47,6 +47,13 @@ const tagOptions = computed(() => props.tags.map((tag) => ({ value: tag.id, labe
 
 const showsTags = computed(() => form.placement === 'loose' && props.tags.length > 0);
 
+// Имя применённого тега — для подсказки в колонке «отдельно». Берётся из
+// фильтра, пришедшего с сервера, а не из формы: пока идёт запрос, форма уже
+// впереди того, что показано.
+const tagName = computed(() =>
+    props.tags.find((tag) => String(tag.id) === String(props.filters.tag_id))?.name ?? '',
+);
+
 watch(() => form.placement, (placement) => {
     if (placement !== 'loose') {
         form.tag_id = null;
@@ -307,7 +314,24 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             <td class="text-end fw-semibold">{{ part.total }}</td>
                             <td class="text-end">{{ part.in_sets || '' }}</td>
                             <td class="text-end">{{ part.in_minifigures || '' }}</td>
-                            <td class="text-end">{{ part.loose || '' }}</td>
+                            <!-- Под фильтром по тегу: сколько в помеченных
+                                 партиях, а в скобках — всё свободное. Урезать
+                                 колонку нельзя, строка должна сходиться с
+                                 итогом; не показать помеченное — значит
+                                 выглядеть так, будто фильтр не работает. -->
+                            <td
+                                v-if="part.loose_tagged !== undefined"
+                                class="text-end text-nowrap"
+                                :title="t('parts.loose_tagged_hint', {
+                                    tag: tagName,
+                                    tagged: part.loose_tagged,
+                                    loose: part.loose,
+                                })"
+                            >
+                                {{ part.loose_tagged }}
+                                <span class="text-body-secondary">({{ part.loose }})</span>
+                            </td>
+                            <td v-else class="text-end">{{ part.loose || '' }}</td>
                             <td class="text-end">{{ part.in_assemblies || '' }}</td>
                             <td class="text-end text-body-secondary">{{ part.spares || '' }}</td>
                             <td class="text-end text-warning-emphasis">{{ part.lost || '' }}</td>

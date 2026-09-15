@@ -116,6 +116,36 @@ class ListedShortagesTest extends TestCase
         $this->assertSame(2, (int) $brick->loose);
     }
 
+    /**
+     * У детали бывает несколько свободных партий, и тег стоит не на всех.
+     *
+     * Колонку «отдельно» урезать нельзя — строка должна сходиться с итогом, —
+     * поэтому помеченное идёт рядом отдельным числом. А выгрузка под фильтром
+     * берёт именно его: отфильтровав «На продажу», не хочется продать заодно
+     * партию, которую никто не помечал.
+     */
+    public function test_a_tag_filter_counts_only_the_tagged_lots_beside_the_rest(): void
+    {
+        $this->lot('brick', 11, 2);
+        $this->lot('brick', 1);
+
+        $page = $this->get('/parts?placement=loose&tag_id=2')->assertOk()->viewData('page');
+        $row = $page['props']['parts']['data'][0];
+
+        $this->assertSame(11, (int) $row->loose_tagged, 'помеченное');
+        $this->assertSame(12, (int) $row->loose, 'всё свободное остаётся как было');
+        $this->assertSame(12, (int) $row->total);
+
+        // Без фильтра по тегу этого поля нет вовсе: считать не о чем.
+        $plain = $this->get('/parts?placement=loose')->viewData('page')['props']['parts']['data'][0];
+
+        $this->assertFalse(property_exists($plain, 'loose_tagged'));
+
+        $xml = $this->get('/parts/export?placement=loose&tag_id=2')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<QTY>11</QTY>', $xml);
+    }
+
     /** Предлагать тег, которого нет ни на одной партии, значит обещать пустой список. */
     public function test_only_tags_put_on_a_lot_are_offered(): void
     {

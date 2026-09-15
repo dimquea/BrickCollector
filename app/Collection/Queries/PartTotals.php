@@ -201,6 +201,17 @@ class PartTotals
         // строки, из счётчиков пропали бы вхождения в наборы, и деталь
         // показала бы «в коллекции 2» вместо «12».
         if (($this->filters['tag_id'] ?? null) !== null && $this->filters['tag_id'] !== '') {
+            // Сколько из свободного лежит именно в помеченных партиях. Колонку
+            // «отдельно» урезать нельзя — строка должна сходиться с итогом, — но
+            // и показывать под фильтром по тегу все свободные значит делать вид,
+            // что фильтр не работает: у детали бывает несколько партий, и тег
+            // стоит не на всех. Поэтому это число идёт рядом, отдельным полем, и
+            // появляется только под фильтром.
+            $query->selectRaw("COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
+                AND e.item_type = 'P' AND EXISTS (SELECT 1 FROM entry_tags lot_tags
+                    WHERE lot_tags.entry_id = e.id AND lot_tags.tag_id = ?)
+                THEN ci.qty END), 0) as loose_tagged", [$this->filters['tag_id']]);
+
             $query->whereExists(fn ($sub) => $sub
                 ->from('collection_items as tagged')
                 ->join('collection_entries as owner', 'owner.id', '=', 'tagged.entry_id')

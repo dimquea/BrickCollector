@@ -212,6 +212,7 @@ return [
         'in_sets_hint' => 'Lying in the set itself. Parts inside its minifigures are counted in the next column, not here, or they would be counted twice.',
         'in_minifigures' => 'In minifigures',
         'loose' => 'Loose',
+        'loose_tagged_hint' => 'Tagged “:tag”: :tagged of :loose loose. The total and the other columns count the whole part.',
         'lost' => 'Missing somewhere',
         'missing' => 'Something missing',
         'missing_hint' => 'Gone from a set, or not there yet for an assembly. Together with "Where it is" it asks where exactly.',
