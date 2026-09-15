@@ -3,6 +3,39 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.4.0 — 2026-09-15
+
+### Added
+
+- **Import from a BrickLink XML file** — a section of its own, and two steps on purpose. The
+  file is read and shown first, every line with its picture, name, colour and quantity, and
+  nothing is created until the rows are ticked and the button pressed. Both kinds of file are
+  understood, an inventory and a wanted list, and a switch says where the rows go: into the
+  collection or into the wishlist. Details filled in above apply to every entry created and a
+  row can override them field by field; a remark from the file becomes that entry's note. A set
+  or a minifigure with a quantity becomes that many copies, a part becomes one lot. What the
+  catalogue does not know, and what the collection does not hold, is shown all the same but
+  cannot be ticked, with the reason beside it.
+- **Finding a part by photograph** — photograph a brick or pick a picture and the catalogue
+  finds it, through Brickognize. It stays off until it is switched on, and the reason sits in
+  the settings beside the switch: the photo goes to an outside service and, by that service's
+  terms, stays with it. The browser shrinks the image to a thousand pixels before it goes — a
+  printed part lives by its print, so no smaller than that — and the candidates come back as
+  rows of our own catalogue, with the colour it guessed carried into the card that opens.
+
+### Fixed
+
+- **A composite part was counted twice.** Adding a torso or a pair of legs from the catalogue
+  spread its own inventory into the entry, so the same plastic was held as the whole thing and
+  again as its pieces: an assembly of seven parts announced fourteen, because the card summed
+  every row while the table listed only the tops. The catalogue never expanded assembled parts
+  inside a set, for exactly this reason; that rule now reaches the item being added, and a
+  migration clears the rows written before it did.
+- **A redirect under the Home Assistant panel led to the root.** Adding a picture to an assembly
+  saved the picture and then landed on the home page, which reads as a failure; a day earlier
+  the same request answered 404 and still saved it. Redirects name where they go now, since
+  "back" has nowhere to go under the panel.
+
 ## 1.3.0 — 2026-09-14
 
 ### Added

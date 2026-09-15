@@ -62,6 +62,11 @@ you hold as an inventory, what you are missing as a wanted list with the sets it
 is missing from written in the remarks. An assembly exports both — what it is
 made of, and what it still needs.
 
+**Import.** The other direction: a BrickLink XML file, read and shown before
+anything is created. Tick what to take, say whether it goes into the collection
+or the wishlist, and fill in what you know about the purchase — once for
+everything, or line by line.
+
 **Search by photo.** Photograph a brick or pick a picture, and the catalogue
 finds it. It works through [Brickognize][bg], an outside service: the image is
 sent there, so the feature is off by default. Read [its terms][bgterms] before
