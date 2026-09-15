@@ -1,10 +1,9 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
-import Link from '@/Components/AppLink.vue';
-import SearchSelect from '@/Components/SearchSelect.vue';
+import { reactive, ref } from 'vue';
+import EntryMetaFields from '@/Components/EntryMetaFields.vue';
 import { patchField } from '@/support/save';
 import { notify } from '@/support/toasts';
-import { locale, t } from '@/i18n';
+import { t } from '@/i18n';
 
 /**
  * What the user knows about a copy, as opposed to what the catalog says.
@@ -96,19 +95,10 @@ async function save() {
     }
 }
 
-// Checkboxes save themselves; a person ticking "box" does not expect to have
-// to confirm it. The text fields keep an explicit save so a half-typed note
-// is not written on every keystroke.
-watch(() => [form.status_ids.length, form.tag_ids.length, form.source_id, form.storage_id], save);
-
-const priceHint = computed(() =>
-    form.price === ''
-        ? ''
-        : new Intl.NumberFormat(locale.value, { style: 'currency', currency: props.currency })
-              .format(Number(form.price) || 0),
-);
-
-const hasDictionary = (name) => props.dictionaries[name].length > 0;
+// Поля сообщают о каждой правке, а сохраняет их эта обёртка. Галочка пишется
+// сразу — поставив «коробку», её не ждут подтверждать; текстовое поле сообщает
+// по окончании ввода, а не на каждой букве, иначе недописанная заметка
+// оказалась бы в базе.
 </script>
 
 <template>
@@ -127,121 +117,17 @@ const hasDictionary = (name) => props.dictionaries[name].length > 0;
 
         <div id="entryMeta" class="accordion-collapse collapse">
             <div class="accordion-body">
-                <div class="row g-3">
-                    <div class="col-12 col-sm-6">
-                        <label for="acquiredAt" class="form-label">{{ t('collection.acquired_at') }}</label>
-                        <input
-                            id="acquiredAt"
-                            v-model="form.acquired_at"
-                            type="date"
-                            class="form-control"
-                            @change="save"
-                        />
-                    </div>
+                <EntryMetaFields
+                    :form="form"
+                    :dictionaries="dictionaries"
+                    :currency="currency"
+                    :prefix="`entry-${entryId}`"
+                    @changed="save"
+                />
 
-                    <div class="col-12 col-sm-6">
-                        <label for="price" class="form-label">{{ t('collection.price') }}</label>
-                        <input
-                            id="price"
-                            v-model="form.price"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            class="form-control"
-                            @change="save"
-                        />
-                        <div v-if="priceHint" class="form-text">{{ priceHint }}</div>
-                    </div>
-
-                    <div class="col-12 col-sm-6">
-                        <label for="source" class="form-label">{{ t('collection.source') }}</label>
-                        <SearchSelect
-                            v-if="hasDictionary('sources')"
-                            id="source"
-                            v-model="form.source_id"
-                            :options="dictionaries.sources.map((s) => ({ value: s.id, label: s.name }))"
-                            :placeholder="t('catalog.any')"
-                        />
-                        <p v-else class="form-text mb-0">
-                            {{ t('collection.dictionary_empty') }}
-                            <Link href="/settings">{{ t('nav.settings') }}</Link>
-                        </p>
-                    </div>
-
-                    <div class="col-12 col-sm-6">
-                        <label for="storage" class="form-label">{{ t('collection.storage') }}</label>
-                        <SearchSelect
-                            v-if="hasDictionary('storages')"
-                            id="storage"
-                            v-model="form.storage_id"
-                            :options="dictionaries.storages.map((s) => ({ value: s.id, label: s.name }))"
-                            :placeholder="t('catalog.any')"
-                        />
-                        <p v-else class="form-text mb-0">
-                            {{ t('collection.dictionary_empty') }}
-                            <Link href="/settings">{{ t('nav.settings') }}</Link>
-                        </p>
-                    </div>
-
-                    <!-- A minifigure has no box and no instructions, so a
-                         section may offer no statuses at all. -->
-                    <div v-if="dictionaries.statuses.length" class="col-12">
-                        <span class="form-label d-block">{{ t('collection.statuses') }}</span>
-                        <div class="d-flex flex-wrap gap-3">
-                            <div v-for="status in dictionaries.statuses" :key="status.id" class="form-check">
-                                <input
-                                    :id="`status-${status.id}`"
-                                    v-model="form.status_ids"
-                                    class="form-check-input"
-                                    type="checkbox"
-                                    :value="status.id"
-                                />
-                                <label class="form-check-label" :for="`status-${status.id}`">
-                                    {{ status.name }}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-12">
-                        <span class="form-label d-block">{{ t('collection.tags') }}</span>
-                        <div v-if="hasDictionary('tags')" class="d-flex flex-wrap gap-3">
-                            <div v-for="tag in dictionaries.tags" :key="tag.id" class="form-check">
-                                <input
-                                    :id="`tag-${tag.id}`"
-                                    v-model="form.tag_ids"
-                                    class="form-check-input"
-                                    type="checkbox"
-                                    :value="tag.id"
-                                />
-                                <label class="form-check-label" :for="`tag-${tag.id}`">
-                                    <span class="badge" :class="`text-bg-${tag.color}`">{{ tag.name }}</span>
-                                </label>
-                            </div>
-                        </div>
-                        <p v-else class="form-text mb-0">
-                            {{ t('collection.dictionary_empty') }}
-                            <Link href="/settings">{{ t('nav.settings') }}</Link>
-                        </p>
-                    </div>
-
-                    <div class="col-12">
-                        <label for="note" class="form-label">{{ t('collection.note') }}</label>
-                        <textarea
-                            id="note"
-                            v-model="form.note"
-                            class="form-control"
-                            rows="3"
-                            @change="save"
-                        ></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <button type="button" class="btn btn-primary" :disabled="saving" @click="save">
-                            {{ t('collection.save') }}
-                        </button>
-                    </div>
-                </div>
+                <button type="button" class="btn btn-primary mt-3" :disabled="saving" @click="save">
+                    {{ t('collection.save') }}
+                </button>
             </div>
         </div>
     </div>

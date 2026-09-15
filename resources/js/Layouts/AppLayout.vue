@@ -17,6 +17,9 @@ const links = computed(() => [
     { key: 'assemblies', href: '/assemblies' },
     { key: 'wishlist', href: '/wishlist' },
     { key: 'analytics', href: '/analytics' },
+    // Импорт — действие над коллекцией, а не её раздел, поэтому стоит после
+    // разделов, рядом с настройками.
+    { key: 'import', href: '/import' },
     { key: 'settings', href: '/settings' },
 ]);
 

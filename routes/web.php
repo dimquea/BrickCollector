@@ -4,6 +4,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AssembliesController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\DictionaryController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\MinifiguresController;
 use App\Http\Controllers\PartsController;
@@ -143,6 +144,14 @@ Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.l
  * Сводка по коллекции: считается на лету из тех же таблиц, что и разделы.
  */
 Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
+
+/*
+ * Импорт из файла BrickLink XML. Разбор и добавление — разные маршруты: первый
+ * только читает и показывает, второй создаёт отмеченное.
+ */
+Route::get('/import', [ImportController::class, 'index'])->name('import');
+Route::post('/import/parse', [ImportController::class, 'parse'])->name('import.parse');
+Route::post('/import', [ImportController::class, 'store'])->name('import.store');
 
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
 Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
