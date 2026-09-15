@@ -7,6 +7,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import EntryMetaFields from '@/Components/EntryMetaFields.vue';
+import SearchSelect from '@/Components/SearchSelect.vue';
 import { notify } from '@/support/toasts';
 import { t } from '@/i18n';
 
@@ -26,6 +27,7 @@ const props = defineProps({
     dictionaries: { type: Object, required: true },
     currency: { type: String, default: 'RUB' },
     limit: { type: Number, default: 1000 },
+    assemblies: { type: Array, default: () => [] },
 });
 
 const rows = ref([]);
@@ -34,6 +36,21 @@ const parsed = ref(false);
 const busy = ref(false);
 const picker = ref(null);
 const destination = ref('collection');
+
+// Куда именно в сборку: «new» — завести новую, иначе номер существующей.
+// Список держим у себя, а не читаем из свойств: сборка, заведённая импортом,
+// должна сразу оказаться в нём на следующий раз.
+const assemblyTarget = ref('new');
+const assemblyList = ref([...props.assemblies]);
+
+// Имя файла без расширения — имя будущей сборки: перечень деталей для MOC
+// обычно и назван по модели.
+const fileName = ref('');
+
+const assemblyOptions = computed(() => [
+    { value: 'new', label: t('import.new_assembly') },
+    ...assemblyList.value.map((assembly) => ({ value: assembly.id, label: assembly.name })),
+]);
 
 function blank() {
     return {
@@ -51,13 +68,59 @@ const shared = reactive(blank());
 
 const toCollection = computed(() => destination.value === 'collection');
 
+const toAssembly = computed(() => destination.value === 'assembly');
+
 /**
  * Можно ли отметить строку.
  *
  * В коллекцию идёт только то, что она умеет держать; в желаемое — всё, что
- * знает справочник: хотеть можно и то, у чего нет своего раздела.
+ * знает справочник: хотеть можно и то, у чего нет своего раздела; в сборку —
+ * одни детали, из них её и собирают.
  */
-const usable = (row) => (toCollection.value ? row.holdable : row.known);
+function usable(row) {
+    if (destination.value === 'wishlist') {
+        return row.known;
+    }
+
+    if (toAssembly.value) {
+        return row.known && row.type === 'P';
+    }
+
+    return row.holdable;
+}
+
+/** Почему строку нельзя отметить: ответ зависит от того, куда её хотят деть. */
+function reason(row) {
+    if (! row.known) {
+        return t('import.unknown');
+    }
+
+    return toAssembly.value ? t('import.parts_only') : t('import.not_holdable');
+}
+
+const addLabel = computed(() => {
+    if (busy.value) {
+        return t('import.adding');
+    }
+
+    if (toAssembly.value) {
+        return t('import.add_assembly');
+    }
+
+    return toCollection.value ? t('import.add') : t('import.add_wishlist');
+});
+
+function resultMessage(data) {
+    if (toAssembly.value) {
+        return data.assembly
+            ? t('import.assembled', { name: data.assembly.name, added: data.added, skipped: data.skipped })
+            : t('import.nothing_assembled', { skipped: data.skipped });
+    }
+
+    return toCollection.value
+        ? t('import.result', { created: data.created, skipped: data.skipped })
+        : t('import.wished_result', { wished: data.wished, skipped: data.skipped });
+}
 
 const selected = computed(() => rows.value.filter((row) => row.take && usable(row)));
 
@@ -78,6 +141,8 @@ async function choose(event) {
     }
 
     busy.value = true;
+
+    fileName.value = file.name.replace(/\.[^.]+$/, '');
 
     const body = new FormData();
     body.append('file', file);
@@ -148,6 +213,12 @@ async function submit() {
         const { data } = await axios.post(url('/import'), {
             destination: destination.value,
             meta: toCollection.value ? payload(shared) : null,
+            // Выбранная сборка приходит из селекта строкой; «новая» и пустое
+            // поле означают одно — завести.
+            assembly_id: toAssembly.value && assemblyTarget.value && assemblyTarget.value !== 'new'
+                ? Number(assemblyTarget.value)
+                : null,
+            assembly_name: toAssembly.value ? fileName.value : null,
             rows: selected.value.map((row) => ({
                 type: row.type,
                 id: row.id,
@@ -157,13 +228,14 @@ async function submit() {
             })),
         });
 
-        notify(
-            toCollection.value
-                ? t('import.result', { created: data.created, skipped: data.skipped })
-                : t('import.wished_result', { wished: data.wished, skipped: data.skipped }),
-            'success',
-            6000,
-        );
+        notify(resultMessage(data), 'success', 6000);
+
+        // Заведённая импортом сборка сразу встаёт в список — на случай, если
+        // следом придёт второй файл той же модели.
+        if (data.assembly && ! assemblyList.value.some((assembly) => assembly.id === data.assembly.id)) {
+            assemblyList.value = [...assemblyList.value, data.assembly]
+                .sort((left, right) => left.name.localeCompare(right.name));
+        }
 
         rows.value = [];
         parsed.value = false;
@@ -206,28 +278,54 @@ const copies = (row) => (row.type === 'P' ? 1 : row.qty);
                 <template v-if="parsed">
                     <fieldset class="mt-3">
                         <legend class="form-label fs-6">{{ t('import.destination') }}</legend>
-                        <div class="btn-group" role="group">
-                            <input
-                                id="toCollection"
-                                v-model="destination"
-                                type="radio"
-                                class="btn-check"
-                                value="collection"
-                            />
-                            <label class="btn btn-outline-primary" for="toCollection">
-                                {{ t('import.to_collection') }}
-                            </label>
+                        <!-- Сборку выбирают тут же, справа: «в сборку» без ответа
+                             «в какую» — только половина вопроса. -->
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <div class="btn-group" role="group">
+                                <input
+                                    id="toCollection"
+                                    v-model="destination"
+                                    type="radio"
+                                    class="btn-check"
+                                    value="collection"
+                                />
+                                <label class="btn btn-outline-primary" for="toCollection">
+                                    {{ t('import.to_collection') }}
+                                </label>
 
-                            <input
-                                id="toWishlist"
-                                v-model="destination"
-                                type="radio"
-                                class="btn-check"
-                                value="wishlist"
-                            />
-                            <label class="btn btn-outline-primary" for="toWishlist">
-                                {{ t('import.to_wishlist') }}
-                            </label>
+                                <input
+                                    id="toWishlist"
+                                    v-model="destination"
+                                    type="radio"
+                                    class="btn-check"
+                                    value="wishlist"
+                                />
+                                <label class="btn btn-outline-primary" for="toWishlist">
+                                    {{ t('import.to_wishlist') }}
+                                </label>
+
+                                <input
+                                    id="toAssembly"
+                                    v-model="destination"
+                                    type="radio"
+                                    class="btn-check"
+                                    value="assembly"
+                                />
+                                <label class="btn btn-outline-primary" for="toAssembly">
+                                    {{ t('import.to_assembly') }}
+                                </label>
+                            </div>
+
+                            <div v-if="toAssembly" style="min-width: 14rem">
+                                <label for="assemblyTarget" class="visually-hidden">
+                                    {{ t('import.assembly_target') }}
+                                </label>
+                                <SearchSelect
+                                    id="assemblyTarget"
+                                    v-model="assemblyTarget"
+                                    :options="assemblyOptions"
+                                />
+                            </div>
                         </div>
                     </fieldset>
 
@@ -252,7 +350,7 @@ const copies = (row) => (row.type === 'P' ? 1 : row.qty);
             <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
                 <button type="button" class="btn btn-primary" :disabled="busy" @click="submit">
                     <span v-if="busy" class="spinner-border spinner-border-sm me-1"></span>
-                    {{ busy ? t('import.adding') : (toCollection ? t('import.add') : t('import.add_wishlist')) }}
+                    {{ addLabel }}
                 </button>
                 <span class="text-body-secondary small">{{ selected.length }} / {{ rows.length }}</span>
                 <span v-if="total > rows.length" class="text-body-secondary small">
@@ -290,7 +388,7 @@ const copies = (row) => (row.type === 'P' ? 1 : row.qty);
                                         class="form-check-input"
                                         type="checkbox"
                                         :disabled="! usable(row)"
-                                        :title="usable(row) ? '' : (row.known ? t('import.not_holdable') : t('import.unknown'))"
+                                        :title="usable(row) ? '' : (reason(row))"
                                     />
                                 </td>
 
@@ -329,7 +427,7 @@ const copies = (row) => (row.type === 'P' ? 1 : row.qty);
                                             :title="`${t('import.remarks')}: ${row.remarks}`"
                                         ></i>
                                         <span v-if="! usable(row)" class="badge text-bg-warning">
-                                            {{ row.known ? t('import.not_holdable') : t('import.unknown') }}
+                                            {{ reason(row) }}
                                         </span>
                                     </div>
                                 </td>
@@ -392,7 +490,7 @@ const copies = (row) => (row.type === 'P' ? 1 : row.qty);
             <div class="d-flex flex-wrap gap-2 align-items-center mt-3">
                 <button type="button" class="btn btn-primary" :disabled="busy" @click="submit">
                     <span v-if="busy" class="spinner-border spinner-border-sm me-1"></span>
-                    {{ busy ? t('import.adding') : (toCollection ? t('import.add') : t('import.add_wishlist')) }}
+                    {{ addLabel }}
                 </button>
                 <span class="text-body-secondary small">{{ selected.length }} / {{ rows.length }}</span>
             </div>

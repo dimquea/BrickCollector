@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Catalog\Models\Item;
 use App\Collection\Actions\AddToCollection;
+use App\Collection\Actions\MoveParts;
 use App\Collection\Import\BrickLinkFile;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
@@ -14,6 +15,7 @@ use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,6 +46,7 @@ class ImportController extends Controller
             ],
             'currency' => Settings::currency(),
             'limit' => BrickLinkFile::LIMIT,
+            'assemblies' => Entry::whereNull('item_type')->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -75,14 +78,17 @@ class ImportController extends Controller
      * Остальное у нас есть в справочнике, и доверять этому присланному значило
      * бы позволить записать в коллекцию что угодно под любым именем.
      */
-    public function store(Request $request, AddToCollection $add): JsonResponse
+    public function store(Request $request, AddToCollection $add, MoveParts $move): JsonResponse
     {
         $meta = [
             'nullable', 'array',
         ];
 
         $validated = $request->validate([
-            'destination' => ['required', 'string', 'in:collection,wishlist'],
+            'destination' => ['required', 'string', 'in:collection,wishlist,assembly'],
+            // Куда в сборку: номер существующей или ничего — тогда заводится новая.
+            'assembly_id' => ['nullable', 'integer'],
+            'assembly_name' => ['nullable', 'string', 'max:120'],
             'rows' => ['required', 'array', 'min:1', 'max:'.BrickLinkFile::LIMIT],
             'rows.*.type' => ['required', 'string', 'size:1'],
             'rows.*.id' => ['required', 'string', 'max:120'],
@@ -96,6 +102,16 @@ class ImportController extends Controller
 
         if ($validated['destination'] === 'wishlist') {
             return response()->json($this->wish($validated['rows']));
+        }
+
+        if ($validated['destination'] === 'assembly') {
+            return response()->json($this->assemble(
+                $validated['rows'],
+                $validated['assembly_id'] ?? null,
+                $validated['assembly_name'] ?? null,
+                $add,
+                $move,
+            ));
         }
 
         return response()->json($this->collect($validated['rows'], $validated['meta'] ?? [], $add));
@@ -172,6 +188,91 @@ class ImportController extends Controller
         });
 
         return ['created' => $created, 'skipped' => $skipped];
+    }
+
+    /**
+     * Кладёт отмеченные детали в сборку — новую или существующую.
+     *
+     * Путь тот же, что у детали, добавленной в сборку из справочника: сначала
+     * партия, потом перенос. Это единственная дорога деталей в сборку, и заведи
+     * импорт свою, у сборок появился бы второй набор правил о том, что делается
+     * со строками под деталью. Заодно одинаковые детали одного цвета сами
+     * складываются в одну строку сборки, а промежуточная партия исчезает, отдав
+     * всё до последней штуки, — россыпь после импорта остаётся какой была.
+     *
+     * Новая сборка заводится лениво, только когда в неё действительно
+     * переносится первая деталь. Иначе импорт, где ничего не подошло, оставлял
+     * бы после себя пустую сборку-сироту.
+     *
+     * Меты здесь нет: у детали внутри сборки её не бывает, а у самой сборки
+     * есть своя страница, где её и правят.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<string, mixed>
+     */
+    private function assemble(array $rows, ?int $assemblyId, ?string $name, AddToCollection $add, MoveParts $move): array
+    {
+        $assembly = null;
+
+        if ($assemblyId !== null) {
+            $assembly = Entry::whereNull('item_type')->find($assemblyId);
+
+            if ($assembly === null) {
+                throw ValidationException::withMessages(['assembly_id' => __('app.assembly.gone')]);
+            }
+        }
+
+        $added = 0;
+        $skipped = 0;
+
+        DB::transaction(function () use ($rows, $name, $add, $move, &$assembly, &$added, &$skipped): void {
+            foreach ($rows as $row) {
+                $item = Item::where('type', $row['type'])->where('id', $row['id'])->first();
+
+                // В сборку идут только детали: из них её и собирают.
+                if ($item === null || $item->type !== 'P') {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $assembly ??= Entry::create([
+                    'name' => $this->assemblyName($name),
+                    'flag_incomplete' => false,
+                    'flag_missing_figs' => false,
+                ]);
+
+                $lot = $add->handle($item, [
+                    'qty' => $row['qty'],
+                    'color_id' => $row['color_id'] ?? (int) $item->image_color_id,
+                ]);
+
+                $move->fromLot($assembly, $lot, $row['qty']);
+
+                $added++;
+            }
+        });
+
+        return [
+            'added' => $added,
+            'skipped' => $skipped,
+            'assembly' => $assembly === null ? null : ['id' => $assembly->id, 'name' => $assembly->name],
+        ];
+    }
+
+    /**
+     * Имя новой сборки — имя файла без расширения.
+     *
+     * Перечень деталей для MOC обычно и назван по модели, так что имя выходит
+     * осмысленным сразу. Если от имени ничего не осталось, берётся сегодняшняя
+     * дата — в виде 2026-09-15, чтобы в списке сборок, упорядоченном по имени,
+     * она вставала по порядку.
+     */
+    private function assemblyName(?string $name): string
+    {
+        $name = trim((string) $name);
+
+        return $name === '' ? now()->format('Y-m-d') : mb_substr($name, 0, 120);
     }
 
     /**

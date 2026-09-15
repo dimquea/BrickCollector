@@ -215,6 +215,91 @@ class ImportTest extends TestCase
         $this->assertSame(0, (int) Wish::where('item_id', 'set-a')->value('color_id'));
     }
 
+    /**
+     * В сборку деталь идёт тем же путём, что и из справочника: партия, потом
+     * перенос. Поэтому одинаковые детали одного цвета складываются в одну
+     * строку, а россыпь после импорта остаётся какой была.
+     */
+    public function test_parts_go_into_a_new_assembly_named_after_the_file(): void
+    {
+        $this->postJson('/import', [
+            'destination' => 'assembly',
+            'assembly_id' => null,
+            'assembly_name' => 'Micro Tantive',
+            'rows' => [
+                ['type' => 'P', 'id' => 'brick', 'color_id' => 5, 'qty' => 2],
+                ['type' => 'P', 'id' => 'brick', 'color_id' => 5, 'qty' => 3],
+                ['type' => 'P', 'id' => 'brick', 'color_id' => 11, 'qty' => 1],
+                ['type' => 'S', 'id' => 'set-a', 'color_id' => null, 'qty' => 1],
+            ],
+        ])->assertOk()
+            ->assertJson(['added' => 3, 'skipped' => 1])
+            ->assertJsonPath('assembly.name', 'Micro Tantive');
+
+        $assembly = Entry::whereNull('item_type')->firstOrFail();
+
+        $roots = DB::table('collection_items')->where('entry_id', $assembly->id)->whereNull('parent_id')->get();
+
+        $this->assertCount(2, $roots, 'одна деталь одного цвета — одна строка сборки');
+        $this->assertSame(5, (int) $roots->firstWhere('color_id', 5)->qty);
+        $this->assertSame(1, (int) $roots->firstWhere('color_id', 11)->qty);
+
+        // Промежуточные партии отдали всё и исчезли, набор в сборку не пошёл.
+        $this->assertSame(0, Entry::where('item_type', 'P')->count());
+        $this->assertSame(0, Entry::where('item_type', 'S')->count());
+    }
+
+    public function test_parts_go_into_an_existing_assembly(): void
+    {
+        $assembly = Entry::create(['name' => 'Moon base', 'flag_incomplete' => false, 'flag_missing_figs' => false]);
+
+        $this->postJson('/import', [
+            'destination' => 'assembly',
+            'assembly_id' => $assembly->id,
+            'assembly_name' => 'Micro Tantive',
+            'rows' => [['type' => 'P', 'id' => 'brick', 'color_id' => 5, 'qty' => 4]],
+        ])->assertOk()->assertJsonPath('assembly.id', $assembly->id);
+
+        $this->assertSame(1, Entry::whereNull('item_type')->count(), 'новая не заведена');
+        $this->assertSame('Moon base', $assembly->refresh()->name, 'имя файла не трогает существующую');
+        $this->assertSame(4, (int) DB::table('collection_items')->where('entry_id', $assembly->id)->value('qty'));
+    }
+
+    /** Когда не подошло ничего, пустой сборки-сироты не остаётся. */
+    public function test_nothing_fitting_creates_no_assembly(): void
+    {
+        $this->postJson('/import', [
+            'destination' => 'assembly',
+            'assembly_name' => 'Пусто',
+            'rows' => [['type' => 'S', 'id' => 'set-a', 'color_id' => null, 'qty' => 1]],
+        ])->assertOk()->assertJson(['added' => 0, 'skipped' => 1, 'assembly' => null]);
+
+        $this->assertSame(0, Entry::count());
+    }
+
+    public function test_an_assembly_that_is_gone_is_refused(): void
+    {
+        $this->postJson('/import', [
+            'destination' => 'assembly',
+            'assembly_id' => 999,
+            'rows' => [['type' => 'P', 'id' => 'brick', 'color_id' => 5, 'qty' => 1]],
+        ])->assertStatus(422)->assertJsonValidationErrors('assembly_id');
+
+        $this->assertSame(0, Entry::count());
+    }
+
+    /** От имени ничего не осталось — берётся сегодняшняя дата, в порядке сортировки. */
+    public function test_a_new_assembly_without_a_name_takes_the_date(): void
+    {
+        $this->postJson('/import', [
+            'destination' => 'assembly',
+            'assembly_name' => '   ',
+            'rows' => [['type' => 'P', 'id' => 'brick', 'color_id' => 5, 'qty' => 1]],
+        ])->assertOk();
+
+        $this->assertSame(now()->format('Y-m-d'), Entry::whereNull('item_type')->value('name'));
+    }
+
     public function test_nothing_is_created_without_rows(): void
     {
         $this->store([])->assertStatus(422);
