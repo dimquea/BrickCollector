@@ -40,10 +40,16 @@ class AssembliesController extends Controller
     {
         $filters = ListFilters::read($request, ['q' => ['string', 'max:120']], switches: ['missing']);
 
+        // Части составной детали не в счёт: карточка должна показывать то же
+        // число, что и таблица её состава, а там лежит торс, а не торс плюс
+        // руки.
         $rows = fn (string $column) => DB::table('collection_items')
             ->whereColumn('collection_items.entry_id', 'collection_entries.id')
             ->where('item_type', 'P')
             ->where('counts', 1)
+            ->where(fn ($where) => $where
+                ->whereNull('parent_item_type')
+                ->orWhere('parent_item_type', '!=', 'P'))
             ->selectRaw("COALESCE(SUM({$column}), 0)");
 
         $query = Entry::whereNull('item_type')

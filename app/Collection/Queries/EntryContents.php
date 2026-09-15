@@ -82,6 +82,14 @@ class EntryContents
     {
         $row = DB::table('collection_items')
             ->where('entry_id', $entry->id)
+            // Части составной детали в счёт не идут: в сборке лежит торс, а не
+            // торс и отдельно руки, которых из него не вынимали. Такая строка
+            // помечена родителем-деталью — единственный случай, когда деталь
+            // лежит внутри детали, — и число сходится с тем, что показано в
+            // таблице состава.
+            ->where(fn ($where) => $where
+                ->whereNull('parent_item_type')
+                ->orWhere('parent_item_type', '!=', 'P'))
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN item_type = 'P' AND counts = 1 THEN qty END), 0)      as parts,
                 COALESCE(SUM(CASE WHEN item_type = 'M' AND counts = 1 THEN qty END), 0)      as minifigures,

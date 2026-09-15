@@ -24,8 +24,15 @@ class ItemInventory
     /** The catalog reaches six levels; the limit is slack for a bad release. */
     private const MAX_DEPTH = 8;
 
-    /** Types whose own inventory is worth expanding. */
-    private const EXPANDABLE = ['M', 'S'];
+    /**
+     * Types whose own inventory is worth expanding.
+     *
+     * Public because adding to the collection asks the same question about the
+     * item being added, and the answer must not be written down twice: a torso
+     * kept whole in one place and taken apart in the other is how one brick
+     * comes to be counted as itself and as its pieces.
+     */
+    public const EXPANDABLE = ['M', 'S'];
 
     /**
      * @return array<int, array<string, mixed>> nested by "children"

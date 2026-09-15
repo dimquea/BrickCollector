@@ -8,30 +8,25 @@ use Illuminate\Support\Facades\DB;
 /**
  * Changes how many of a part a loose lot holds.
  *
- * A part can have an inventory of its own — a length of track is a rail and
- * its sleepers — and those rows were multiplied by the lot's quantity when it
- * was added. They are scaled with it, or the lot would claim 2 rails and 20
- * sleepers' worth of track. Each row divides evenly, since it was built as
- * a multiple of the old quantity.
+ * A lot is one row, whatever the part is made of. A composite part — a torso
+ * with its arms, a length of track with its sleepers — goes in whole: those
+ * pieces are the same plastic described twice, and holding them as rows of
+ * their own would make the collection bigger than the drawer. So there is
+ * nothing underneath to scale.
  *
  * A loss can not outnumber what is there, so it is trimmed to the new count.
+ * The interface refuses to shrink a lot below what is missing from it; this is
+ * the floor under that, for every other way in.
  */
 class ResizeLot
 {
     public function handle(Entry $entry, int $qty): void
     {
-        DB::transaction(function () use ($entry, $qty) {
-            $root = $entry->roots()->firstOrFail();
-            $old = max(1, $root->qty);
+        $root = $entry->roots()->firstOrFail();
 
-            foreach ($entry->items()->get() as $row) {
-                $next = $row->id === $root->id ? $qty : intdiv($row->qty * $qty, $old);
-
-                $row->update([
-                    'qty' => $next,
-                    'lost_qty' => min($row->lost_qty, $next),
-                ]);
-            }
-        });
+        $root->update([
+            'qty' => $qty,
+            'lost_qty' => min($root->lost_qty, $qty),
+        ]);
     }
 }

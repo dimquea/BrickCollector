@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Collection\Actions\ResizeLot;
 use App\Collection\Models\Entry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -79,7 +80,12 @@ class PartLotsTest extends TestCase
         $this->assertSame('P', $lot->item_type);
         $this->assertSame(10, (int) $lot->color_id);
         $this->assertSame(3, $this->qty($lot, 'track'));
-        $this->assertSame(6, $this->qty($lot, 'rail'), 'what the part is made of is multiplied by the lot');
+
+        // A composite part goes in whole. A length of track is one thing, not a
+        // thing plus the rail and sleepers it is made of: counting both would
+        // put pieces into the collection that nobody can pick up separately.
+        $this->assertSame(0, $this->qty($lot, 'rail'));
+        $this->assertSame(1, DB::table('collection_items')->where('entry_id', $lot->id)->count());
     }
 
     public function test_without_a_colour_the_part_takes_its_picture_colour(): void
@@ -103,7 +109,7 @@ class PartLotsTest extends TestCase
 
         $this->assertSame(1, Entry::count(), 'topped up, not duplicated');
         $this->assertSame(5, $this->qty($lot, 'track'));
-        $this->assertSame(10, $this->qty($lot, 'rail'));
+        $this->assertSame(1, DB::table('collection_items')->where('entry_id', $lot->id)->count());
 
         $this->add(['qty' => 1, 'color_id' => 10]);
 
@@ -139,24 +145,27 @@ class PartLotsTest extends TestCase
         $this->assertSame(2, $this->qty($lot, 'track'));
     }
 
-    public function test_resizing_scales_the_contents_and_trims_losses(): void
+    public function test_resizing_changes_the_lot_and_a_loss_can_not_outnumber_it(): void
     {
         $this->add(['qty' => 4, 'color_id' => 10]);
         $lot = Entry::first();
-
-        DB::table('collection_items')
-            ->where('entry_id', $lot->id)
-            ->where('item_id', 'sleeper')
-            ->update(['lost_qty' => 10]);
 
         $this->patchJson("/parts/copy/{$lot->id}/qty", ['qty' => 2])
             ->assertOk()
             ->assertJson(['qty' => 2]);
 
         $this->assertSame(2, $this->qty($lot, 'track'));
-        $this->assertSame(4, $this->qty($lot, 'rail'));
-        $this->assertSame(8, $this->qty($lot, 'sleeper'));
-        $this->assertSame(8, $this->qty($lot, 'sleeper', 'lost_qty'), 'a loss can not outnumber the lot');
+        $this->assertSame(1, DB::table('collection_items')->where('entry_id', $lot->id)->count());
+
+        // Through the interface a lot can not shrink below what is missing from
+        // it — the test below says so. This is the floor under that, for every
+        // other way in.
+        DB::table('collection_items')->where('entry_id', $lot->id)->update(['lost_qty' => 2]);
+
+        app(ResizeLot::class)->handle($lot->refresh(), 1);
+
+        $this->assertSame(1, $this->qty($lot, 'track'));
+        $this->assertSame(1, $this->qty($lot, 'track', 'lost_qty'));
     }
 
     public function test_a_lot_can_not_shrink_below_what_is_missing_from_it(): void
@@ -185,7 +194,9 @@ class PartLotsTest extends TestCase
                 ->component('Parts/Copy')
                 ->where('entry.qty', 3)
                 ->where('entry.color_id', 10)
-                ->has('parts', 2));
+                // A composite part lists nothing inside: its pieces are not
+                // separate bricks, and the page shows it like any plain one.
+                ->has('parts', 0));
 
         // The part page used to link every owned copy to the set page.
         $this->get("/sets/{$lot->id}")->assertRedirect("/parts/copy/{$lot->id}");

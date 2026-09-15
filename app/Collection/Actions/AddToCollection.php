@@ -40,7 +40,16 @@ class AddToCollection
                 'flag_missing_figs' => false,
             ]);
 
-            $tree = $item->has_inventory ? $this->inventory->tree($item->type, $item->id) : [];
+            // Опись есть не только у наборов, но раскрывается не всякая.
+            // Составная деталь — торс с руками, ноги в сборе — физически одна
+            // вещь: её части внутрь не кладутся, иначе тот же кирпичик будет
+            // посчитан дважды, и сам, и по частям. Правило то же, что и для
+            // вложенных уровней, и живёт оно там же, в одном экземпляре.
+            $expandable = in_array($item->type, ItemInventory::EXPANDABLE, true);
+
+            $tree = $item->has_inventory && $expandable
+                ? $this->inventory->tree($item->type, $item->id)
+                : [];
 
             if ($item->type === 'S') {
                 // A set is the entry itself; its lots are the top of the tree.

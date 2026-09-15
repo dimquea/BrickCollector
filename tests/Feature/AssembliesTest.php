@@ -66,6 +66,45 @@ class AssembliesTest extends TestCase
         return DB::table('collection_items')->where('entry_id', $entry->id)->get();
     }
 
+    /**
+     * Карточка и список считают ровно то, что показано в таблице состава.
+     *
+     * Составные детали — торс с руками, ноги в сборе — прежде раскладывались
+     * внутрь, и их части оказывались отдельными строками. Считались они наравне
+     * со своим узлом, и сборка из семи деталей объявляла четырнадцать: строки
+     * есть, а в таблице их не видно, потому что там только корневые.
+     *
+     * Причина устранена, но условие остаётся сторожем: деталь внутри детали не
+     * в счёт, откуда бы она ни взялась.
+     */
+    public function test_a_piece_of_a_composite_part_is_not_counted_beside_it(): void
+    {
+        $assembly = $this->assembly();
+
+        $rootId = DB::table('collection_items')->insertGetId([
+            'entry_id' => $assembly->id, 'item_type' => 'P', 'item_id' => 'brick', 'color_id' => 11,
+            'qty' => 2, 'lost_qty' => 0, 'counts' => 1,
+        ]);
+
+        DB::table('collection_items')->insert([
+            'entry_id' => $assembly->id, 'parent_id' => $rootId, 'parent_item_type' => 'P',
+            'item_type' => 'P', 'item_id' => 'other', 'color_id' => 11,
+            'qty' => 3, 'lost_qty' => 0, 'counts' => 1,
+        ]);
+
+        $this->get('/assemblies/'.$assembly->id)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('totals.parts', 2)
+                // Таблица показывает корневые строки, и число над ней должно
+                // совпадать с тем, что под ним перечислено.
+                ->has('parts', 1));
+
+        $this->get('/assemblies')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('assemblies.data.0.parts', 2));
+    }
+
     public function test_an_assembly_is_created_with_a_name_and_opens_its_page(): void
     {
         $this->post('/assemblies', ['name' => 'Moon base'])
