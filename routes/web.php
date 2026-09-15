@@ -175,5 +175,8 @@ Route::post('/locale', function (Request $request) {
 
     $request->session()->put('locale', $validated['locale']);
 
-    return back();
+    // Язык переключают со страницы настроек и больше ниоткуда, поэтому адрес
+    // назван прямо: back() под панелью Home Assistant уводит в корень, и смена
+    // языка выглядела бы как выброс на главную.
+    return to_route('settings');
 })->name('locale.set');

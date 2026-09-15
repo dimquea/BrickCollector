@@ -350,9 +350,13 @@ class AssembliesTest extends TestCase
 
         $this->get('/images/assembly/'.$assembly->id)->assertNotFound();
 
+        // Адрес возврата назван, а не просто «куда-нибудь»: под панелью Home
+        // Assistant «назад» оборачивалось корнем, и человек, загрузив картинку,
+        // оказывался на главной — картинка сохранена, а выглядело как отказ.
+        // Проверка «просто редирект» такое пропускала.
         $this->post("/assemblies/{$assembly->id}/image", [
             'image' => UploadedFile::fake()->image('shelf.jpg'),
-        ])->assertRedirect();
+        ])->assertRedirect('/assemblies/'.$assembly->id);
 
         $this->get('/assemblies/'.$assembly->id)
             ->assertInertia(fn ($page) => $page->where('entry.has_image', true));
@@ -361,7 +365,8 @@ class AssembliesTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'image/jpeg');
 
-        $this->delete("/assemblies/{$assembly->id}/image")->assertRedirect();
+        $this->delete("/assemblies/{$assembly->id}/image")
+            ->assertRedirect('/assemblies/'.$assembly->id);
 
         $this->get('/images/assembly/'.$assembly->id)->assertNotFound();
     }

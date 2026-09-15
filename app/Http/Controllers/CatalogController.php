@@ -254,7 +254,11 @@ class CatalogController extends Controller
         $destination = match (true) {
             in_array($item->type, SetsController::TYPES, true) => to_route('sets.show', $entry),
             $item->type === 'M' => to_route('minifigures.copy', $entry),
-            default => back(),
+            // Своего раздела у такого типа нет, поэтому остаёмся на карточке
+            // справочника. Названный адрес, а не back(): под панелью Home
+            // Assistant «назад» оборачивается корнем, и человек решает, что
+            // добавить не вышло, — хотя вышло.
+            default => to_route('catalog.show', [$item->type, $item->id]),
         };
 
         return $destination->with('flash', $flash);

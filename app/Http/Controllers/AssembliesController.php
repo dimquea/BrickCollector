@@ -301,7 +301,13 @@ class AssembliesController extends Controller
 
         $images->put($entry->id, $request->file('image'));
 
-        return back()->with('flash', ['message' => __('app.collection.saved')]);
+        // Возврат назван прямо, а не через back(). Под панелью Home Assistant
+        // предыдущей страницы у запроса может не оказаться вовсе, и «назад»
+        // оборачивается корнем: картинка сохранена, а человек очутился на
+        // главной и решил, что не вышло. Сюда приходят с одной-единственной
+        // страницы, так что называть её — честнее, чем гадать.
+        return to_route('assemblies.show', $entry)
+            ->with('flash', ['message' => __('app.collection.saved')]);
     }
 
     public function destroyImage(Entry $entry, AssemblyImages $images): RedirectResponse
@@ -310,6 +316,9 @@ class AssembliesController extends Controller
 
         $images->delete($entry->id);
 
-        return back()->with('flash', ['message' => __('app.collection.saved')]);
+        // По той же причине, что и при загрузке: «назад» под панелью ведёт в
+        // корень.
+        return to_route('assemblies.show', $entry)
+            ->with('flash', ['message' => __('app.collection.saved')]);
     }
 }

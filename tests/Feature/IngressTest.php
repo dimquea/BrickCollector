@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Collection\Models\Entry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
@@ -146,6 +147,22 @@ class IngressTest extends TestCase
     }
 
     /**
+     * Маршрут для проверки «назад».
+     *
+     * Свой, а не чужой: в самом приложении back() больше не осталось — каждый
+     * возврат называет адрес прямо, потому что под панелью «назад» уводит в
+     * корень. Прежде эти два теста ездили на маршруте картинки сборки, и, когда
+     * тот перестал возвращаться «назад», один из них молча перестал что-либо
+     * проверять. Предмет проверки — правило прослойки, и держать его надо здесь.
+     */
+    private function routeGoingBack(): string
+    {
+        Route::middleware('web')->get('/testing/back', fn () => back());
+
+        return '/testing/back';
+    }
+
+    /**
      * «Назад» под ингрессом.
      *
      * back() берёт адрес из сессии или из Referer, а там стоит тот хост,
@@ -157,17 +174,15 @@ class IngressTest extends TestCase
      */
     public function test_a_redirect_back_is_relative_even_when_it_names_another_host(): void
     {
-        $assembly = Entry::create(['name' => 'Moon base']);
-
-        $response = $this->delete('/assemblies/'.$assembly->id.'/image', [], $this->headers([
-            'Referer' => 'http://192.168.0.10/assemblies/'.$assembly->id,
+        $response = $this->get($this->routeGoingBack(), $this->headers([
+            'Referer' => 'http://192.168.0.10/assemblies/5',
         ]));
 
         $response->assertRedirect();
 
         $location = (string) $response->headers->get('Location');
 
-        $this->assertStringStartsWith(self::PREFIX.'/assemblies/'.$assembly->id, $location);
+        $this->assertStringStartsWith(self::PREFIX.'/assemblies/5', $location);
         $this->assertStringNotContainsString('192.168.0.10', $location);
     }
 
@@ -181,9 +196,7 @@ class IngressTest extends TestCase
      */
     public function test_a_redirect_to_the_bare_root_is_relative_too(): void
     {
-        $assembly = Entry::create(['name' => 'Moon base']);
-
-        $response = $this->delete('/assemblies/'.$assembly->id.'/image', [], $this->headers());
+        $response = $this->get($this->routeGoingBack(), $this->headers());
 
         $response->assertRedirect();
 

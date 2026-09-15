@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Collection\Models\Entry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 /**
@@ -133,13 +134,21 @@ class ListFiltersTest extends TestCase
      * Список рисует два десятка картинок, и пока их маршрут шёл через сессию,
      * каждая перезаписывала адрес, на который ведёт «назад». В Home Assistant
      * переключение языка или отказ валидации уводили на /images/…
+     *
+     * Маршрут здесь свой: в приложении back() не осталось ни одного — каждый
+     * возврат называет адрес прямо, потому что под панелью «назад» уводит в
+     * корень. Прежде тест ездил на переключении языка, и стоило тому перестать
+     * возвращаться «назад», как проверка осталась бы без предмета. Само
+     * свойство сессии никуда не делось, и держать его надо здесь.
      */
     public function test_a_picture_is_not_where_back_leads(): void
     {
+        Route::middleware('web')->get('/testing/back', fn () => back());
+
         $this->get('/sets')->assertOk();
         $this->get('/images/S/set-a/0');
 
-        $this->post('/locale', ['locale' => 'en'])->assertRedirect(url('/sets'));
+        $this->get('/testing/back')->assertRedirect(url('/sets'));
     }
 
     /** Картинке не нужна сессия, и её ответ не должен ставить cookie. */
