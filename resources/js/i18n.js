@@ -22,11 +22,29 @@ function lookup(key) {
     return key.split('.').reduce((carry, part) => carry?.[part], dictionary.value);
 }
 
+/**
+ * Подставляет значения на место :заполнителей — одним проходом.
+ *
+ * Прежде замены шли по очереди, каждая по уже изменённой строке, и это ломалось
+ * дважды. Короткий заполнитель съедал начало длинного: «:tag» внутри «:tagged»
+ * превращал подсказку в «На продажуged». А подставленное значение могло само
+ * сойти за заполнитель для следующей замены — тег с именем «:loose» подменился
+ * бы числом.
+ *
+ * Здесь, как у strtr в Laravel, все заполнители ищутся разом, длинные раньше
+ * коротких, и подставленный текст повторно не просматривается.
+ */
 function interpolate(line, replacements) {
-    return Object.entries(replacements).reduce(
-        (carry, [name, value]) => carry.replaceAll(`:${name}`, value),
-        line,
-    );
+    const names = Object.keys(replacements).sort((left, right) => right.length - left.length);
+
+    if (! names.length) {
+        return line;
+    }
+
+    const escaped = names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const pattern = new RegExp(`:(${escaped.join('|')})`, 'g');
+
+    return line.replace(pattern, (match, name) => String(replacements[name]));
 }
 
 /** Translate a key. Falls back to the key itself so a miss is visible, not silent. */
