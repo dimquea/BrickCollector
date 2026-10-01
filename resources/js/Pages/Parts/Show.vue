@@ -83,15 +83,18 @@ const lotDate = (lot) =>
                         <span>{{ part.name }}</span>
                     </div>
 
-                    <Link :href="`/catalog/P/${encodeURIComponent(part.item_id)}?color=${part.color_id}`">
-                        <ItemImage
-                            type="P"
-                            :id="part.item_id"
-                            :color-id="part.color_id"
-                            :alt="part.name"
-                            class="card-img-top p-3"
-                        />
-                    </Link>
+                    <!-- Щелчок по снимку увеличивает его: в справочник со
+                         страницы детали ведёт кнопка ниже, а здесь смотрят
+                         саму деталь. -->
+                    <ItemImage
+                        type="P"
+                        :id="part.item_id"
+                        :color-id="part.color_id"
+                        :alt="part.name"
+                        :zoom-subtitle="part.color_name"
+                        class="card-img-top p-3"
+                        zoom
+                    />
 
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between gap-2">
@@ -166,14 +169,13 @@ const lotDate = (lot) =>
                                 <template v-if="active === 'entries'">
                                     <tr v-for="row in inEntries" :key="row.entry_id">
                                         <td style="width: 4rem">
-                                            <Link :href="entryHref(row)">
-                                                <ItemImage
-                                                    :type="row.type"
-                                                    :id="row.item_id"
-                                                    :color-id="row.image_color_id"
-                                                    :alt="row.name"
-                                                />
-                                            </Link>
+                                            <ItemImage
+                                                :type="row.type"
+                                                :id="row.item_id"
+                                                :color-id="row.image_color_id"
+                                                :alt="row.name"
+                                                zoom
+                                            />
                                         </td>
                                         <td>
                                             <Link :href="entryHref(row)" class="text-decoration-none">
@@ -227,13 +229,12 @@ const lotDate = (lot) =>
                                 <template v-else-if="active === 'assemblies'">
                                     <tr v-for="row in assemblies" :key="row.entry_id">
                                         <td style="width: 4rem">
-                                            <Link :href="`/assemblies/${row.entry_id}`">
-                                                <AssemblyImage
-                                                    :id="row.entry_id"
-                                                    :has-image="row.has_image"
-                                                    :alt="row.name"
-                                                />
-                                            </Link>
+                                            <AssemblyImage
+                                                :id="row.entry_id"
+                                                :has-image="row.has_image"
+                                                :alt="row.name"
+                                                zoom
+                                            />
                                         </td>
                                         <td>
                                             <Link :href="`/assemblies/${row.entry_id}`" class="text-decoration-none">
@@ -252,14 +253,13 @@ const lotDate = (lot) =>
                                 <template v-else-if="active === 'minifigures'">
                                     <tr v-for="row in inMinifigures" :key="row.item_id">
                                         <td style="width: 4rem">
-                                            <Link :href="figureHref(row)">
-                                                <ItemImage
-                                                    type="M"
-                                                    :id="row.item_id"
-                                                    :color-id="row.image_color_id"
-                                                    :alt="row.name"
-                                                />
-                                            </Link>
+                                            <ItemImage
+                                                type="M"
+                                                :id="row.item_id"
+                                                :color-id="row.image_color_id"
+                                                :alt="row.name"
+                                                zoom
+                                            />
                                         </td>
                                         <td>
                                             <Link
@@ -277,14 +277,14 @@ const lotDate = (lot) =>
                                 <template v-else-if="active === 'colours'">
                                     <tr v-for="row in otherColours" :key="row.color_id">
                                         <td style="width: 4rem">
-                                            <Link :href="colourHref(row)">
-                                                <ItemImage
-                                                    type="P"
-                                                    :id="row.item_id"
-                                                    :color-id="row.color_id"
-                                                    :alt="row.name"
-                                                />
-                                            </Link>
+                                            <ItemImage
+                                                type="P"
+                                                :id="row.item_id"
+                                                :color-id="row.color_id"
+                                                :alt="row.name"
+                                                :zoom-subtitle="row.color_name"
+                                                zoom
+                                            />
                                         </td>
                                         <td>
                                             <Link :href="colourHref(row)" class="text-decoration-none">
@@ -298,14 +298,13 @@ const lotDate = (lot) =>
                                 <template v-else>
                                     <tr v-for="row in missingIn" :key="row.entry_id" class="table-warning">
                                         <td style="width: 4rem">
-                                            <Link :href="entryHref(row)">
-                                                <ItemImage
-                                                    :type="row.type"
-                                                    :id="row.item_id"
-                                                    :color-id="row.image_color_id"
-                                                    :alt="row.name"
-                                                />
-                                            </Link>
+                                            <ItemImage
+                                                :type="row.type"
+                                                :id="row.item_id"
+                                                :color-id="row.image_color_id"
+                                                :alt="row.name"
+                                                zoom
+                                            />
                                         </td>
                                         <td>
                                             <Link :href="entryHref(row)" class="text-decoration-none">

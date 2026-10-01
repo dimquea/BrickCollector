@@ -87,3 +87,95 @@
     font-size: 0.8125rem;
     padding: 0.375rem 0.5rem;
 }
+
+/*
+ * Картинка, которую можно открыть во весь экран.
+ *
+ * Курсор — единственная подсказка, что щелчок что-то даст: рамка или кнопка
+ * вокруг снимка в строке таблицы заметнее самого снимка.
+ */
+.zoomable {
+    cursor: zoom-in;
+}
+
+/*
+ * Затенённый слой со снимком.
+ *
+ * Своя разметка, а не окно бутстрапа: рамка и поля окна съедали бы место,
+ * ради которого снимок и открывают.
+ *
+ * Прокручивается слой целиком, а снимок внутри него стоит на margin: auto —
+ * так увеличенный вдвое не обрезается сверху и слева, как это бывает с
+ * центровкой флексом в прокручиваемом блоке.
+ */
+.image-zoom {
+    position: fixed;
+    inset: 0;
+    /* Выше всего, кроме уведомлений: сообщение об ошибке должно быть видно и
+       поверх снимка. */
+    z-index: 1080;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.85);
+}
+
+.image-zoom__bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: #fff;
+    /* Подпись лежит поверх снимка, и читаться она должна и на светлом: отсюда
+       растушёванная тень, а не сплошная полоса. */
+    background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+}
+
+.image-zoom__frame {
+    display: flex;
+    min-width: 100%;
+    min-height: 100%;
+    width: max-content;
+    padding: 1rem;
+}
+
+.image-zoom__picture {
+    margin: auto;
+    max-width: 95vw;
+    max-height: 95vh;
+    cursor: zoom-in;
+}
+
+.image-zoom__picture--scaled {
+    max-width: none;
+    max-height: none;
+    cursor: zoom-out;
+}
+
+/*
+ * Шапка гармошки со снимком слева.
+ *
+ * Снимок вынесен из кнопки: внутри неё щелчок по нему был бы щелчком по
+ * кнопке, то есть раскрывал бы состав вместо того, чтобы показать картинку
+ * крупнее. Полоса остаётся одной: кнопка занимает всё, что осталось, а
+ * подсветка раскрытой кнопки распространяется на всю шапку — иначе под
+ * снимком оставался бы неокрашенный островок.
+ */
+.accordion-header--picture {
+    display: flex;
+    align-items: center;
+}
+.accordion-header--picture > .accordion-header__picture {
+    /* Снимок и слева от него отступ — ровно те же, что были внутри кнопки:
+       перестановка не должна быть заметна. */
+    flex: 0 0 3rem;
+    margin-left: var(--bs-accordion-btn-padding-x, 1.25rem);
+}
+.accordion-header--picture > .accordion-button {
+    padding-left: 0.5rem;
+}
+.accordion-header--picture:has(.accordion-button:not(.collapsed)) {
+    background-color: var(--bs-accordion-active-bg);
+}

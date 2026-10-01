@@ -84,6 +84,7 @@ function remove() {
                         :color-id="entry.image_color_id"
                         :alt="entry.name"
                         class="card-img-top p-3"
+                        zoom
                     />
 
                     <ul class="list-group list-group-flush">

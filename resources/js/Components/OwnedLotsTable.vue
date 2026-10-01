@@ -55,9 +55,14 @@ const href = (lot) =>
                     :class="{ 'table-warning': lot.lost_qty > 0, 'opacity-50': !lot.counts }"
                 >
                     <td>
-                        <Link :href="href(lot)">
-                            <ItemImage type="P" :id="lot.item_id" :color-id="lot.color_id" :alt="lot.name" />
-                        </Link>
+                        <ItemImage
+                            type="P"
+                            :id="lot.item_id"
+                            :color-id="lot.color_id"
+                            :alt="lot.name"
+                            :zoom-subtitle="lot.color_name"
+                            zoom
+                        />
                     </td>
                     <td>
                         <Link :href="href(lot)" class="text-decoration-none">

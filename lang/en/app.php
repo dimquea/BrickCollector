@@ -179,6 +179,8 @@ return [
         'element_codes' => 'LEGO element numbers',
         'no_inventory' => 'The catalog has no contents listed for this item.',
         'open' => 'Open',
+        'close' => 'Close',
+        'zoom' => 'Show the picture larger',
         'appears_in' => 'Part of',
         'appears_none' => 'Nothing in the catalog lists this item.',
         'appears_none_colour' => 'Nothing lists it in this colour.',

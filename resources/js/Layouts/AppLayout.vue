@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import ToastHost from '@/Components/ToastHost.vue';
+import ImageOverlay from '@/Components/ImageOverlay.vue';
 import { t } from '@/i18n';
 
 const page = usePage();
@@ -67,5 +68,6 @@ const isActive = (href) => href !== null && page.url.startsWith(href);
         </main>
 
         <ToastHost />
+        <ImageOverlay />
     </div>
 </template>

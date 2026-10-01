@@ -40,16 +40,24 @@ const lostInside = computed(() => {
 
 <template>
     <div class="accordion-item" :class="{ 'opacity-50': !lot.counts }">
-        <h2 class="accordion-header">
+        <!-- Снимок стоит рядом с кнопкой, а не внутри неё: внутри щелчок по
+             нему был бы щелчком по кнопке и только раскрывал бы состав. -->
+        <h2 class="accordion-header accordion-header--picture">
+            <span class="accordion-header__picture">
+                <ItemImage
+                    :type="lot.type"
+                    :id="lot.item_id"
+                    :color-id="lot.image_color_id"
+                    :alt="lot.name"
+                    zoom
+                />
+            </span>
             <button
                 class="accordion-button collapsed gap-2"
                 type="button"
                 data-bs-toggle="collapse"
                 :data-bs-target="`#${domId}`"
             >
-                <span style="width: 3rem" class="flex-shrink-0">
-                    <ItemImage :type="lot.type" :id="lot.item_id" :color-id="lot.image_color_id" :alt="lot.name" />
-                </span>
                 <span class="badge text-bg-secondary flex-shrink-0">{{ lot.item_id }}</span>
                 <span class="text-truncate">{{ lot.name }}</span>
                 <span v-if="lot.qty > 1" class="badge text-bg-light flex-shrink-0">&times;{{ lot.qty }}</span>

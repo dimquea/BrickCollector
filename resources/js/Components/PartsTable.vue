@@ -29,9 +29,16 @@ const parts = computed(() => props.lots.filter((lot) => lot.type === 'P'));
             <tbody>
                 <tr v-for="lot in parts" :key="`${lot.id}/${lot.color_id}/${lot.match_id}`">
                     <td>
-                        <Link :href="`/catalog/P/${encodeURIComponent(lot.id)}?color=${lot.color_id}`">
-                            <ItemImage type="P" :id="lot.id" :color-id="lot.color_id" :alt="lot.name" />
-                        </Link>
+                        <!-- Снимок увеличивает, а не переходит: мы уже внутри
+                             карточки, и к детали ведёт её название рядом. -->
+                        <ItemImage
+                            type="P"
+                            :id="lot.id"
+                            :color-id="lot.color_id"
+                            :alt="lot.name"
+                            :zoom-subtitle="lot.color_name"
+                            zoom
+                        />
                     </td>
                     <td>
                         <Link :href="`/catalog/P/${encodeURIComponent(lot.id)}?color=${lot.color_id}`" class="text-decoration-none">

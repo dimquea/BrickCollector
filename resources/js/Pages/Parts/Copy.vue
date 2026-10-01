@@ -101,7 +101,9 @@ const partHref = `/parts/${encodeURIComponent(props.entry.item_id)}/${props.entr
                         :id="entry.item_id"
                         :color-id="entry.color_id"
                         :alt="entry.name"
+                        :zoom-subtitle="entry.color_name"
                         class="card-img-top p-3"
+                        zoom
                     />
 
                     <ul class="list-group list-group-flush">

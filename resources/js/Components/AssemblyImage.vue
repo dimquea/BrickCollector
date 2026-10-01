@@ -1,6 +1,8 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { url } from '@/support/base';
+import { zoom as openZoom } from '@/support/lightbox';
+import { t } from '@/i18n';
 
 /**
  * The picture of an assembly, or a stand-in when it has none.
@@ -13,13 +15,50 @@ const props = defineProps({
     id: { type: Number, required: true },
     hasImage: { type: Boolean, default: false },
     alt: { type: String, default: '' },
+    /** Открывать ли снимок во весь экран по щелчку; см. ItemImage. */
+    zoom: { type: Boolean, default: false },
 });
 
 const src = computed(() => (props.hasImage ? url(`/images/assembly/${props.id}`) : null));
+
+// Увеличивать есть во что, только если исходник крупнее нарисованного; см.
+// ItemImage, там же и почему это выясняется после загрузки.
+const natural = ref(0);
+const rendered = ref(0);
+
+function measure(event) {
+    natural.value = event.target.naturalWidth;
+    rendered.value = event.target.clientWidth;
+}
+
+const zoomable = computed(
+    () => props.zoom && src.value !== null && natural.value > rendered.value + 8,
+);
+
+function open() {
+    if (zoomable.value) {
+        openZoom({ kind: 'assembly', id: props.id, hasImage: true, title: props.alt });
+    }
+}
 </script>
 
 <template>
-    <img v-if="src" :src="src" :alt="alt" loading="lazy" decoding="async" class="img-fluid" />
+    <img
+        v-if="src"
+        :src="src"
+        :alt="alt"
+        loading="lazy"
+        decoding="async"
+        class="img-fluid"
+        :class="{ zoomable }"
+        :role="zoomable ? 'button' : null"
+        :tabindex="zoomable ? 0 : null"
+        :title="zoomable ? t('item.zoom') : null"
+        @load="measure"
+        @click="open"
+        @keydown.enter.prevent="open"
+        @keydown.space.prevent="open"
+    />
 
     <svg v-else class="img-fluid" viewBox="0 0 160 120" role="img" :aria-label="alt" preserveAspectRatio="xMidYMid meet">
         <!-- Цвета — переменные Bootstrap: на тёмной теме заглушка должна быть

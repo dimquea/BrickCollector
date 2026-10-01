@@ -195,6 +195,12 @@ const parentColourOptions = computed(() =>
 );
 
 const parentRows = computed(() => props.parents?.rows?.data ?? []);
+
+// Название цвета — подпись к снимку в оверлее: деталь в двух цветах рисуется
+// двумя разными картинками, и без подписи непонятно, какая из них открыта.
+const colourName = computed(
+    () => props.colours.find((row) => Number(row.id) === Number(colour.value))?.name ?? null,
+);
 </script>
 
 <template>
@@ -221,7 +227,9 @@ const parentRows = computed(() => props.parents?.rows?.data ?? []);
                         :id="item.id"
                         :color-id="Number(colour)"
                         :alt="item.name"
+                        :zoom-subtitle="colourName"
                         class="card-img-top p-3"
+                        zoom
                     />
 
                     <div class="card-body d-grid gap-2">
@@ -368,14 +376,16 @@ const parentRows = computed(() => props.parents?.rows?.data ?? []);
                             <tbody>
                                 <tr v-for="row in parentRows" :key="`${row.type}/${row.id}`">
                                     <td style="width: 4rem">
-                                        <Link :href="`/catalog/${row.type}/${encodeURIComponent(row.id)}`">
-                                            <ItemImage
-                                                :type="row.type"
-                                                :id="row.id"
-                                                :color-id="row.image_color_id"
-                                                :alt="row.name"
-                                            />
-                                        </Link>
+                                        <!-- Снимок увеличивает, а не переходит:
+                                             мы уже в карточке, и к набору ведёт
+                                             его название рядом. -->
+                                        <ItemImage
+                                            :type="row.type"
+                                            :id="row.id"
+                                            :color-id="row.image_color_id"
+                                            :alt="row.name"
+                                            zoom
+                                        />
                                     </td>
                                     <td>
                                         <Link

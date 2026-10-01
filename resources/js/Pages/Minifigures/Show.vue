@@ -60,6 +60,7 @@ const money = (minor) =>
                         :color-id="figure.image_color_id"
                         :alt="figure.name"
                         class="card-img-top p-3"
+                        zoom
                     />
 
                     <ul class="list-group list-group-flush">
@@ -128,14 +129,14 @@ const money = (minor) =>
                                     <template v-if="active === 'parts'">
                                         <tr v-for="part in parts" :key="`${part.item_id}/${part.color_id}`">
                                             <td style="width: 4rem">
-                                                <Link :href="`/parts/${encodeURIComponent(part.item_id)}/${part.color_id}`">
-                                                    <ItemImage
-                                                        type="P"
-                                                        :id="part.item_id"
-                                                        :color-id="part.color_id"
-                                                        :alt="part.name"
-                                                    />
-                                                </Link>
+                                                <ItemImage
+                                                    type="P"
+                                                    :id="part.item_id"
+                                                    :color-id="part.color_id"
+                                                    :alt="part.name"
+                                                    :zoom-subtitle="part.color_name"
+                                                    zoom
+                                                />
                                             </td>
                                             <td>
                                                 <Link
@@ -157,14 +158,13 @@ const money = (minor) =>
                                     <template v-else-if="active === 'entries'">
                                         <tr v-for="row in inEntries" :key="row.entry_id">
                                             <td style="width: 4rem">
-                                                <Link :href="`/sets/${row.entry_id}`">
-                                                    <ItemImage
-                                                        :type="row.type"
-                                                        :id="row.item_id"
-                                                        :color-id="row.image_color_id"
-                                                        :alt="row.name"
-                                                    />
-                                                </Link>
+                                                <ItemImage
+                                                    :type="row.type"
+                                                    :id="row.item_id"
+                                                    :color-id="row.image_color_id"
+                                                    :alt="row.name"
+                                                    zoom
+                                                />
                                             </td>
                                             <td>
                                                 <Link :href="`/sets/${row.entry_id}`" class="text-decoration-none">
@@ -179,14 +179,13 @@ const money = (minor) =>
                                     <template v-else-if="active === 'copies'">
                                         <tr v-for="copy in copies" :key="copy.entry_id">
                                             <td style="width: 4rem">
-                                                <Link :href="`/minifigures/copy/${copy.entry_id}`">
-                                                    <ItemImage
-                                                        type="M"
-                                                        :id="figure.item_id"
-                                                        :color-id="figure.image_color_id"
-                                                        :alt="figure.name"
-                                                    />
-                                                </Link>
+                                                <ItemImage
+                                                    type="M"
+                                                    :id="figure.item_id"
+                                                    :color-id="figure.image_color_id"
+                                                    :alt="figure.name"
+                                                    zoom
+                                                />
                                             </td>
                                             <td>
                                                 <Link
@@ -213,14 +212,13 @@ const money = (minor) =>
                                     <template v-else>
                                         <tr v-for="row in missingIn" :key="row.entry_id" class="table-warning">
                                             <td style="width: 4rem">
-                                                <Link :href="`/sets/${row.entry_id}`">
-                                                    <ItemImage
-                                                        :type="row.type"
-                                                        :id="row.item_id"
-                                                        :color-id="row.image_color_id"
-                                                        :alt="row.name"
-                                                    />
-                                                </Link>
+                                                <ItemImage
+                                                    :type="row.type"
+                                                    :id="row.item_id"
+                                                    :color-id="row.image_color_id"
+                                                    :alt="row.name"
+                                                    zoom
+                                                />
                                             </td>
                                             <td>
                                                 <Link :href="`/sets/${row.entry_id}`" class="text-decoration-none">

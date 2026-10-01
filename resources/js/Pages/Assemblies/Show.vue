@@ -128,6 +128,7 @@ function remove() {
                         :has-image="entry.has_image"
                         :alt="entry.name"
                         class="card-img-top p-3"
+                        zoom
                     />
 
                     <ul class="list-group list-group-flush">
