@@ -3,6 +3,24 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.5.1 — 2026-10-01
+
+### Fixed
+
+- **An accordion row ran off the card on a phone.** The row of a minifigure inside a set is a
+  button declared full width, and it would not shrink below its own contents: on a 390-point
+  screen it ran past the card by exactly the width of the picture beside it, carrying the chevron
+  off the edge. The row now holds the item number and the counts, and the name moved into the
+  body, where there is room to write it out in full instead of cutting it with an ellipsis. On a
+  narrow screen the badges for spares and losses keep their numbers and drop the word before
+  them — the word is four times the length of the number, and the colour and the sign already say
+  which is which.
+- **The magnifier appeared on one picture and not on the next.** 1.5.0 offered to open a picture
+  only where the file was larger than what is drawn, which is known only once it has loaded — so
+  in a table of a figure's parts some rows had it and some did not, with nothing on screen to
+  explain the difference. A picture inside a card opens now, and whether the file is worth the
+  trip is the looker's business.
+
 ## 1.5.0 — 2026-10-01
 
 ### Added
