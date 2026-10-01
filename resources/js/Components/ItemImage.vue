@@ -75,31 +75,12 @@ watch(
 
 const src = computed(() => candidates.value[attempt.value] ?? null);
 
-/*
- * Увеличивать есть во что?
- *
- * В кэше лежит то, что отдал BrickLink: у ходовой детали это 200 точек по
- * ширине, у набора — 640. В строке таблицы снимок нарисован в 56 и крупнее
- * станет заведомо, а в карточке он уже шире, чем исходник, и «увеличение»
- * показало бы картинку меньше той, на которую нажали.
- *
- * Поэтому решает не место вызова, а сам файл: ширину исходника видно только
- * после загрузки, и до неё снимок обычный, без курсора и без обещания.
- */
-const natural = ref(0);
-const rendered = ref(0);
-
-function measure(event) {
-    natural.value = event.target.naturalWidth;
-    // Ноль — картинка ещё не на экране (свёрнутый блок, список ниже сгиба):
-    // сравнивать не с чем, и отказывать не за что.
-    rendered.value = event.target.clientWidth;
-}
-
-// Заглушку увеличивать незачем: там нечего разглядывать.
-const zoomable = computed(
-    () => props.zoom && src.value !== null && natural.value > rendered.value + 8,
-);
+// Заглушку увеличивать незачем: там нечего разглядывать. В остальном решает
+// место вызова — размером снимка не проверяемся. Проверялись: у ходовой детали
+// исходник мельче того, как он нарисован в карточке, и лупа у неё пропадала, а
+// у соседней фигурки оставалась. Непонятно, почему одна картинка открывается,
+// а другая нет, и объяснить это нечем.
+const zoomable = computed(() => props.zoom && src.value !== null);
 
 function open() {
     if (zoomable.value) {
@@ -129,7 +110,6 @@ function open() {
         :tabindex="zoomable ? 0 : null"
         :title="zoomable ? t('item.zoom') : null"
         @error="attempt += 1"
-        @load="measure"
         @click="open"
         @keydown.enter.prevent="open"
         @keydown.space.prevent="open"

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { url } from '@/support/base';
 import { zoom as openZoom } from '@/support/lightbox';
 import { t } from '@/i18n';
@@ -21,19 +21,8 @@ const props = defineProps({
 
 const src = computed(() => (props.hasImage ? url(`/images/assembly/${props.id}`) : null));
 
-// Увеличивать есть во что, только если исходник крупнее нарисованного; см.
-// ItemImage, там же и почему это выясняется после загрузки.
-const natural = ref(0);
-const rendered = ref(0);
-
-function measure(event) {
-    natural.value = event.target.naturalWidth;
-    rendered.value = event.target.clientWidth;
-}
-
-const zoomable = computed(
-    () => props.zoom && src.value !== null && natural.value > rendered.value + 8,
-);
+// Заглушку увеличивать незачем; размером снимка не проверяемся, см. ItemImage.
+const zoomable = computed(() => props.zoom && src.value !== null);
 
 function open() {
     if (zoomable.value) {
@@ -54,7 +43,6 @@ function open() {
         :role="zoomable ? 'button' : null"
         :tabindex="zoomable ? 0 : null"
         :title="zoomable ? t('item.zoom') : null"
-        @load="measure"
         @click="open"
         @keydown.enter.prevent="open"
         @keydown.space.prevent="open"
