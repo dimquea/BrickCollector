@@ -5,6 +5,7 @@ namespace App\Catalog\Queries;
 use App\Catalog\Models\Item;
 use App\Catalog\Models\ItemType;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -85,7 +86,12 @@ class ItemParents
             $total,
             self::PER_PAGE,
             $page,
-            ['pageName' => 'in_page'],
+            // Путь задаётся явно, потому что постраничка здесь собрана руками:
+            // paginate() у построителя запросов подставляет адрес текущей
+            // страницы сам, а конструктору всё равно, и без пути он берёт
+            // корень. Ссылка «2» тогда ведёт на «/?in_page=2» — то есть на
+            // главную, откуда возвращаться некуда.
+            ['pageName' => 'in_page', 'path' => Paginator::resolveCurrentPath()],
         );
     }
 

@@ -166,6 +166,13 @@ class ItemParentsTest extends TestCase
                 ->where('parents.rows.total', ItemParents::PER_PAGE + 2)
                 ->has('parents.rows.data', ItemParents::PER_PAGE)
                 ->where('parents.rows.data.0.id', 'bulk-000')
+                // Адрес карточки, а не одна только строка запроса: постраничка
+                // здесь собрана руками, и без явного пути она строила ссылки
+                // от корня — «/?in_page=2», то есть на главную.
+                ->where('parents.rows.next_page_url', fn ($url) => str_ends_with(
+                    $url,
+                    '/catalog/P/brick?in_color=11&in_page=2',
+                ))
                 ->where('parents.rows.links.1.url', fn ($url) => str_contains($url, 'in_color=11')));
 
         $this->get('/catalog/P/brick?in_color=11&in_page=2')
