@@ -3,6 +3,38 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.5.0 — 2026-10-01
+
+### Added
+
+- **A picture opens at its own size.** In a table row a picture is drawn 56 points wide and in a
+  card about three hundred, while the file behind it is 400 to 700: the pattern on a printed tile
+  could not be made out anywhere. A click on a picture inside a card — the main one, or a
+  thumbnail in a table of what something is made of or of where it turns up — now shows it on a
+  dimmed layer, at its own size, up to 95% of the window; a double click doubles that and the
+  layer scrolls. Esc, a click past the picture or the cross closes it. Lists and grids keep what
+  they had: there a picture is how one opens the thing. Where the file is no larger than what is
+  already drawn — a part's picture is 200 points wide and the card draws it at 414 — nothing is
+  offered, because "larger" would mean smaller.
+- **"In the collection" on a catalogue card.** The card said what a thing is and what it is part
+  of, but not whether it is here; that could be asked only from inside the collection's own
+  sections, so one had to know the answer to get it. A block at the end of the card now answers
+  it, with a tab per place and none for a place that holds nothing: a part lists its loose lots,
+  the sets and figures it is built into and the assemblies it went to, a figure its own copies and
+  the sets holding it, a set its copies and anything it sits inside. For a part the block follows
+  the colour of the card, as the picture, the links out and the add dialog already do.
+
+### Fixed
+
+- **The second page of "part of" landed on the home page.** That list builds its paging by hand,
+  and such a paginator takes no address of its own: it fell back to the site root, so the link to
+  page two read "/?in_page=2". A common brick is in tens of thousands of inventories and every one
+  past the first fifty was unreachable.
+- **A minifigure holding a part opened in the catalogue.** On the part page the "minifigures" tab
+  led out to the catalogue card while the tabs beside it — sets, assemblies, colours — led into
+  the collection. It is our own part, so the figure it is built into is ours too. An alternate
+  figure still goes to the catalogue: the section knows only what is in the box.
+
 ## 1.4.2 — 2026-09-15
 
 ### Fixed
