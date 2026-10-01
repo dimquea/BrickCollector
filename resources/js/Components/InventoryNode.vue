@@ -35,8 +35,10 @@ defineProps({
                 data-bs-toggle="collapse"
                 :data-bs-target="`#${domId}`"
             >
+                <!-- В полосе остаются артикул и счётчики; название открывается
+                     вместе с составом. Внутри кнопки оно не ужималось, и на
+                     телефоне кнопка выезжала за край карточки. -->
                 <span class="badge text-bg-secondary flex-shrink-0">{{ lot.id }}</span>
-                <span class="text-truncate">{{ lot.name }}</span>
                 <span v-if="lot.qty > 1" class="badge text-bg-light flex-shrink-0">&times;{{ lot.qty }}</span>
                 <LotBadges :lot="lot" />
             </button>
@@ -44,6 +46,8 @@ defineProps({
 
         <div :id="domId" class="accordion-collapse collapse">
             <div class="accordion-body">
+                <p class="fw-semibold mb-3">{{ lot.name }}</p>
+
                 <Link
                     :href="`/catalog/${lot.type}/${encodeURIComponent(lot.id)}`"
                     class="btn btn-sm btn-outline-secondary mb-3"

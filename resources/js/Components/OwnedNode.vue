@@ -58,8 +58,11 @@ const lostInside = computed(() => {
                 data-bs-toggle="collapse"
                 :data-bs-target="`#${domId}`"
             >
+                <!-- В полосе остаются артикул и счётчики. Название сюда не
+                     помещается: на телефоне строка с ним не ужималась, и
+                     кнопка выезжала за край карточки. Оно открывается вместе
+                     с составом, целиком и с переносами. -->
                 <span class="badge text-bg-secondary flex-shrink-0">{{ lot.item_id }}</span>
-                <span class="text-truncate">{{ lot.name }}</span>
                 <span v-if="lot.qty > 1" class="badge text-bg-light flex-shrink-0">&times;{{ lot.qty }}</span>
                 <span
                     v-if="lot.lost_qty > 0"
@@ -81,6 +84,8 @@ const lostInside = computed(() => {
 
         <div :id="domId" class="accordion-collapse collapse">
             <div class="accordion-body">
+                <p class="fw-semibold mb-3">{{ lot.name }}</p>
+
                 <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
                     <div>
                         <label class="form-label small mb-1">{{ t('lot.lost') }}</label>

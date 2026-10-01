@@ -217,12 +217,16 @@ function remove() {
                             >
                                 <span>{{ t(`item.${group.key}`) }}</span>
                                 <span class="badge text-bg-secondary">{{ group.count }}</span>
+                                <!-- На узком экране от бейджа остаётся число:
+                                     подпись к нему вчетверо длиннее самого
+                                     числа, а значок и цвет и так говорят, о чём
+                                     речь. -->
                                 <span v-if="group.extras" class="badge text-bg-light border">
-                                    {{ t('item.extras') }}: {{ group.extras }}
+                                    <span class="hide-narrow">{{ t('item.extras') }}: </span>{{ group.extras }}
                                 </span>
                                 <span v-if="group.lost" class="badge text-bg-warning ms-auto">
                                     <i class="mdi mdi-alert-outline"></i>
-                                    {{ t('collection.lost') }}: {{ group.lost }}
+                                    <span class="hide-narrow">{{ t('collection.lost') }}: </span>{{ group.lost }}
                                 </span>
                             </button>
                         </h2>
