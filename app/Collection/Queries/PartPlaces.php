@@ -146,6 +146,10 @@ class PartPlaces
                 DB::raw('SUM(ci.qty) as qty'),
                 DB::raw('SUM(ci.lost_qty) as lost'),
                 DB::raw('COUNT(DISTINCT ci.entry_id) as entries'),
+                // Считается ли сама фигурка. Раздел коллекции знает только те,
+                // что в коробке есть: альтернатива — это версия, которой там
+                // нет, и строка о ней должна вести в справочник.
+                DB::raw('MAX(fig.counts) as counts'),
             ]);
     }
 

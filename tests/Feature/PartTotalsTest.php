@@ -272,6 +272,39 @@ class PartTotalsTest extends TestCase
         $this->assertCount(1, $figures);
         $this->assertSame('fig', $figures[0]->item_id);
         $this->assertSame(3, (int) $figures[0]->qty);
+        $this->assertSame(1, (int) $figures[0]->counts, 'фигурка в коробке есть, строка ведёт в коллекцию');
+    }
+
+    /**
+     * Строка знает, считается ли фигурка.
+     *
+     * Вкладка ведёт в раздел коллекции, а раздел знает только то, что в
+     * коробке есть: у альтернативы — версии, которой там нет, — ссылка должна
+     * остаться справочной.
+     */
+    public function test_a_part_of_an_alternate_figure_says_the_figure_does_not_count(): void
+    {
+        $set = $this->entry('S', 'set-a');
+
+        DB::table('bl_items')->insert([
+            'type' => 'M', 'id' => 'fig-alt', 'name' => 'Fig-alt',
+            'image_color_id' => 0, 'has_inventory' => 0,
+        ]);
+
+        $altId = DB::table('collection_items')->insertGetId([
+            'entry_id' => $set->id, 'item_type' => 'M', 'item_id' => 'fig-alt',
+            'color_id' => 0, 'qty' => 1, 'lost_qty' => 0, 'counts' => 0, 'is_alternate' => 1,
+        ]);
+
+        $this->lot($set, [
+            'item_id' => 'brick', 'qty' => 1, 'counts' => 0,
+            'parent_id' => $altId, 'parent_item_type' => 'M',
+        ]);
+
+        $figures = (new PartPlaces('brick', 11))->inMinifigures();
+
+        $this->assertCount(1, $figures);
+        $this->assertSame(0, (int) $figures[0]->counts);
     }
 
     public function test_it_lists_where_a_part_is_missing(): void

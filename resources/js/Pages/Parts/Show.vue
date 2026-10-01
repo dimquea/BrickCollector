@@ -47,6 +47,14 @@ const entryHref = (row) => ({
 
 const colourHref = (row) => `/parts/${encodeURIComponent(row.item_id)}/${row.color_id}`;
 
+// Фигурка, в которую эта деталь встроена, открывается в коллекции — как и
+// набор в соседней вкладке: мы смотрим свою деталь, а не каталожную. Раздел
+// знает только то, что в коробке есть, поэтому альтернатива — версия, которой
+// там нет, — уходит в справочник, как и везде в приложении.
+const figureHref = (row) => (row.counts
+    ? `/minifigures/${encodeURIComponent(row.item_id)}`
+    : `/catalog/M/${encodeURIComponent(row.item_id)}`);
+
 const lotDate = (lot) =>
     lot.date ? new Intl.DateTimeFormat(locale.value).format(new Date(lot.date)) : t('parts.lot_undated');
 </script>
@@ -244,7 +252,7 @@ const lotDate = (lot) =>
                                 <template v-else-if="active === 'minifigures'">
                                     <tr v-for="row in inMinifigures" :key="row.item_id">
                                         <td style="width: 4rem">
-                                            <Link :href="`/catalog/M/${encodeURIComponent(row.item_id)}`">
+                                            <Link :href="figureHref(row)">
                                                 <ItemImage
                                                     type="M"
                                                     :id="row.item_id"
@@ -255,7 +263,7 @@ const lotDate = (lot) =>
                                         </td>
                                         <td>
                                             <Link
-                                                :href="`/catalog/M/${encodeURIComponent(row.item_id)}`"
+                                                :href="figureHref(row)"
                                                 class="text-decoration-none"
                                             >
                                                 {{ row.name }}
