@@ -7,6 +7,7 @@ import { notify } from '@/support/toasts';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
+import AssemblyImage from '@/Components/AssemblyImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import PartsTable from '@/Components/PartsTable.vue';
 import InventoryNode from '@/Components/InventoryNode.vue';
@@ -29,6 +30,8 @@ const props = defineProps({
     assemblies: { type: Array, default: () => [] },
     // What this item is part of — null when nothing lists it.
     parents: { type: Object, default: null },
+    // Где предмет лежит в коллекции — null, когда его там нет.
+    owned: { type: Array, default: null },
     // Желания по этому предмету: у детали их может быть несколько, по одному
     // на цвет.
     wishes: { type: Array, default: () => [] },
@@ -201,6 +204,57 @@ const parentRows = computed(() => props.parents?.rows?.data ?? []);
 const colourName = computed(
     () => props.colours.find((row) => Number(row.id) === Number(colour.value))?.name ?? null,
 );
+
+/*
+ * «В коллекции»: где этот предмет лежит у меня.
+ *
+ * Вкладка выбирается здесь, а не адресом, в отличие от «Входит в состав»:
+ * там за вкладкой десятки тысяч чужих наборов и каждая — отдельный заход на
+ * сервер, а здесь всё своё, и оно уже пришло вместе со страницей.
+ */
+const ownedLabels = {
+    loose: 'parts.tab_loose',
+    copies: 'item.owned_copies',
+    entries: 'parts.tab_entries',
+    minifigures: 'parts.tab_minifigures',
+    assemblies: 'assembly.tab_assemblies',
+};
+
+const ownedGroups = computed(() => props.owned ?? []);
+const ownedTab = ref(ownedGroups.value[0]?.key ?? null);
+
+// Смена цвета — это новый заход на страницу, и разделы приходят другие:
+// вкладка, открытая в прежнем цвете, может больше не существовать.
+watch(ownedGroups, (groups) => {
+    if (! groups.some((group) => group.key === ownedTab.value)) {
+        ownedTab.value = groups[0]?.key ?? null;
+    }
+});
+
+const ownedRows = computed(
+    () => ownedGroups.value.find((group) => group.key === ownedTab.value)?.rows ?? [],
+);
+
+// Каждый вид строки открывается в своём разделе. Фигурка — исключение: она
+// ведёт не в экземпляр, а в сводную страницу фигурки, потому что строка
+// говорит «деталь встроена вот в эту фигурку», а не «в этот экземпляр».
+const ownedHref = (row) => {
+    if (row.kind === 'lot') {
+        return `/parts/copy/${row.entry_id}`;
+    }
+
+    if (row.kind === 'assembly') {
+        return `/assemblies/${row.entry_id}`;
+    }
+
+    if (row.kind === 'figure') {
+        return row.counts
+            ? `/minifigures/${encodeURIComponent(row.item_id)}`
+            : `/catalog/M/${encodeURIComponent(row.item_id)}`;
+    }
+
+    return row.type === 'M' ? `/minifigures/copy/${row.entry_id}` : `/sets/${row.entry_id}`;
+};
 </script>
 
 <template>
@@ -426,6 +480,71 @@ const colourName = computed(
                             </ul>
                         </nav>
                         <p class="form-text text-center mb-0">{{ t('item.appears_order') }}</p>
+                    </div>
+                </div>
+
+                <!-- Где предмет лежит у меня. Карточка справочника говорит о
+                     предмете вообще, и до сих пор вопрос «а он у меня есть»
+                     задавался только из разделов коллекции — то есть ответ
+                     надо было знать заранее. -->
+                <div v-if="owned" class="card shadow-sm mb-4">
+                    <div class="card-header">{{ t('item.owned') }}</div>
+
+                    <ul class="nav nav-tabs px-2 pt-2">
+                        <li v-for="group in owned" :key="group.key" class="nav-item">
+                            <button
+                                type="button"
+                                class="nav-link d-flex align-items-center gap-2"
+                                :class="{ active: group.key === ownedTab }"
+                                @click="ownedTab = group.key"
+                            >
+                                {{ t(ownedLabels[group.key]) }}
+                                <span class="badge text-bg-secondary">{{ group.rows.length }}</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <tbody>
+                                <tr
+                                    v-for="row in ownedRows"
+                                    :key="`${row.kind}/${row.entry_id ?? row.item_id}`"
+                                >
+                                    <td style="width: 4rem">
+                                        <AssemblyImage
+                                            v-if="row.kind === 'assembly'"
+                                            :id="row.entry_id"
+                                            :has-image="row.has_image"
+                                            :alt="row.title"
+                                            zoom
+                                        />
+                                        <ItemImage
+                                            v-else
+                                            :type="row.type"
+                                            :id="row.item_id"
+                                            :color-id="row.image_color_id"
+                                            :alt="row.title"
+                                            zoom
+                                        />
+                                    </td>
+                                    <td>
+                                        <Link :href="ownedHref(row)" class="text-decoration-none">
+                                            <span class="line-clamp-2" :title="row.title">{{ row.title }}</span>
+                                        </Link>
+                                        <div v-if="row.subtitle" class="mt-1">
+                                            <span class="badge text-bg-light border">{{ row.subtitle }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <span v-if="row.lost" class="badge text-bg-warning me-2">
+                                            <i class="mdi mdi-alert-outline"></i> {{ row.lost }}
+                                        </span>
+                                        <span class="fw-semibold">{{ row.qty }}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 

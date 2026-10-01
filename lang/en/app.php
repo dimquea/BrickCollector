@@ -181,6 +181,8 @@ return [
         'open' => 'Open',
         'close' => 'Close',
         'zoom' => 'Show the picture larger',
+        'owned' => 'In the collection',
+        'owned_copies' => 'Copies',
         'appears_in' => 'Part of',
         'appears_none' => 'Nothing in the catalog lists this item.',
         'appears_none_colour' => 'Nothing lists it in this colour.',

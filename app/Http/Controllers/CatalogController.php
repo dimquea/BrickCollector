@@ -14,6 +14,7 @@ use App\Collection\Actions\MoveParts;
 use App\Collection\Actions\ResizeLot;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Wish;
+use App\Collection\Queries\OwnedPlaces;
 use App\Collection\Queries\PartPlaces;
 use Illuminate\Http\RedirectResponse;
 use App\Support\ExternalLinks;
@@ -148,6 +149,15 @@ class CatalogController extends Controller
                 ? Entry::whereNull('item_type')->orderBy('name')->get(['id', 'name'])
                 : [],
             'parents' => $this->parents($request, $item, $parents),
+            // Где этот предмет лежит у меня. Деталь — в цвете карточки: цвет
+            // здесь уже решает, какая картинка, какие внешние ссылки и что
+            // предложит окно добавления, и блок, живущий по своим правилам,
+            // читался бы как ошибка.
+            'owned' => (new OwnedPlaces(
+                $item->type,
+                $item->id,
+                $item->type === 'P' ? $colour : 0,
+            ))->groups(),
             // Уже в желаемом или нет — кнопка должна знать это сразу, не
             // спрашивая отдельно. У детали желаний может быть несколько: её
             // хотят в цвете, и цветов бывает больше одного.
