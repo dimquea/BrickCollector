@@ -49,6 +49,9 @@ class SettingsController extends Controller
             'currency' => Settings::currency(),
             'theme' => Settings::theme(),
             'photoSearch' => Settings::photoSearch(),
+            // proxyImages сюда не передаётся: она общая для всех страниц и
+            // едет в разделяемых свойствах, откуда Inertia подставит её в
+            // проп страницы сама. Два источника одного значения разошлись бы.
             'appearance' => [
                 'lists' => collect(config('brickcollector.lists'))
                     ->map(fn (array $list, string $key) => [
@@ -108,6 +111,7 @@ class SettingsController extends Controller
             'currency' => ['nullable', 'string', 'size:3', 'alpha'],
             'theme' => ['nullable', 'string', 'in:system,light,dark'],
             'photo_search' => ['nullable', 'boolean'],
+            'proxy_images' => ['nullable', 'boolean'],
             'locale' => ['nullable', 'string', 'in:'.implode(',', SetLocale::SUPPORTED)],
             'per_page' => ['array'],
             'per_page.*' => ['integer', 'min:6', 'max:200'],
@@ -145,6 +149,10 @@ class SettingsController extends Controller
         // потому что это выбор человека, а не настройка развёртывания.
         if (array_key_exists('photo_search', $validated)) {
             Settings::put('photo_search', $validated['photo_search'] ? '1' : '0');
+        }
+
+        if (array_key_exists('proxy_images', $validated)) {
+            Settings::put('proxy_images', $validated['proxy_images'] ? '1' : '0');
         }
 
         if (! empty($validated['locale'])) {

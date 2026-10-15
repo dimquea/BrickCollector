@@ -357,6 +357,8 @@ return [
         'title' => 'Settings',
         'appearance' => 'Appearance',
         'appearance_hint' => 'Interface language and display options.',
+        'proxy_images' => 'Serve pictures through the application',
+        'proxy_images_hint' => 'On: a picture comes from our cache, so the collection is visible even on a day BrickLink will not answer. Off: the browser fetches it from the source itself and it appears at once, without waiting for the background download. The cache fills either way.',
         'saved' => 'Saved.',
         'currency' => 'Currency',
         'currency_hint' => 'Three-letter code, e.g. EUR. Amounts are stored as whole minor units.',

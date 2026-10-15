@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use App\Support\Settings;
 use Illuminate\Support\Facades\Lang;
 use Inertia\Middleware;
 
@@ -48,6 +49,10 @@ class HandleInertiaRequests extends Middleware
             // источника сама — иначе каждая из сорока восьми ходила бы к нам
             // за редиректом.
             'imageUrl' => config('brickcollector.image_url'),
+            // Идти ли сперва в наш кэш или сразу к источнику. Настройка общая
+            // для всех страниц, поэтому едет здесь: иначе её пришлось бы
+            // передавать каждым контроллером, рисующим хоть одну картинку.
+            'proxyImages' => Settings::proxyImages(),
             'flash' => fn () => $request->session()->get('flash'),
         ];
     }

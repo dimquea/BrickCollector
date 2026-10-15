@@ -58,18 +58,29 @@ const source = computed(() => {
         .replaceAll('{id}', encodeURIComponent(props.id));
 });
 
-// Известно, что в кэше пусто — значит и спрашивать нас не о чем: сразу к
-// источнику. В остальных случаях начинаем со своего, а источник остаётся
-// запасным вариантом на случай, если файл из кэша пропал.
-const candidates = computed(() =>
-    (props.hasImage === false ? [source.value] : [cached.value, source.value])
-        .filter((candidate) => candidate !== null),
-);
+/*
+ * Откуда брать картинку и в каком порядке.
+ *
+ * С проксированием — сначала наш кэш: коллекция тогда видна и в тот день,
+ * когда BrickLink не отвечает. Известно, что в кэше пусто — сразу к источнику,
+ * спрашивать не о чем. Без проксирования порядок обратный: браузер идёт в
+ * источник сам и показывает картинку, не дожидаясь, пока её скачает фоновая
+ * служба, а кэш остаётся запасным вариантом, если источник молчит.
+ */
+const proxied = computed(() => page.props.proxyImages !== false);
+
+const candidates = computed(() => {
+    const order = proxied.value
+        ? (props.hasImage === false ? [source.value] : [cached.value, source.value])
+        : [source.value, cached.value];
+
+    return order.filter((candidate) => candidate !== null);
+});
 
 const attempt = ref(0);
 
 watch(
-    () => [props.type, props.id, props.colorId, props.hasImage],
+    () => [props.type, props.id, props.colorId, props.hasImage, proxied.value],
     () => (attempt.value = 0),
 );
 

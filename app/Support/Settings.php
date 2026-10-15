@@ -59,6 +59,22 @@ class Settings
         return self::get('photo_search') === '1';
     }
 
+    /**
+     * Показывать ли картинки через себя.
+     *
+     * Включено: сначала наш кэш, и коллекция видна даже тогда, когда BrickLink
+     * не отвечает или до него не дотянуться. Выключено: браузер идёт в источник
+     * сам, а кэш остаётся запасным вариантом — так картинка появляется сразу,
+     * не дожидаясь, пока её скачает фоновая служба.
+     *
+     * Умолчание — включено: это то, как приложение работало всегда, и то, ради
+     * чего кэш заведён.
+     */
+    public static function proxyImages(): bool
+    {
+        return self::get('proxy_images', '1') === '1';
+    }
+
     /** ISO 4217 code used to render prices. Amounts are stored in minor units. */
     public static function currency(): string
     {

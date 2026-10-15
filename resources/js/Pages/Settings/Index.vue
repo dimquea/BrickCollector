@@ -17,6 +17,7 @@ const props = defineProps({
     currency: { type: String, default: 'RUB' },
     theme: { type: String, default: 'system' },
     photoSearch: { type: Boolean, default: false },
+    proxyImages: { type: Boolean, default: true },
     links: { type: Array, default: () => [] },
     appearance: { type: Object, default: () => ({ lists: [] }) },
     catalog: { type: Object, default: () => ({}) },
@@ -71,6 +72,28 @@ async function saveCurrency() {
         notify(data.message, 'success', 2000);
     } catch (error) {
         currency.value = props.currency;
+        notify(error.response?.data?.message ?? t('errors.save_failed'));
+    }
+}
+
+/*
+ * Проксировать ли картинки. Меняет порядок, в котором их ищет браузер, а не
+ * то, скачиваются ли они: кэш остаётся и наполняется в любом случае, поэтому
+ * переключатель можно вернуть обратно без последствий.
+ */
+const proxyImages = ref(props.proxyImages);
+
+async function saveProxyImages() {
+    try {
+        const { data } = await axios.patch(url('/settings'), { proxy_images: proxyImages.value });
+
+        notify(data.message, 'success', 2000);
+        // Порядок источников читают все картинки сразу при отрисовке, и
+        // страница настроек — единственная, где его меняют: перечитываем
+        // общие свойства, чтобы не объяснять, почему ничего не изменилось.
+        router.reload({ only: ['proxyImages'] });
+    } catch (error) {
+        proxyImages.value = props.proxyImages;
         notify(error.response?.data?.message ?? t('errors.save_failed'));
     }
 }
@@ -182,6 +205,21 @@ const sections = [
                                 </select>
                                 <div class="form-text">{{ t('theme.hint') }}</div>
                             </div>
+                        </div>
+
+                        <div class="form-check form-switch mt-3">
+                            <input
+                                id="proxyImages"
+                                v-model="proxyImages"
+                                class="form-check-input"
+                                type="checkbox"
+                                role="switch"
+                                @change="saveProxyImages"
+                            />
+                            <label class="form-check-label" for="proxyImages">
+                                {{ t('settings.proxy_images') }}
+                            </label>
+                            <div class="form-text">{{ t('settings.proxy_images_hint') }}</div>
                         </div>
 
                         <h3 class="h6 mt-4">{{ t('settings.lists') }}</h3>
