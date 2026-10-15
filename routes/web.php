@@ -162,6 +162,11 @@ Route::post('/settings/catalog', [SettingsController::class, 'refreshCatalog'])
 Route::get('/settings/catalog', [SettingsController::class, 'catalogStatus'])
     ->name('settings.catalog.status');
 
+// Пересборка описей по свежему справочнику: руками, когда человек решил, что
+// справочник теперь правее его экземпляров.
+Route::post('/settings/inventories', [SettingsController::class, 'refreshInventories'])
+    ->name('settings.inventories.refresh');
+
 // Отвечает ли служба распознавания: пустой запрос без данных, поэтому доступен
 // и до того, как функцию включили.
 Route::get('/settings/recognition', [RecognitionController::class, 'health'])

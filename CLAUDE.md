@@ -85,6 +85,10 @@ Rules:
 
 - **One operation, one Action**, with a single public `handle()` method. No `CollectionService` with
   twenty methods on it.
+- **The catalogue tree is written in exactly one place** (`Collection/Actions/WriteContents`). Two
+  callers need it — adding to the collection and refreshing an inventory — and the rules it carries
+  (quantities multiplying down, a non-counting lot taking its subtree with it) must not drift apart:
+  one copy of a set would then be counted differently from the one beside it.
 - **Controllers hold no business logic.** Validate, call an Action or a Query, render.
 - **`Catalog` models are never written to.** A shared base class blocks `save`/`delete`/`update`;
   only the importer fills those tables, and it does so through `DB` directly.

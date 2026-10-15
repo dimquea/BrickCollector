@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\DB;
  */
 class AddToCollection
 {
-    public function __construct(private readonly ItemInventory $inventory) {}
+    public function __construct(
+        private readonly ItemInventory $inventory,
+        private readonly WriteContents $contents,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $meta  acquired_at, price, source_id, storage_id, note
@@ -53,89 +56,25 @@ class AddToCollection
 
             if ($item->type === 'S') {
                 // A set is the entry itself; its lots are the top of the tree.
-                $this->store($entry, $tree, null, null, 1, true);
+                $this->contents->store($entry, $tree, null, null, 1, true);
             } else {
                 // Anything else is a countable thing in its own right — a
                 // minifigure, a loose part — so it gets a row, with whatever
                 // it is made of underneath.
                 $qty = max(1, (int) ($meta['qty'] ?? 1));
 
-                $rootId = $this->row($entry, [
-                    'type' => $item->type,
-                    'id' => $item->id,
-                    'color_id' => $entry->color_id ?? 0,
-                    'qty' => $qty,
-                    'is_extra' => false,
-                    'is_alternate' => false,
-                    'is_counterpart' => false,
-                    'match_id' => 0,
-                ], null, null);
+                $rootId = $this->contents->root(
+                    $entry,
+                    $item->type,
+                    $item->id,
+                    (int) ($entry->color_id ?? 0),
+                    $qty,
+                );
 
-                $this->store($entry, $tree, $rootId, $item->type, $qty, true);
+                $this->contents->store($entry, $tree, $rootId, $item->type, $qty, true);
             }
 
             return $entry;
         });
-    }
-
-    /**
-     * Writes one level of the tree and recurses.
-     *
-     * Quantities are multiplied down the tree. A box holding 36 packets of one
-     * part means 36 of that part in the collection, and part counting is a
-     * single SUM(qty) over these rows — it does not walk back up looking for
-     * ancestors to multiply by.
-     *
-     * A lot that does not count takes its whole subtree with it. The eleven
-     * alternates of a random packet are not in the box, and neither are the
-     * minifigures inside them.
-     *
-     * @param  array<int, array<string, mixed>>  $nodes
-     */
-    private function store(
-        Entry $entry,
-        array $nodes,
-        ?int $parentId,
-        ?string $parentType,
-        int $multiplier,
-        bool $parentCounts,
-    ): void {
-        foreach ($nodes as $node) {
-            $counts = $parentCounts
-                && ! $node['is_extra']
-                && ! $node['is_alternate']
-                && ! $node['is_counterpart'];
-
-            $id = $this->row($entry, $node, $parentId, $parentType, $multiplier, $counts);
-
-            if ($node['children']) {
-                $this->store($entry, $node['children'], $id, $node['type'], $multiplier * $node['qty'], $counts);
-            }
-        }
-    }
-
-    /** @param array<string, mixed> $node */
-    private function row(
-        Entry $entry,
-        array $node,
-        ?int $parentId,
-        ?string $parentType,
-        int $multiplier = 1,
-        bool $counts = true,
-    ): int {
-        return $entry->items()->create([
-            'parent_id' => $parentId,
-            'parent_item_type' => $parentType,
-            'item_type' => $node['type'],
-            'item_id' => $node['id'],
-            'color_id' => $node['color_id'],
-            'qty' => $node['qty'] * $multiplier,
-            'lost_qty' => 0,
-            'is_extra' => $node['is_extra'],
-            'is_alternate' => $node['is_alternate'],
-            'is_counterpart' => $node['is_counterpart'],
-            'match_id' => $node['match_id'],
-            'counts' => $counts,
-        ])->id;
     }
 }

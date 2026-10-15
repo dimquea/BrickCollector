@@ -8,6 +8,7 @@ import DictionaryEditor from '@/Components/DictionaryEditor.vue';
 import LinkEditor from '@/Components/LinkEditor.vue';
 import ListAppearance from '@/Components/ListAppearance.vue';
 import CatalogUpdate from '@/Components/CatalogUpdate.vue';
+import InventoryRefresh from '@/Components/InventoryRefresh.vue';
 import { notify } from '@/support/toasts';
 import { locale, t } from '@/i18n';
 
@@ -366,6 +367,8 @@ const sections = [
                 <div id="settingsCatalog" class="accordion-collapse collapse">
                     <div class="accordion-body">
                         <CatalogUpdate :catalog="catalog" />
+
+                        <InventoryRefresh />
                     </div>
                 </div>
             </div>

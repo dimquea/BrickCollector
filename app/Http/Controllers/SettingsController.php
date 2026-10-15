@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Catalog\Import\CatalogRefresh;
 use App\Catalog\Import\CatalogStatus;
+use App\Collection\Actions\RefreshInventories;
 use App\Collection\Models\Link;
 use App\Collection\Models\Source;
 use App\Collection\Models\Status;
@@ -83,6 +84,39 @@ class SettingsController extends Controller
         $refresh->start();
 
         return response()->json($this->catalog() + ['message' => __('app.settings.catalog_started')]);
+    }
+
+    /**
+     * Пересобирает опись экземпляров по нынешнему справочнику.
+     *
+     * Вручную и по кнопке: справочник обновляется сам собой, а что лежит на
+     * полке, знает только владелец. Отвечает, когда закончит, — работа на
+     * большой коллекции занимает секунды, и заводить ради неё отдельный
+     * процесс со своим файлом состояния, как у импорта справочника, было бы
+     * больше машинерии, чем дела.
+     */
+    public function refreshInventories(RefreshInventories $refresh): JsonResponse
+    {
+        // Полтысячи экземпляров — это десятки тысяч строк, и на слабой машине
+        // работа выходит за отведённые запросу тридцать секунд. Прервать её на
+        // середине нельзя: сделка одна на весь прогон, и обрыв откатит всё.
+        set_time_limit(0);
+
+        $summary = $refresh->handle();
+
+        return response()->json([
+            'summary' => $summary,
+            'message' => $summary['changed'] === 0
+                ? __('app.settings.inventories_same')
+                : __('app.settings.inventories_done', [
+                    'changed' => $summary['changed'],
+                    'added' => $summary['added'],
+                    'removed' => $summary['removed'],
+                ]),
+            'orphaned' => $summary['orphaned'] > 0
+                ? __('app.settings.inventories_orphaned', ['count' => $summary['orphaned']])
+                : null,
+        ]);
     }
 
     /** Как там справочник: страница спрашивает, пока идёт импорт. */
