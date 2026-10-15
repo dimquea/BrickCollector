@@ -157,12 +157,16 @@ class ItemInventory
      * minifigure inside each of them turns a box of 36 packets into 432
      * minifigures.
      *
+     * Everything that is neither part, figure nor subset — gear, a book, a
+     * catalogue — is counted apart, by type. A storage case is in the box and
+     * belongs in no other column.
+     *
      * @param  array<int, array<string, mixed>>  $nodes
-     * @return array{parts: int, lots: int, minifigures: int, subsets: int, extras: int}
+     * @return array{parts: int, lots: int, minifigures: int, subsets: int, extras: int, others: array<string, int>}
      */
     public function summarise(array $nodes): array
     {
-        $totals = ['parts' => 0, 'lots' => 0, 'minifigures' => 0, 'subsets' => 0, 'extras' => 0];
+        $totals = ['parts' => 0, 'lots' => 0, 'minifigures' => 0, 'subsets' => 0, 'extras' => 0, 'others' => []];
 
         $walk = function (array $nodes, bool $parentCounts, int $multiplier) use (&$walk, &$totals): void {
             foreach ($nodes as $node) {
@@ -178,11 +182,11 @@ class ItemInventory
                     && ! $node['is_counterpart'];
 
                 if ($counts) {
-                    match ($node['type']) {
-                        'P' => [$totals['parts'] += $qty, $totals['lots']++],
-                        'M' => $totals['minifigures'] += $qty,
-                        'S' => $totals['subsets'] += $qty,
-                        default => null,
+                    match (true) {
+                        $node['type'] === 'P' => [$totals['parts'] += $qty, $totals['lots']++],
+                        $node['type'] === 'M' => $totals['minifigures'] += $qty,
+                        $node['type'] === 'S' => $totals['subsets'] += $qty,
+                        default => $totals['others'][$node['type']] = ($totals['others'][$node['type']] ?? 0) + $qty,
                     };
                 }
 

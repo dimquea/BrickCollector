@@ -14,6 +14,7 @@ import InventoryNode from '@/Components/InventoryNode.vue';
 import ExternalLinks from '@/Components/ExternalLinks.vue';
 import AddPartDialog from '@/Components/AddPartDialog.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
+import { kindLabel } from '@/support/itemKinds';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -366,6 +367,13 @@ const ownedHref = (row) => {
                         <div v-if="totals.subsets">
                             <div class="fs-4 fw-semibold">{{ totals.subsets }}</div>
                             <div class="text-body-secondary small">{{ t('item.subsets') }}</div>
+                        </div>
+                        <!-- Всё, что не деталь, не фигурка и не поднабор:
+                             коробка-органайзер, книжка, каталог. В коробке оно
+                             есть, а колонки своей до сих пор не было. -->
+                        <div v-for="(count, code) in totals.others" :key="code">
+                            <div class="fs-4 fw-semibold">{{ count }}</div>
+                            <div class="text-body-secondary small">{{ t(kindLabel(code)) }}</div>
                         </div>
                         <div v-if="totals.extras">
                             <div class="fs-4 fw-semibold text-warning">{{ totals.extras }}</div>

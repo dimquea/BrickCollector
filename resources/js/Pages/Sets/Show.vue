@@ -5,6 +5,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
+import { KIND_ORDER, kindLabel } from '@/support/itemKinds';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
 import OwnedNode from '@/Components/OwnedNode.vue';
 import EntryMetaForm from '@/Components/EntryMetaForm.vue';
@@ -68,21 +69,16 @@ function applyMeta({ codes, meta: saved }) {
  * be misleading in the one case that matters.
  */
 const groups = computed(() => {
-    const kinds = [
-        { key: 'subsets', type: 'S' },
-        { key: 'minifigures', type: 'M' },
-        { key: 'parts', type: 'P' },
-    ];
-
     const walk = (lots, pick) =>
         lots.reduce((sum, lot) => sum + pick(lot) + walk(lot.children ?? [], pick), 0);
 
-    return kinds
-        .map(({ key, type }) => {
+    return KIND_ORDER
+        .map((type) => {
             const lots = props.contents.filter((lot) => lot.type === type);
 
             return {
-                key,
+                key: type,
+                label: kindLabel(type),
                 lots,
                 count: lots.filter((lot) => lot.counts).reduce((sum, lot) => sum + lot.qty, 0),
                 // Spares and alternates hang off the copy without being part
@@ -215,7 +211,7 @@ function remove() {
                                 data-bs-toggle="collapse"
                                 :data-bs-target="`#group-${group.key}`"
                             >
-                                <span>{{ t(`item.${group.key}`) }}</span>
+                                <span>{{ t(group.label) }}</span>
                                 <span class="badge text-bg-secondary">{{ group.count }}</span>
                                 <!-- На узком экране от бейджа остаётся число:
                                      подпись к нему вчетверо длиннее самого
@@ -232,9 +228,9 @@ function remove() {
                         </h2>
 
                         <div :id="`group-${group.key}`" class="accordion-collapse collapse">
-                            <div class="accordion-body" :class="{ 'p-0': group.key === 'parts' }">
+                            <div class="accordion-body" :class="{ 'p-0': group.key === 'P' }">
                                 <OwnedLotsTable
-                                    v-if="group.key === 'parts'"
+                                    v-if="group.key === 'P'"
                                     :lots="contents"
                                     @saved="applySaved"
                                 />
