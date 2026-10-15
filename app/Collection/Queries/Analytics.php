@@ -227,12 +227,16 @@ class Analytics
         $figures = $this->ownedFigures()
             ->join('bl_themes as t', 't.id', '=', 'i.theme_id')
             ->selectRaw("{$root} as label")
-            // Артикулы, а не экземпляры: по числу кликают, и раздел минифигурок
-            // показывает одну карточку на артикул. Обещать 53 и открыть 50 —
-            // хуже, чем не делать ссылку вовсе.
+            // Два числа, а не одно: по артикулам кликают — раздел минифигурок
+            // показывает одну карточку на артикул, и обещать 53, открыв 50,
+            // хуже, чем не делать ссылку вовсе, — а человечков на полке всё-таки
+            // столько, сколько экземпляров. Одним числом под общим заголовком
+            // это читалось как «минифигурок у меня 223», что неправда.
             ->selectRaw('COUNT(DISTINCT ci.item_id) as figures')
+            ->selectRaw('COALESCE(SUM(ci.qty), 0) as copies')
             ->groupBy(DB::raw($root))
-            ->pluck('figures', 'label');
+            ->get()
+            ->keyBy('label');
 
         $ids = DB::table('bl_themes')->where('depth', 0)->pluck('id', 'path');
 
@@ -240,7 +244,8 @@ class Analytics
             'key' => $ids[$row->label] ?? null,
             'label' => (string) $row->label,
             'sets' => (int) $row->sets,
-            'figures' => (int) ($figures[$row->label] ?? 0),
+            'figures' => (int) ($figures[$row->label]->figures ?? 0),
+            'copies' => (int) ($figures[$row->label]->copies ?? 0),
             'price' => (int) $row->price,
         ])->all();
 
@@ -264,18 +269,22 @@ class Analytics
             ->groupBy('i.year')
             ->get();
 
+        // Артикулы и экземпляры врозь — по той же причине, что и по темам.
         $figures = $this->ownedFigures()
             ->whereNotNull('i.year')
             ->selectRaw('i.year as label')
             ->selectRaw('COUNT(DISTINCT ci.item_id) as figures')
+            ->selectRaw('COALESCE(SUM(ci.qty), 0) as copies')
             ->groupBy('i.year')
-            ->pluck('figures', 'label');
+            ->get()
+            ->keyBy('label');
 
         $rows = $sets->map(fn ($row) => [
             'key' => (int) $row->label,
             'label' => (string) $row->label,
             'sets' => (int) $row->sets,
-            'figures' => (int) ($figures[$row->label] ?? 0),
+            'figures' => (int) ($figures[$row->label]->figures ?? 0),
+            'copies' => (int) ($figures[$row->label]->copies ?? 0),
             'price' => (int) $row->price,
         ])->all();
 

@@ -98,11 +98,27 @@ const groups = [
                                 <div class="table-responsive">
                                     <table class="table table-sm align-middle mb-0">
                                         <thead>
+                                            <!-- У минифигурок два числа: по
+                                                 артикулам кликают, а на полке
+                                                 стоят экземпляры. Одним числом
+                                                 под общим заголовком это
+                                                 читалось как «столько у меня
+                                                 фигурок», что неправда. -->
                                             <tr>
-                                                <th class="text-nowrap">{{ t('catalog.theme') }}</th>
-                                                <th class="text-nowrap text-end">{{ t('nav.sets') }}</th>
-                                                <th class="text-nowrap text-end">{{ t('nav.minifigures') }}</th>
-                                                <th class="text-nowrap text-end">{{ t('analytics.price') }}</th>
+                                                <th class="text-nowrap" rowspan="2">{{ t('catalog.theme') }}</th>
+                                                <th class="text-nowrap text-end" rowspan="2">{{ t('nav.sets') }}</th>
+                                                <th class="text-nowrap text-center" colspan="2">
+                                                    {{ t('nav.minifigures') }}
+                                                </th>
+                                                <th class="text-nowrap text-end" rowspan="2">{{ t('analytics.price') }}</th>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-nowrap text-end fw-normal small">
+                                                    {{ t('analytics.field_unique') }}
+                                                </th>
+                                                <th class="text-nowrap text-end fw-normal small">
+                                                    {{ t('analytics.field_total') }}
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -126,6 +142,10 @@ const groups = [
                                                         {{ number(row.figures) }}
                                                     </span>
                                                 </td>
+                                                <td
+                                                    class="text-end"
+                                                    :class="{ 'text-body-secondary': ! row.copies }"
+                                                >{{ number(row.copies) }}</td>
                                                 <td class="text-end text-nowrap">{{ money(row.price) }}</td>
                                             </tr>
                                         </tbody>
@@ -219,10 +239,20 @@ const groups = [
                                     <table class="table table-sm align-middle mb-0">
                                         <thead>
                                             <tr>
-                                                <th class="text-nowrap">{{ t('catalog.year') }}</th>
-                                                <th class="text-nowrap text-end">{{ t('nav.sets') }}</th>
-                                                <th class="text-nowrap text-end">{{ t('nav.minifigures') }}</th>
-                                                <th class="text-nowrap text-end">{{ t('analytics.price') }}</th>
+                                                <th class="text-nowrap" rowspan="2">{{ t('catalog.year') }}</th>
+                                                <th class="text-nowrap text-end" rowspan="2">{{ t('nav.sets') }}</th>
+                                                <th class="text-nowrap text-center" colspan="2">
+                                                    {{ t('nav.minifigures') }}
+                                                </th>
+                                                <th class="text-nowrap text-end" rowspan="2">{{ t('analytics.price') }}</th>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-nowrap text-end fw-normal small">
+                                                    {{ t('analytics.field_unique') }}
+                                                </th>
+                                                <th class="text-nowrap text-end fw-normal small">
+                                                    {{ t('analytics.field_total') }}
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -242,6 +272,10 @@ const groups = [
                                                     >{{ number(row.figures) }}</Link>
                                                     <span v-else class="text-body-secondary">0</span>
                                                 </td>
+                                                <td
+                                                    class="text-end"
+                                                    :class="{ 'text-body-secondary': ! row.copies }"
+                                                >{{ number(row.copies) }}</td>
                                                 <td class="text-end text-nowrap">{{ money(row.price) }}</td>
                                             </tr>
                                         </tbody>
