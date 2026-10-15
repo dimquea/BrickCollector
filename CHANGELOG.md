@@ -3,6 +3,61 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.6.0 — 2026-10-15
+
+### Added
+
+- **What a set holds besides parts and figures.** A set can list gear — the storage case a
+  Throwbot came in, a keyring — and a book or a catalogue too. Those lines were written into the
+  collection and then shown nowhere: the page of a set knew three kinds of thing and silently
+  dropped the rest. Every kind in the box now has its own group on the page and its own number on
+  the catalogue card, with its colour: the case in 8500 through 8507 comes in a different one each
+  time, and all eight used to look alike.
+- **"Refresh the inventories".** An inventory is copied into the collection when something is
+  added and lives on its own after that: a set on the shelf does not change because BrickLink
+  edited its page. Sometimes the edit is the truth, though — a missing lot found, a colour
+  corrected — and a button under Settings → Catalogue now rebuilds the inventories of sets and
+  figures from the catalogue as it is now. By hand, never by itself. Marks for missing pieces are
+  carried to their places by where they sit in the tree and trimmed to what is left; any that have
+  nowhere to go are listed by copy, lot and colour rather than quietly dropped. Assemblies and
+  loose lots, which no catalogue ever described, are left alone.
+- **"Serve pictures through the application", under Settings → Appearance.** On, as before: a
+  picture comes from our cache, so the collection is visible even on a day BrickLink will not
+  answer. Off: the browser fetches it from the source itself and it appears at once, without
+  waiting for the background download. The cache fills either way, so the switch can be turned
+  back.
+- **"Incomplete" in the minifigure filter** — figures missing a piece of their own. Until now such
+  a figure could be found only by opening the set holding it; the switch beside it, "Missing", is
+  a different question: that one is about a figure a set of yours is missing.
+- **Three kinds of export, chosen by name.** The export button became a menu: an inventory and a
+  wanted list, both BrickLink XML as before, and a BrickStore basket (.bsx) — BrickStore's own
+  document, which opens by double click instead of going through an import dialog. The kind used
+  to be guessed from the filter, which was right more often than not but left no choice.
+- **A picture zooms by wheel and by pinch.** The single "twice as big" of a double click was a
+  step where a dial was wanted: what one does with an open picture is look closely at the print on
+  a tile. The wheel does it on a desktop, two fingers on a phone, and what no longer fits is
+  dragged; the point under the cursor stays where it is.
+- **Each section remembers how it was last sorted.** The order still lives in the address, so
+  "parts by how many I have" is a link worth sending, but a bookmark and the menu carry a bare
+  address and the choice had to be made again on every visit. Kept in the browser and separately
+  per section: sets go by year while parts go by count, and neither decides for the other.
+- **A Dockerfile and a compose file in the repository.** `docker compose up -d` and the
+  application is at `http://localhost:8080`, with the collection, the image cache and the
+  catalogue archive in a volume. For a machine of your own; the Home Assistant add-on is
+  unchanged and still builds from a released tag.
+
+### Fixed
+
+- **A minifigure inside a minifigure was counted twice.** BrickLink describes a Technic figure
+  wearing a helmet as the bare figure plus the helmet, so a set with one such figure in the box
+  reported two, and the inner figure stood in the minifigure section as a card of its own. A
+  figure inside a figure is a part of it now; its pieces still count, because they are in the box
+  either way.
+- **Two columns of the analytics tables counted different things under similar headings.** By
+  theme and by year, "Sets" counted copies while "Minifigures" counted distinct item numbers —
+  the figure column is split into "Distinct" and "In total" now, so neither number has to be
+  guessed at.
+
 ## 1.5.1 — 2026-10-01
 
 ### Fixed
