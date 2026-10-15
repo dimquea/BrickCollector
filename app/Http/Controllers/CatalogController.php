@@ -45,9 +45,17 @@ class CatalogController extends Controller
 
         $results = $search->filters($filters)->sort($sort)->paginate(Settings::perPage('catalog'));
 
+        // Код элемента называет не деталь вообще, а деталь в цвете: его
+        // переписывают из инструкции, где нужен ровно один кирпичик. Поэтому
+        // найденное по коду показывается в этом цвете и открывается в нём же,
+        // а не в том, в каком деталь нарисована в справочнике.
+        $asked = $this->elementCodeColours($filters['q'] ?? null);
+
+        $colourOf = fn (Item $item) => $asked[$item->type.'/'.$item->id] ?? (int) $item->image_color_id;
+
         $images = app(ItemImages::class)->availability(
             collect($results->items())
-                ->map(fn (Item $item) => [$item->type, $item->id, (int) $item->image_color_id])
+                ->map(fn (Item $item) => [$item->type, $item->id, $colourOf($item)])
                 ->all(),
         );
 
@@ -62,8 +70,11 @@ class CatalogController extends Controller
                 'year' => $item->year,
                 'theme' => $item->theme?->path,
                 'has_inventory' => $item->has_inventory,
-                'image_color_id' => $item->image_color_id,
-                'has_image' => $images[$item->type.'/'.$item->id.'/'.(int) $item->image_color_id] ?? false,
+                'image_color_id' => $colourOf($item),
+                // Цвет, названный кодом, уезжает в ссылку: карточка откроется
+                // сразу в нём. У остальных строк его нет, и ссылка короткая.
+                'code_color' => $asked[$item->type.'/'.$item->id] ?? null,
+                'has_image' => $images[$item->type.'/'.$item->id.'/'.$colourOf($item)] ?? false,
             ]),
             'itemTypes' => ItemType::whereIn('code', ItemType::BROWSABLE)
                 ->orderByRaw("CASE code ".implode(' ', array_map(
@@ -166,6 +177,46 @@ class CatalogController extends Controller
                 ->get(['id', 'color_id'])
                 ->map(fn (Wish $wish) => ['id' => $wish->id, 'color_id' => $wish->color_id]),
         ]);
+    }
+
+    /**
+     * Цвета, названные кодом элемента LEGO.
+     *
+     * Код вроде 4243815 — это не «Plate 4 x 4», а «Plate 4 x 4 синяя»: его
+     * переписывают из инструкции, и цвет там половина ответа. Сам поиск
+     * находит предмет — коды лежат в поисковом индексе наравне с артикулами, —
+     * а цвет знает только эта таблица.
+     *
+     * Строка ищется как есть, точным совпадением, без догадок о том, похожа
+     * ли она на код: обычное слово просто не найдётся, и стоит это сотые доли
+     * миллисекунды по индексу.
+     *
+     * @return array<string, int> «тип/артикул» => цвет
+     */
+    private function elementCodeColours(?string $term): array
+    {
+        $code = trim((string) $term);
+
+        if ($code === '') {
+            return [];
+        }
+
+        $colours = [];
+
+        $rows = DB::table('bl_element_codes')
+            ->where('code', $code)
+            ->get(['item_type', 'item_id', 'color_id']);
+
+        foreach ($rows as $row) {
+            $key = $row->item_type.'/'.$row->item_id;
+
+            // Один предмет под одним кодом в нескольких цветах — восемь
+            // случаев на весь справочник. Выбирать за человека не из чего,
+            // поэтому такая строка показывается как обычно.
+            $colours[$key] = array_key_exists($key, $colours) ? null : (int) $row->color_id;
+        }
+
+        return array_filter($colours, static fn (?int $colour) => $colour !== null);
     }
 
     /**

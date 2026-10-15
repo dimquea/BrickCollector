@@ -4,6 +4,7 @@ namespace App\Catalog\Queries;
 
 use App\Catalog\Models\Item;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -29,6 +30,15 @@ class SearchItems
      * happens to contain the digits.
      */
     private const WEIGHTS = [1.0, 4.0];
+
+    /**
+     * Ранг точного совпадения по идентификатору.
+     *
+     * bm25 отдаёт отрицательные числа, лучшее — меньшее, и настолько малого
+     * он не выдаёт: найденное по коду идёт первым, что бы ни нашлось по
+     * названию.
+     */
+    private const EXACT_RANK = -1.0e9;
 
     /** @var array<string, mixed> */
     private array $filters = [];
@@ -70,7 +80,7 @@ class SearchItems
 
             $query
                 ->addSelect('k.rank')
-                ->joinSub($matches, 'k', fn ($join) => $join
+                ->joinSub($this->withIdentifiers($matches, $term), 'k', fn ($join) => $join
                     ->on('k.type', '=', 'i.type')
                     ->on('k.id', '=', 'i.id'));
         }
@@ -152,6 +162,49 @@ class SearchItems
      * executed or raising a syntax error. The last token carries a prefix
      * wildcard so results narrow while typing.
      */
+    /**
+     * Добавляет к найденному предметы, названные точным идентификатором.
+     *
+     * Их два вида, и оба лежат в базе давно. Код элемента LEGO — семизначное
+     * число из инструкции и из фирменного магазина, 111 тысяч штук; он
+     * называет не деталь вообще, а деталь в цвете. Альтернативный артикул
+     * BrickLink — второе имя того же предмета, ещё 17 тысяч. Ни по тому, ни по
+     * другому справочник до сих пор не отвечал ничем.
+     *
+     * Подмешиваются они сюда, а не в сам индекс, и вот почему: bm25 делит вес
+     * на длину строки целиком, а кодов у ходовой детали под сотню. Сложенные в
+     * индекс, они роняли саму деталь 3031 с первого места на седьмое по
+     * запросу «3031» — ниже наборов, чей номер просто начинается с тех же
+     * цифр. Отдельная колонка не спасает: нормируется вся строка.
+     *
+     * Ранг у такой строки заведомо лучший: идентификатор набирают целиком и не
+     * наугад. MIN() нужен для предмета, который нашёлся обоими способами, —
+     * иначе он попал бы в выдачу дважды.
+     */
+    private function withIdentifiers(Builder $matches, string $term): Builder
+    {
+        $direct = DB::table('bl_element_codes')
+            ->where('code', $term)
+            ->select(['item_type as type', 'item_id as id'])
+            ->union(DB::table('bl_item_alt_ids')->where('alt_id', $term)->select(['type', 'id']))
+            ->get();
+
+        if ($direct->isEmpty()) {
+            return $matches;
+        }
+
+        foreach ($direct as $row) {
+            $matches = $matches->unionAll(
+                DB::query()->selectRaw('? as type, ? as id, ? as rank', [$row->type, $row->id, self::EXACT_RANK]),
+            );
+        }
+
+        return DB::query()
+            ->fromSub($matches, 'found')
+            ->selectRaw('type, id, MIN(rank) as rank')
+            ->groupBy('type', 'id');
+    }
+
     private function ftsQuery(string $term): string
     {
         $tokens = preg_split('/[^\p{L}\p{N}]+/u', $term, -1, PREG_SPLIT_NO_EMPTY) ?: [];

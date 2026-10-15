@@ -29,6 +29,9 @@ const photoDialog = ref(null);
 
 const typeOptions = computed(() => props.itemTypes.map((type) => ({ value: type.code, label: type.name })));
 
+const href = (item) => `/catalog/${item.type}/${encodeURIComponent(item.id)}`
+    + (item.code_color === null ? '' : `?color=${item.code_color}`);
+
 const sortOptions = computed(() => [
     { value: 'id', label: t('sort.id') },
     { value: 'name', label: t('sort.name') },
@@ -207,7 +210,9 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                     <span class="text-truncate" :title="item.name">{{ item.name }}</span>
                 </div>
 
-                <Link :href="`/catalog/${item.type}/${encodeURIComponent(item.id)}`">
+                <!-- Искали по коду элемента — открываем в том цвете, который
+                     код назвал: он и есть половина ответа. -->
+                <Link :href="href(item)">
                     <ItemImage
                         :type="item.type"
                         :id="item.id"
