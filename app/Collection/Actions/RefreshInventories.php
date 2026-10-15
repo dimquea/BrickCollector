@@ -36,11 +36,13 @@ class RefreshInventories
     ) {}
 
     /**
-     * @return array{entries: int, changed: int, added: int, removed: int, losses: int, orphaned: int}
+     * @return array{entries: int, changed: int, added: int, removed: int, losses: int,
+     *     orphaned: int, orphans: array<int, array<string, mixed>>}
      */
     public function handle(): array
     {
         $summary = ['entries' => 0, 'changed' => 0, 'added' => 0, 'removed' => 0, 'losses' => 0, 'orphaned' => 0];
+        $orphans = [];
 
         $entries = Entry::query()
             ->whereIn('item_type', ItemInventory::EXPANDABLE)
@@ -52,23 +54,31 @@ class RefreshInventories
         // замере это была разница между секундой и дюжиной. Заодно и всё
         // правило целиком: обновление либо прошло, либо коллекция осталась
         // ровно такой, какой была.
-        return DB::transaction(function () use ($entries, $summary) {
+        $summary = DB::transaction(function () use ($entries, $summary, &$orphans) {
             foreach ($entries as $entry) {
                 $summary['entries']++;
 
-                foreach ($this->one($entry) as $key => $value) {
+                $result = $this->one($entry);
+
+                $orphans = [...$orphans, ...$result['orphans']];
+                unset($result['orphans']);
+
+                foreach ($result as $key => $value) {
                     $summary[$key] += $value;
                 }
             }
 
             return $summary;
         });
+
+        return $summary + ['orphans' => $this->describe($orphans)];
     }
 
     /**
      * Один экземпляр.
      *
-     * @return array{changed: int, added: int, removed: int, losses: int, orphaned: int}
+     * @return array{changed: int, added: int, removed: int, losses: int, orphaned: int,
+     *     orphans: array<int, array<string, mixed>>}
      */
     private function one(Entry $entry): array
     {
@@ -83,7 +93,7 @@ class RefreshInventories
         // или у которого пропала отметка об описи, выглядел бы здесь как набор
         // без единой детали. Такой экземпляр оставляем как есть.
         if ($tree === []) {
-            return ['changed' => 0, 'added' => 0, 'removed' => 0, 'losses' => 0, 'orphaned' => 0];
+            return ['changed' => 0, 'added' => 0, 'removed' => 0, 'losses' => 0, 'orphaned' => 0, 'orphans' => []];
         }
 
         $before = $this->keyed($entry);
@@ -117,9 +127,24 @@ class RefreshInventories
             $after = $this->keyed($entry);
 
             $moved = 0;
+            $orphans = [];
 
             foreach ($losses as $key => $lost) {
                 if (! isset($after[$key])) {
+                    // Позиции, на которой стояла отметка, в новой описи нет.
+                    // Молча потерять её нельзя: это единственное, что в дереве
+                    // ввёл человек, и он должен узнать, что именно пропало.
+                    $row = $before[$key];
+
+                    $orphans[] = [
+                        'entry_id' => $entry->id,
+                        'entry' => $entry->item_id,
+                        'type' => $row->item_type,
+                        'item_id' => $row->item_id,
+                        'color_id' => (int) $row->color_id,
+                        'lost' => $lost,
+                    ];
+
                     continue;
                 }
 
@@ -144,11 +169,42 @@ class RefreshInventories
                 'added' => $added,
                 'removed' => $removed,
                 'losses' => $moved,
-                'orphaned' => count($losses) - $moved,
+                'orphaned' => count($orphans),
+                'orphans' => $orphans,
             ];
         };
 
         return $run();
+    }
+
+    /**
+     * Дополняет осиротевшие отметки названиями.
+     *
+     * Одним запросом на весь прогон, а не по строке на каждую: таких отметок
+     * обычно единицы, но запрос внутри цикла остаётся запросом внутри цикла.
+     *
+     * @param  array<int, array<string, mixed>>  $orphans
+     * @return array<int, array<string, mixed>>
+     */
+    private function describe(array $orphans): array
+    {
+        if ($orphans === []) {
+            return [];
+        }
+
+        $names = DB::table('bl_items')
+            ->whereIn('id', array_column($orphans, 'item_id'))
+            ->get(['type', 'id', 'name'])
+            ->keyBy(fn (object $row) => $row->type.'/'.$row->id);
+
+        $colours = DB::table('bl_colors')
+            ->whereIn('id', array_filter(array_column($orphans, 'color_id')))
+            ->pluck('name', 'id');
+
+        return array_map(fn (array $orphan) => $orphan + [
+            'name' => $names[$orphan['type'].'/'.$orphan['item_id']]->name ?? $orphan['item_id'],
+            'color' => $colours[$orphan['color_id']] ?? null,
+        ], $orphans);
     }
 
     /** Корневая строка экземпляра: у набора её нет, у всего прочего одна. */

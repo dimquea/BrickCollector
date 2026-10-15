@@ -113,9 +113,13 @@ class SettingsController extends Controller
                     'added' => $summary['added'],
                     'removed' => $summary['removed'],
                 ]),
+            // Не только сколько, но и что именно: отметка о недостаче —
+            // единственное, что в дереве ввёл человек, и «пропало три» без
+            // ответа на вопрос «каких и откуда» не сообщение, а загадка.
             'orphaned' => $summary['orphaned'] > 0
                 ? __('app.settings.inventories_orphaned', ['count' => $summary['orphaned']])
                 : null,
+            'orphans' => $summary['orphans'],
         ]);
     }
 

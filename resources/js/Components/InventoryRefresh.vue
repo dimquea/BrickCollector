@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios';
 import { ref } from 'vue';
+import Link from '@/Components/AppLink.vue';
 import { url } from '@/support/base';
 import { notify } from '@/support/toasts';
 import { t } from '@/i18n';
@@ -20,17 +21,20 @@ import { t } from '@/i18n';
 const running = ref(false);
 const result = ref(null);
 const orphaned = ref(null);
+const orphans = ref([]);
 
 async function refresh() {
     running.value = true;
     result.value = null;
     orphaned.value = null;
+    orphans.value = [];
 
     try {
         const { data } = await axios.post(url('/settings/inventories'));
 
         result.value = data.message;
         orphaned.value = data.orphaned;
+        orphans.value = data.orphans ?? [];
         notify(data.message, 'success', 4000);
     } catch (error) {
         notify(error.response?.data?.message ?? t('errors.save_failed'));
@@ -53,6 +57,22 @@ async function refresh() {
         <div class="form-text">{{ t('settings.inventories_hint') }}</div>
 
         <p v-if="result" class="alert alert-info mt-3 mb-0">{{ result }}</p>
-        <p v-if="orphaned" class="alert alert-warning mt-3 mb-0">{{ orphaned }}</p>
+        <div v-if="orphaned" class="alert alert-warning mt-3 mb-0">
+            <p class="mb-2">{{ orphaned }}</p>
+
+            <!-- Поимённо: из какого экземпляра, какая позиция и сколько.
+                 Иначе остаётся только гадать, что именно пропало. -->
+            <ul class="mb-0 ps-3">
+                <li v-for="(orphan, index) in orphans" :key="index">
+                    <Link :href="`/sets/${orphan.entry_id}`" class="text-decoration-none">
+                        {{ orphan.entry }}
+                    </Link>
+                    · {{ orphan.name }}
+                    <span class="badge text-bg-light border">{{ orphan.item_id }}</span>
+                    <span v-if="orphan.color">· {{ orphan.color }}</span>
+                    · {{ orphan.lost }}
+                </li>
+            </ul>
+        </div>
     </div>
 </template>

@@ -160,6 +160,34 @@ class RefreshInventoriesTest extends TestCase
 
         $this->assertSame(0, $summary['losses']);
         $this->assertSame(1, $summary['orphaned']);
+
+        // Число без имён — загадка, а не сообщение: сказать надо, какой
+        // позиции и из какого экземпляра отметка была.
+        $this->assertSame([[
+            'entry_id' => $entry->id,
+            'entry' => 'set-a',
+            'type' => 'P',
+            'item_id' => 'plate',
+            'color_id' => 11,
+            'lost' => 1,
+            'name' => 'Plate',
+            'color' => 'Black',
+        ]], $summary['orphans']);
+    }
+
+    public function test_the_page_is_told_what_could_not_be_carried(): void
+    {
+        $entry = $this->add('S', 'set-a');
+
+        DB::table('collection_items')->where('id', $this->row($entry, 'plate')->id)->update(['lost_qty' => 2]);
+        DB::table('bl_inventory')->where('parent_id', 'set-a')->where('child_id', 'plate')->delete();
+
+        $this->post('/settings/inventories')
+            ->assertOk()
+            ->assertJsonPath('orphans.0.item_id', 'plate')
+            ->assertJsonPath('orphans.0.color', 'Black')
+            ->assertJsonPath('orphans.0.lost', 2)
+            ->assertJsonPath('summary.orphaned', 1);
     }
 
     /**
