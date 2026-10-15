@@ -3,6 +3,7 @@
 namespace App\Collection\Queries;
 
 use App\Collection\Models\Entry;
+use App\Catalog\Queries\ItemIdentifiers;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -91,12 +92,18 @@ class SearchEntries
         if ($term !== '') {
             $escaped = $this->escapeLike($term);
 
-            $query->where(fn ($where) => $where
-                ->where('i.name', 'like', "%{$escaped}%")
-                ->orWhere('e.item_id', 'like', "{$escaped}%")
-                // An assembly has no catalog item, so its own name is all
-                // there is to match on.
-                ->orWhere('e.name', 'like', "%{$escaped}%"));
+            $identifiers = ItemIdentifiers::resolve($term);
+
+            $query->where(function ($where) use ($escaped, $identifiers) {
+                $where
+                    ->where('i.name', 'like', "%{$escaped}%")
+                    ->orWhere('e.item_id', 'like', "{$escaped}%")
+                    // An assembly has no catalog item, so its own name is all
+                    // there is to match on.
+                    ->orWhere('e.name', 'like', "%{$escaped}%");
+
+                ItemIdentifiers::match($where, $identifiers, 'e.item_type', 'e.item_id');
+            });
         }
 
         if (($this->filters['type'] ?? null)) {

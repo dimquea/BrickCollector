@@ -3,6 +3,7 @@
 namespace App\Collection\Queries;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Catalog\Queries\ItemIdentifiers;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -183,9 +184,18 @@ class PartTotals
         if ($term !== '') {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
 
-            $query->where(fn ($where) => $where
-                ->where('ci.item_id', 'like', "{$escaped}%")
-                ->orWhere('i.name', 'like', "%{$escaped}%"));
+            // Номер из инструкции — тоже имя детали, и притом точное: код
+            // элемента называет артикул вместе с цветом, то есть ровно одну
+            // строку этого списка.
+            $identifiers = ItemIdentifiers::resolve($term);
+
+            $query->where(function ($where) use ($escaped, $identifiers) {
+                $where
+                    ->where('ci.item_id', 'like', "{$escaped}%")
+                    ->orWhere('i.name', 'like', "%{$escaped}%");
+
+                ItemIdentifiers::match($where, $identifiers, 'ci.item_type', 'ci.item_id', 'ci.color_id');
+            });
         }
 
         if (($this->filters['color_id'] ?? null) !== null && $this->filters['color_id'] !== '') {

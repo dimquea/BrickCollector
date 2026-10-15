@@ -2,6 +2,7 @@
 
 namespace App\Collection\Queries;
 
+use App\Catalog\Queries\ItemIdentifiers;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
@@ -133,9 +134,15 @@ class WishedItems
         if ($term !== '') {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
 
-            $query->where(fn ($where) => $where
-                ->where('w.item_id', 'like', "{$escaped}%")
-                ->orWhere('i.name', 'like', "%{$escaped}%"));
+            $identifiers = ItemIdentifiers::resolve($term);
+
+            $query->where(function ($where) use ($escaped, $identifiers) {
+                $where
+                    ->where('w.item_id', 'like', "{$escaped}%")
+                    ->orWhere('i.name', 'like', "%{$escaped}%");
+
+                ItemIdentifiers::match($where, $identifiers, 'w.item_type', 'w.item_id', 'w.color_id');
+            });
         }
 
         if (($this->filters['type'] ?? null)) {

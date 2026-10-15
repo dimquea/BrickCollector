@@ -183,11 +183,7 @@ class SearchItems
      */
     private function withIdentifiers(Builder $matches, string $term): Builder
     {
-        $direct = DB::table('bl_element_codes')
-            ->where('code', $term)
-            ->select(['item_type as type', 'item_id as id'])
-            ->union(DB::table('bl_item_alt_ids')->where('alt_id', $term)->select(['type', 'id']))
-            ->get();
+        $direct = ItemIdentifiers::resolve($term);
 
         if ($direct->isEmpty()) {
             return $matches;

@@ -3,6 +3,7 @@
 namespace App\Collection\Queries;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Catalog\Queries\ItemIdentifiers;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -170,9 +171,16 @@ class MinifigureTotals
         if ($term !== '') {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
 
-            $query->where(fn ($where) => $where
-                ->where('ci.item_id', 'like', "{$escaped}%")
-                ->orWhere('i.name', 'like', "%{$escaped}%"));
+            // Кодов элементов у фигурок нет ни одного, а вторые имена есть.
+            $identifiers = ItemIdentifiers::resolve($term);
+
+            $query->where(function ($where) use ($escaped, $identifiers) {
+                $where
+                    ->where('ci.item_id', 'like', "{$escaped}%")
+                    ->orWhere('i.name', 'like', "%{$escaped}%");
+
+                ItemIdentifiers::match($where, $identifiers, 'ci.item_type', 'ci.item_id');
+            });
         }
 
         if (($this->filters['year'] ?? null)) {
