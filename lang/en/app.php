@@ -252,6 +252,8 @@ return [
         'loose_badge' => ':count on its own|:count on their own',
         'tag_hint' => 'Tags belong to a copy owned on its own; a figure inside a set does not inherit tags from it.',
         'lost' => 'Missing',
+        'incomplete' => 'Incomplete',
+        'incomplete_hint' => 'Figures missing a piece of their own: the part is gone, the figure is still there. Until now such a figure showed only from inside the set holding it.',
         'lost_hint' => 'Figures a set of yours is missing. A figure owned on its own is never marked missing — if it is gone, it is not in the collection.',
         'tab_parts' => 'Parts',
         'tab_entries' => 'In sets',

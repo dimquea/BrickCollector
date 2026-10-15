@@ -153,6 +153,16 @@ class MinifigureTotals
                     THEN ci.entry_id END) as entries"),
 
                 DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 THEN ci.lost_qty END), 0) as lost'),
+
+                // Экземпляры, внутри которых чего-то не хватает. Детали лежат
+                // прямо под фигуркой, поэтому достаточно посмотреть на детей.
+                // Считается здесь, а не отбором по строке: отбор до GROUP BY
+                // поменял бы и остальные числа на карточке, и «всего» стало бы
+                // «всего некомплектных».
+                DB::raw("COUNT(DISTINCT CASE WHEN ci.counts = 1 AND EXISTS (
+                    SELECT 1 FROM collection_items part
+                    WHERE part.parent_id = ci.id AND part.counts = 1 AND part.lost_qty > 0
+                ) THEN ci.id END) as incomplete"),
             ]);
 
         $term = trim((string) ($this->filters['q'] ?? ''));
@@ -196,6 +206,13 @@ class MinifigureTotals
         // просто нет, и правильный ответ удалить экземпляр, а не помечать его.
         if (! empty($this->filters['lost'])) {
             $query->havingRaw('lost > 0');
+        }
+
+        // «Некомплект» — про внутренности фигурки, а не про неё саму: деталь
+        // потерялась, человечек остался. Найти такую можно было только через
+        // набор, в котором она стоит.
+        if (! empty($this->filters['incomplete'])) {
+            $query->havingRaw('incomplete > 0');
         }
 
         return $query;

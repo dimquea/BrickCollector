@@ -205,7 +205,7 @@ class MinifiguresController extends Controller
             'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
             'tag_id' => ['integer'],
             'placement' => ['string', 'in:set,loose'],
-        ], switches: ['lost']);
+        ], switches: ['lost', 'incomplete']);
     }
 
     /** @return array{by: string, dir: string} */

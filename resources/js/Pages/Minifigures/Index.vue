@@ -39,6 +39,7 @@ const form = reactive({
     tag_id: props.filters.tag_id ?? null,
     placement: props.filters.placement ?? null,
     lost: Boolean(props.filters.lost),
+    incomplete: Boolean(props.filters.incomplete),
     sort: chosenSort,
     dir: props.sort.dir ?? 'asc',
 });
@@ -73,13 +74,13 @@ const exportMode = computed(() => (form.lost ? 'wanted' : 'inventory'));
 function reset() {
     Object.assign(form, {
         q: '', theme_id: null, year: null, tag_id: null, placement: null, lost: false,
-        sort: null, dir: 'asc',
+        incomplete: false, sort: null, dir: 'asc',
     });
 }
 
 watch(() => form.q, debounce(submit, 300));
 watch(
-    () => [form.theme_id, form.year, form.tag_id, form.placement, form.lost, form.sort, form.dir],
+    () => [form.theme_id, form.year, form.tag_id, form.placement, form.lost, form.incomplete, form.sort, form.dir],
     submit,
 );
 
@@ -194,6 +195,24 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
                         <div class="form-text">{{ t('minifigures.lost_hint') }}</div>
                     </div>
 
+                    <!-- Про внутренности фигурки, а не про неё саму: деталь
+                         потерялась, человечек остался. Такую можно было найти
+                         только через некомплектный набор. -->
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input
+                                id="incomplete"
+                                v-model="form.incomplete"
+                                class="form-check-input"
+                                type="checkbox"
+                            />
+                            <label class="form-check-label" for="incomplete">
+                                {{ t('minifigures.incomplete') }}
+                            </label>
+                        </div>
+                        <div class="form-text">{{ t('minifigures.incomplete_hint') }}</div>
+                    </div>
+
                     <!-- Порядок — отдельной строкой внизу: он отвечает не на
                          «что показать», а на «в каком виде». Разрыв явный,
                          иначе строка встала бы в остаток предыдущей. -->
@@ -246,6 +265,13 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
                     </span>
                     <span v-if="figure.lost" class="badge text-bg-warning">
                         <i class="mdi mdi-alert-outline"></i> {{ figure.lost }}
+                    </span>
+                    <span
+                        v-if="figure.incomplete"
+                        class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"
+                        :title="t('minifigures.incomplete')"
+                    >
+                        <i class="mdi mdi-alert-circle-outline"></i> {{ figure.incomplete }}
                     </span>
                 </div>
             </div>
