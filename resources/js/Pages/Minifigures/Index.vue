@@ -11,6 +11,7 @@ import ExportButton from '@/Components/ExportButton.vue';
 import { exportItems } from '@/support/exports';
 import { debounce } from '@/support/debounce';
 import { masonry } from '@/support/cards';
+import { rememberSort } from '@/support/sortMemory';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -48,6 +49,10 @@ const form = reactive({
 function submit() {
     router.get(url('/minifigures'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
+
+// Порядок этого раздела держится между заходами; адрес с порядком
+// сильнее запомненного.
+rememberSort('minifigures', form, submit);
 
 function clean() {
     const query = Object.fromEntries(

@@ -14,6 +14,7 @@ import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import { debounce } from '@/support/debounce';
 import { masonry } from '@/support/cards';
+import { rememberSort } from '@/support/sortMemory';
 import { t, tChoice } from '@/i18n';
 
 /**
@@ -56,6 +57,10 @@ const form = reactive({
 function submit() {
     router.get(url('/wishlist'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
+
+// Порядок этого раздела держится между заходами; адрес с порядком
+// сильнее запомненного.
+rememberSort('wishlist', form, submit);
 
 function clean() {
     const query = Object.fromEntries(

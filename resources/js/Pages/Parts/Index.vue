@@ -11,6 +11,7 @@ import SortControl from '@/Components/SortControl.vue';
 import ExportButton from '@/Components/ExportButton.vue';
 import { exportItems } from '@/support/exports';
 import { debounce } from '@/support/debounce';
+import { rememberSort } from '@/support/sortMemory';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -64,6 +65,10 @@ watch(() => form.placement, (placement) => {
 function submit() {
     router.get(url('/parts'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
+
+// Порядок этого раздела держится между заходами; адрес с порядком
+// сильнее запомненного.
+rememberSort('parts', form, submit);
 
 /** Empty filters stay out of the URL so a bare /parts is a clean link. */
 function clean() {

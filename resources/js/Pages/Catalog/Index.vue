@@ -10,6 +10,7 @@ import SortControl from '@/Components/SortControl.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import PhotoSearchDialog from '@/Components/PhotoSearchDialog.vue';
 import { masonry } from '@/support/cards';
+import { rememberSort } from '@/support/sortMemory';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -51,6 +52,10 @@ const form = reactive({
 function submit() {
     router.get(url('/catalog'), clean(), { preserveState: true, preserveScroll: true, replace: true });
 }
+
+// Порядок этого раздела держится между заходами; адрес с порядком
+// сильнее запомненного.
+rememberSort('catalog', form, submit);
 
 /** Empty filters stay out of the URL so a bare /catalog is a clean link. */
 function clean() {
