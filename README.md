@@ -94,8 +94,22 @@ As a Home Assistant add-on — the simplest way, and the one it is built for:
    catalogue and unpacks it; the log says what it is doing.
 3. Open **BrickCollector** in the sidebar.
 
-On your own machine you need PHP 8.2 or newer with SQLite, and a web server
-pointed at `public/`:
+With Docker, if Home Assistant is not involved:
+
+```bash
+git clone https://github.com/dimquea/BrickCollector.git
+cd BrickCollector
+docker compose up -d
+```
+
+Open `http://localhost:8080`. The catalogue is downloaded and unpacked on the
+first run; the container log says what it is doing. The collection, the image
+cache and the catalogue archive live in the `brickcollector-data` volume and
+survive a rebuild of the image. Language, currency and the rest are set as
+environment variables in `docker-compose.yml`.
+
+By hand, without a container, you need PHP 8.2 or newer with SQLite and a web
+server pointed at `public/`:
 
 ```bash
 git clone https://github.com/dimquea/BrickCollector.git

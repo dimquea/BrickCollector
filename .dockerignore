@@ -1,0 +1,24 @@
+# Всё, что собирается в образе само или не нужно внутри.
+.git
+.github
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+storage/app/brickcollector
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+tests
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+.phpunit.cache
+CLAUDE.local.md
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

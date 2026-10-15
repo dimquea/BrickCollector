@@ -1,0 +1,26 @@
+# BrickCollector на своей машине: docker compose up -d, и откройте
+# http://localhost:8080
+#
+# Коллекция, кэш картинок и архив справочника лежат в томе brickcollector-data
+# и переживают пересборку образа.
+services:
+  brickcollector:
+    build: .
+    image: brickcollector
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - brickcollector-data:/data
+    environment:
+      # Язык интерфейса: en или ru. Дальше его меняют в настройках.
+      APP_LOCALE: ru
+      # Валюта, в которой показываются цены.
+      BRICKCOLLECTOR_CURRENCY: RUB
+      # Скачать и развернуть справочник BrickLink при первом запуске.
+      IMPORT_CATALOG: "true"
+      # Подкачивать в фоне картинки того, чем владеешь.
+      FETCH_IMAGES: "true"
+
+volumes:
+  brickcollector-data:
