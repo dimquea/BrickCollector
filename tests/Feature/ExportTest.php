@@ -290,6 +290,63 @@ class ExportTest extends TestCase
         $this->get("/assemblies/{$assembly->id}/export/everything")->assertNotFound();
     }
 
+    /**
+     * BSX — родной документ BrickStore.
+     *
+     * Он читает и обычный BrickLink XML, но только через «Импорт». Поля
+     * сверены с исходниками BrickStore: без Condition позиция читается как
+     * б/у, а цена с запятой — как ноль.
+     */
+    public function test_the_basket_is_a_brickstore_document(): void
+    {
+        $this->entry('S', 'set-a');
+
+        $bsx = $this->get('/sets/export?as=bsx')->assertOk();
+
+        $this->assertStringContainsString('application/x-brickstore-xml', $bsx->headers->get('Content-Type'));
+        $this->assertStringContainsString('.bsx"', $bsx->headers->get('Content-Disposition'));
+
+        $body = $bsx->getContent();
+
+        $this->assertStringStartsWith('<?xml version="1.0" encoding="UTF-8"?>', $body);
+        $this->assertStringContainsString('<BrickStoreXML>', $body);
+        $this->assertStringContainsString('<Inventory Currency="', $body);
+        $this->assertStringContainsString('<ItemID>set-a</ItemID>', $body);
+        $this->assertStringContainsString('<ItemTypeID>S</ItemTypeID>', $body);
+        // Ноль — это «цвет неприменим», а не пропущенное поле.
+        $this->assertStringContainsString('<ColorID>0</ColorID>', $body);
+        $this->assertStringContainsString('<Condition>N</Condition>', $body);
+        $this->assertStringContainsString('<Price>0.000</Price>', $body);
+        $this->assertStringNotContainsString('<ItemTypeName>', $body, 'его первая буква перебила бы код типа');
+        $this->assertNotFalse(simplexml_load_string($body), 'документ должен разбираться');
+    }
+
+    public function test_the_basket_carries_the_colour_of_a_part(): void
+    {
+        $set = $this->entry('S', 'set-a');
+        $this->row($set, ['item_type' => 'P', 'item_id' => 'brick', 'qty' => 4]);
+
+        $body = $this->get('/parts/export?as=bsx')->assertOk()->getContent();
+
+        $this->assertStringContainsString('<ItemTypeID>P</ItemTypeID>', $body);
+        $this->assertStringContainsString('<ColorID>11</ColorID>', $body);
+        $this->assertStringContainsString('<Qty>4</Qty>', $body);
+    }
+
+    /** Вид просят адресом, и он сильнее догадки по фильтру. */
+    public function test_the_kind_asked_for_wins_over_the_filter(): void
+    {
+        $set = $this->entry('S', 'set-a');
+        $this->row($set, ['item_type' => 'P', 'item_id' => 'brick', 'qty' => 4, 'lost_qty' => 1]);
+
+        $this->assertStringContainsString('<MINQTY>', $this->xml('/parts/export?lost=true'));
+        $this->assertStringContainsString('<QTY>', $this->xml('/parts/export?lost=true&as=inventory'));
+        $this->assertStringContainsString(
+            '<BrickStoreXML>',
+            $this->get('/parts/export?lost=true&as=bsx')->getContent(),
+        );
+    }
+
     public function test_the_document_escapes_text_and_trims_a_long_remark(): void
     {
         $xml = BrickLinkXml::wanted([

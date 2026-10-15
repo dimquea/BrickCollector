@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\UpdateEntryMeta;
-use App\Collection\Export\BrickLinkXml;
+use App\Collection\Export\Export;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Storage;
@@ -64,17 +64,21 @@ class MinifiguresController extends Controller
         $filters = $this->filters($request);
         $rows = $totals->filters($filters)->sort($this->sort($request))->all();
 
-        if (! empty($filters['lost'])) {
+        // Вид выбирают в меню кнопки. Умолчание осталось прежним: под фильтром
+        // «потеряны» просят не опись, а список того, чего не хватает.
+        $kind = Export::kind($request, ! empty($filters['lost']) ? 'wanted' : 'inventory');
+
+        if ($kind === 'wanted') {
             $sources = $lost->minifigures();
 
-            return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+            return Export::respond($kind, $rows->map(fn (object $row) => [
                 'type' => 'M',
                 'id' => $row->item_id,
                 'qty' => (int) $row->lost,
                 // Чему её недостаёт: в магазине это разница между «взять одну»
                 // и «взять три».
                 'remarks' => $sources->get((string) $row->item_id),
-            ])), 'minifigures', 'wanted');
+            ]), 'minifigures');
         }
 
         // Количество берётся по выбранному месту: фильтр «отдельно» обещает
@@ -86,11 +90,11 @@ class MinifiguresController extends Controller
             default => 'total',
         };
 
-        return BrickLinkXml::download(BrickLinkXml::inventory($rows->map(fn (object $row) => [
+        return Export::respond($kind, $rows->map(fn (object $row) => [
             'type' => 'M',
             'id' => $row->item_id,
             'qty' => (int) $row->{$held},
-        ])), 'minifigures', 'inventory');
+        ]), 'minifigures');
     }
 
     public function show(string $id, MinifigureTotals $totals): Response

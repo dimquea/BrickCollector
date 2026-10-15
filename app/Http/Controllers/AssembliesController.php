@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Collection\Actions\MoveParts;
 use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\AssemblyImages;
-use App\Collection\Export\BrickLinkXml;
+use App\Collection\Export\Export;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Item;
 use App\Collection\Models\Source;
@@ -194,7 +194,7 @@ class AssembliesController extends Controller
      * состоит из стольких деталей, сколько в неё заложено, и тот, кто собирает
      * такую же, должен купить все. Недостача — ровно вторая половина ответа.
      */
-    public function export(Entry $entry, string $kind): HttpResponse
+    public function export(Request $request, Entry $entry, string $kind): HttpResponse
     {
         abort_unless($entry->isAssembly(), 404);
 
@@ -207,7 +207,7 @@ class AssembliesController extends Controller
             ->get(['item_id', 'color_id', 'qty', 'lost_qty']);
 
         if ($kind === 'shortage') {
-            return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+            return Export::respond(Export::kind($request, 'wanted'), $rows->map(fn (object $row) => [
                 'type' => 'P',
                 'id' => $row->item_id,
                 'color' => (int) $row->color_id,
@@ -215,15 +215,15 @@ class AssembliesController extends Controller
                 // Откуда недостаёт: номера у сборки нет, назвать её можно только
                 // именем, которое ей дали.
                 'remarks' => $entry->name,
-            ])), 'assembly', 'wanted');
+            ]), 'assembly');
         }
 
-        return BrickLinkXml::download(BrickLinkXml::inventory($rows->map(fn (object $row) => [
+        return Export::respond(Export::kind($request), $rows->map(fn (object $row) => [
             'type' => 'P',
             'id' => $row->item_id,
             'color' => (int) $row->color_id,
             'qty' => (int) $row->qty,
-        ])), 'assembly', 'inventory');
+        ]), 'assembly');
     }
 
     /** Loose parts available to build with, for the dialog. */

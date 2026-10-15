@@ -9,6 +9,7 @@ import ColorDot from '@/Components/ColorDot.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
 import ExportButton from '@/Components/ExportButton.vue';
+import { exportItems } from '@/support/exports';
 import { debounce } from '@/support/debounce';
 import { t, tChoice } from '@/i18n';
 
@@ -84,9 +85,6 @@ const exportHref = computed(() => {
     return query ? `/parts/export?${query}` : '/parts/export';
 });
 
-// «Есть недостача» меняет смысл выгрузки: не «вот что у меня есть», а «вот
-// чего мне не хватает».
-const exportMode = computed(() => (form.lost ? 'wanted' : 'inventory'));
 
 function reset() {
     Object.assign(form, {
@@ -203,7 +201,7 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                          иначе строка встала бы в остаток предыдущей. -->
                     <div class="w-100"></div>
                     <div class="col-12 col-lg-4 d-flex align-items-end gap-2">
-                        <ExportButton :href="exportHref" :mode="exportMode" />
+                        <ExportButton :items="exportItems(exportHref)" />
                         <SortControl
                             v-model:by="form.sort"
                             v-model:dir="form.dir"

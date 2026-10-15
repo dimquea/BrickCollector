@@ -84,10 +84,11 @@ return [
     ],
 
     'export' => [
-        'as_inventory' => 'Will be exported as an inventory',
-        'as_wanted' => 'Will be exported as a wanted list',
-        'inventory' => 'Export the inventory',
-        'shortage' => 'Export what is missing',
+        'title' => 'Export',
+        'inventory' => 'Inventory — BrickLink XML',
+        'wanted' => 'Wanted list — BrickLink XML',
+        'bsx' => 'BrickStore basket — BSX',
+        'shortage' => 'What is missing — BrickLink XML',
     ],
 
     'import' => [

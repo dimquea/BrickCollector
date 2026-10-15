@@ -1,39 +1,43 @@
 <script setup>
-import { computed } from 'vue';
 import { url } from '@/support/base';
 import { t } from '@/i18n';
 
 /**
- * Выгрузка в BrickLink XML.
+ * Выгрузка списка: кнопка с меню видов.
  *
- * Обычная ссылка, а не переход роутера: в ответ приходит файл, и Inertia о таком
- * ответе ничего не знает. Адрес собирается из тех же фильтров, что и список, —
- * выгружается ровно то, что человек видит на экране.
+ * Обычные ссылки, а не переходы роутера: в ответ приходит файл, и Inertia о
+ * таком ответе ничего не знает. Адрес собирается из тех же фильтров, что и
+ * список, — выгружается ровно то, что человек видит на экране.
  *
- * Подсказка говорит, каким файл получится. Опись и список желаемого читаются
- * BrickLink по-разному, а по виду файла это не отличить: узнать после загрузки
- * было бы поздно.
+ * Прежде вид угадывался по фильтру: включён «потеряны» — значит нужен список
+ * желаемого. Угадывание было верным чаще, чем нет, но выбора не оставляло, а
+ * по виду файла не понять, чем он окажется на той стороне.
  */
-const props = defineProps({
-    href: { type: String, required: true },
-    /** inventory — QTY, «вот что у меня есть»; wanted — MINQTY, «вот чего не хватает». */
-    mode: { type: String, default: 'inventory' },
+defineProps({
+    /** @type {{key: string, label: string, href: string}[]} */
+    items: { type: Array, required: true },
     /** Подпись рядом с иконкой: в строке фильтров не нужна, на странице сборки нужна. */
     label: { type: String, default: null },
 });
-
-const hint = computed(() => t(props.mode === 'wanted' ? 'export.as_wanted' : 'export.as_inventory'));
 </script>
 
 <template>
-    <a
-        class="btn btn-outline-secondary text-nowrap"
-        :href="url(href)"
-        :title="hint"
-        :aria-label="label ?? hint"
-        download
-    >
-        <i class="mdi mdi-tray-arrow-down"></i>
-        <span v-if="label" class="ms-1">{{ label }}</span>
-    </a>
+    <div class="btn-group">
+        <button
+            type="button"
+            class="btn btn-outline-secondary text-nowrap dropdown-toggle"
+            data-bs-toggle="dropdown"
+            :title="t('export.title')"
+            :aria-label="label ?? t('export.title')"
+        >
+            <i class="mdi mdi-tray-arrow-down"></i>
+            <span v-if="label" class="ms-1">{{ label }}</span>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li v-for="item in items" :key="item.key">
+                <a class="dropdown-item" :href="url(item.href)" download>{{ t(item.label) }}</a>
+            </li>
+        </ul>
+    </div>
 </template>

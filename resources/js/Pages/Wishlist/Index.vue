@@ -9,6 +9,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
 import ExportButton from '@/Components/ExportButton.vue';
+import { exportItems } from '@/support/exports';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import { debounce } from '@/support/debounce';
@@ -181,7 +182,7 @@ const shows = (list) => list.length > 1;
 
                     <div class="w-100"></div>
                     <div class="col-12 col-lg-4 d-flex align-items-end gap-2">
-                        <ExportButton :href="exportHref" mode="wanted" />
+                        <ExportButton :items="exportItems(exportHref, ['wanted', 'bsx'])" />
                         <SortControl
                             v-model:by="form.sort"
                             v-model:dir="form.dir"

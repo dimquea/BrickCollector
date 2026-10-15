@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Catalog\Images\ItemImages;
 use App\Catalog\Models\Item;
 use App\Catalog\Models\ItemType;
-use App\Collection\Export\BrickLinkXml;
+use App\Collection\Export\Export;
 use App\Collection\Models\Wish;
 use App\Collection\Queries\WishedItems;
 use App\Http\ListFilters;
@@ -77,13 +77,15 @@ class WishlistController extends Controller
     {
         $rows = $wished->filters($this->filters($request))->sort($this->sort($request))->all();
 
-        return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+        // Описи у желаемого не бывает: им не владеют. Остаётся список
+        // желаемого и корзина, с которой идут в магазин.
+        return Export::respond(Export::kind($request, 'wanted'), $rows->map(fn (object $row) => [
             'type' => $row->type,
             'id' => $row->item_id,
             // Цвет осмыслен только у детали, и только если известен.
             'color' => $row->type === 'P' && (int) $row->color_id > 0 ? (int) $row->color_id : null,
             'qty' => 1,
-        ])), 'wishlist', 'wanted');
+        ]), 'wishlist');
     }
 
     /**

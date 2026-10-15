@@ -6,7 +6,7 @@ use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\ResizeLot;
 use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\AssemblyImages;
-use App\Collection\Export\BrickLinkXml;
+use App\Collection\Export\Export;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Storage;
@@ -74,7 +74,11 @@ class PartsController extends Controller
         $rows = $totals->filters($filters)->sort($this->sort($request))->all();
         $placement = $filters['placement'] ?? null;
 
-        if (! empty($filters['lost'])) {
+        // Вид выбирают в меню кнопки; под фильтром «потеряны» по умолчанию
+        // просят список недостающего, как и раньше.
+        $kind = Export::kind($request, ! empty($filters['lost']) ? 'wanted' : 'inventory');
+
+        if ($kind === 'wanted') {
             $sources = $lost->parts();
 
             $missing = match ($placement) {
@@ -85,13 +89,13 @@ class PartsController extends Controller
                 default => 'lost',
             };
 
-            return BrickLinkXml::download(BrickLinkXml::wanted($rows->map(fn (object $row) => [
+            return Export::respond($kind, $rows->map(fn (object $row) => [
                 'type' => 'P',
                 'id' => $row->item_id,
                 'color' => (int) $row->color_id,
                 'qty' => (int) $row->{$missing},
                 'remarks' => $sources->get($row->item_id.'/'.(int) $row->color_id),
-            ])), 'parts', 'wanted');
+            ]), 'parts');
         }
 
         // Количество берётся по выбранному месту: фильтр «отдельно» обещает
@@ -112,12 +116,12 @@ class PartsController extends Controller
             $held = 'loose_tagged';
         }
 
-        return BrickLinkXml::download(BrickLinkXml::inventory($rows->map(fn (object $row) => [
+        return Export::respond($kind, $rows->map(fn (object $row) => [
             'type' => 'P',
             'id' => $row->item_id,
             'color' => (int) $row->color_id,
             'qty' => (int) $row->{$held},
-        ])), 'parts', 'inventory');
+        ]), 'parts');
     }
 
     public function show(string $id, int $color, PartTotals $totals, AssemblyImages $images): Response

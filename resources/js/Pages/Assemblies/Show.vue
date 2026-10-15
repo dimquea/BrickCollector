@@ -11,6 +11,7 @@ import EntryMetaBadges from '@/Components/EntryMetaBadges.vue';
 import EntryMetaRows from '@/Components/EntryMetaRows.vue';
 import EntryNote from '@/Components/EntryNote.vue';
 import ExportButton from '@/Components/ExportButton.vue';
+import { exportItems } from '@/support/exports';
 import AssemblyPartsDialog from '@/Components/AssemblyPartsDialog.vue';
 import AssemblyContentsDialog from '@/Components/AssemblyContentsDialog.vue';
 import { patchField } from '@/support/save';
@@ -95,6 +96,22 @@ const editDialog = ref(null);
 function refresh() {
     router.reload({ only: ['parts', 'totals'], preserveScroll: true });
 }
+
+/*
+ * Выгрузка сборки: опись — «собрать такую же», недостача — «дособрать эту».
+ * Вид недостачи предлагается, только когда есть чего недоставать: пустой файл
+ * на выбор — обещание, за которым ничего нет.
+ */
+const exports = computed(() => [
+    ...exportItems(`/assemblies/${props.entry.id}/export/inventory`, ['inventory']),
+    // У сборки это не «список желаемого вообще», а недостача вот этой сборки,
+    // поэтому подпись своя.
+    ...(props.totals.lost
+        ? exportItems(`/assemblies/${props.entry.id}/export/shortage`, ['wanted'])
+            .map((item) => ({ ...item, label: 'export.shortage' }))
+        : []),
+    ...exportItems(`/assemblies/${props.entry.id}/export/inventory`, ['bsx']),
+]);
 
 function remove() {
     if (window.confirm(t('assembly.remove_confirm', { name: props.entry.name }))) {
@@ -229,15 +246,8 @@ function remove() {
                                          нечего. -->
                                     <ExportButton
                                         v-if="parts.length"
-                                        :href="`/assemblies/${entry.id}/export/inventory`"
-                                        mode="inventory"
-                                        :label="t('export.inventory')"
-                                    />
-                                    <ExportButton
-                                        v-if="totals.lost"
-                                        :href="`/assemblies/${entry.id}/export/shortage`"
-                                        mode="wanted"
-                                        :label="t('export.shortage')"
+                                        :items="exports"
+                                        :label="t('export.title')"
                                     />
                                 </div>
                             </div>

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\UpdateEntryMeta;
-use App\Collection\Export\BrickLinkXml;
+use App\Collection\Export\Export;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Status;
@@ -84,7 +84,7 @@ class SetsController extends Controller
                 'qty' => $group->count(),
             ]);
 
-        return BrickLinkXml::download(BrickLinkXml::inventory($items), 'sets', 'inventory');
+        return Export::respond(Export::kind($request), $items, 'sets');
     }
 
     public function show(Entry $entry, EntryContents $contents): Response|RedirectResponse
