@@ -211,6 +211,16 @@ request path reads the cache and records what is missing.
   not a pair of arms. Show its composition on the part's own page instead.
 - Subsets and minifigures, by contrast, are expanded recursively and the intermediate node is kept.
   Depth limit 8, with cycle protection along the traversal path.
+- **A minifigure inside a minifigure is a part of it, not a second figure.** BrickLink describes a
+  Technic figure wearing a helmet as the bare figure plus the helmet; counting both turned one
+  figure in the box into two. The rule lives in the counting, not in the rows: figure counts skip
+  rows whose `parent_item_type` is `M` — and remember SQL's NULL, `NOT (x = 'M')` drops every row
+  with no parent at all. The nested figure's own pieces still count.
+- **A set holds more than parts, figures and subsets.** Gear, a book, a catalogue: those lines were
+  always written into `collection_items` and for a long time read by nothing, because both the
+  summary and the page of a set knew a hard-coded list of three kinds. Count anything else apart,
+  by type, and show it in its own group. Gear is not expanded even when it has an inventory of its
+  own — a storage case does not come apart into bricks.
 - "Incomplete" and "Missing figures" are derived, cached in `collection_entries.flag_*`, and
   recomputed whenever the contents change.
 - **An assembly is an entry with no `item_type`** — a group of loose parts with a name of its own and

@@ -157,6 +157,11 @@ class ItemInventory
      * minifigure inside each of them turns a box of 36 packets into 432
      * minifigures.
      *
+     * A minifigure inside a minifigure is a part of it, not a second figure:
+     * BrickLink describes a Technic figure with a helmet as the bare figure
+     * plus the helmet, and counting both turned one figure in the box into
+     * two. Its pieces still count — they are in the box either way.
+     *
      * Everything that is neither part, figure nor subset — gear, a book, a
      * catalogue — is counted apart, by type. A storage case is in the box and
      * belongs in no other column.
@@ -168,7 +173,7 @@ class ItemInventory
     {
         $totals = ['parts' => 0, 'lots' => 0, 'minifigures' => 0, 'subsets' => 0, 'extras' => 0, 'others' => []];
 
-        $walk = function (array $nodes, bool $parentCounts, int $multiplier) use (&$walk, &$totals): void {
+        $walk = function (array $nodes, bool $parentCounts, int $multiplier, bool $insideFigure) use (&$walk, &$totals): void {
             foreach ($nodes as $node) {
                 $qty = $node['qty'] * $multiplier;
 
@@ -184,17 +189,17 @@ class ItemInventory
                 if ($counts) {
                     match (true) {
                         $node['type'] === 'P' => [$totals['parts'] += $qty, $totals['lots']++],
-                        $node['type'] === 'M' => $totals['minifigures'] += $qty,
+                        $node['type'] === 'M' => $insideFigure ? null : $totals['minifigures'] += $qty,
                         $node['type'] === 'S' => $totals['subsets'] += $qty,
                         default => $totals['others'][$node['type']] = ($totals['others'][$node['type']] ?? 0) + $qty,
                     };
                 }
 
-                $walk($node['children'], $counts, $qty);
+                $walk($node['children'], $counts, $qty, $insideFigure || $node['type'] === 'M');
             }
         };
 
-        $walk($nodes, true, 1);
+        $walk($nodes, true, 1, false);
 
         return $totals;
     }

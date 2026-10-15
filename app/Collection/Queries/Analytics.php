@@ -64,6 +64,12 @@ class Analytics
             ->join('collection_entries as e', 'e.id', '=', 'ci.entry_id')
             ->where('ci.item_type', 'M')
             ->where('ci.counts', 1)
+            // Фигурка внутри фигурки — её часть, а не вторая фигурка: техниковская
+            // фигурка со шлемом описана как фигурка плюс шлем, и считая обе, мы
+            // удваивали то, что в коробке лежит одним человечком.
+            ->where(fn ($where) => $where
+                ->whereNull('ci.parent_item_type')
+                ->orWhere('ci.parent_item_type', '!=', 'M'))
             ->selectRaw('COALESCE(SUM(ci.qty), 0) as total')
             ->selectRaw("COALESCE(SUM(CASE WHEN NOT ({$loose}) THEN ci.qty END), 0) as in_sets")
             ->selectRaw("COALESCE(SUM(CASE WHEN {$loose} THEN ci.qty END), 0) as loose")
@@ -75,6 +81,9 @@ class Analytics
         $incomplete = DB::table('collection_items as ci')
             ->where('ci.item_type', 'M')
             ->where('ci.counts', 1)
+            ->where(fn ($where) => $where
+                ->whereNull('ci.parent_item_type')
+                ->orWhere('ci.parent_item_type', '!=', 'M'))
             ->whereExists(fn ($sub) => $sub
                 ->from('collection_items as part')
                 ->whereColumn('part.parent_id', 'ci.id')
@@ -293,6 +302,10 @@ class Analytics
                 ->on('i.type', '=', 'ci.item_type')
                 ->on('i.id', '=', 'ci.item_id'))
             ->where('ci.item_type', 'M')
-            ->where('ci.counts', 1);
+            ->where('ci.counts', 1)
+            // См. minifigures(): вложенная фигурка — часть внешней.
+            ->where(fn ($where) => $where
+                ->whereNull('ci.parent_item_type')
+                ->orWhere('ci.parent_item_type', '!=', 'M'));
     }
 }

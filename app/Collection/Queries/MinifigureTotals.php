@@ -116,6 +116,12 @@ class MinifigureTotals
                 ->on('i.id', '=', 'ci.item_id'))
             ->leftJoin('bl_themes as t', 't.id', '=', 'i.theme_id')
             ->where('ci.item_type', 'M')
+            // Фигурка внутри фигурки — её часть, а не отдельная: техниковская
+            // фигурка со шлемом описана как фигурка плюс шлем, и раздел
+            // показывал обе, насчитывая человечков вдвое больше, чем их есть.
+            ->where(fn ($where) => $where
+                ->whereNull('ci.parent_item_type')
+                ->orWhere('ci.parent_item_type', '!=', 'M'))
             ->groupBy('ci.item_id')
             ->select([
                 'ci.item_id',
