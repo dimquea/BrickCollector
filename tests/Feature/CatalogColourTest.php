@@ -31,6 +31,7 @@ class CatalogColourTest extends TestCase
         DB::table('bl_item_types')->insert([
             ['code' => 'S', 'name' => 'Set'],
             ['code' => 'P', 'name' => 'Part'],
+            ['code' => 'G', 'name' => 'Gear'],
         ]);
 
         DB::table('bl_colors')->insert([
@@ -44,7 +45,18 @@ class CatalogColourTest extends TestCase
                 'type' => 'P', 'id' => 'brick', 'name' => 'Brick',
                 'image_color_id' => self::DARK_TAN, 'has_inventory' => 0,
             ],
-            ['type' => 'S', 'id' => 'set-a', 'name' => 'Set A', 'image_color_id' => 0, 'has_inventory' => 0],
+            ['type' => 'S', 'id' => 'set-a', 'name' => 'Set A', 'image_color_id' => 0, 'has_inventory' => 1],
+            // Коробка-органайзер: у аксессуара цвет бывает свой, а кодов
+            // элементов у не-деталей не бывает вовсе.
+            ['type' => 'G', 'id' => 'case', 'name' => 'Storage case', 'image_color_id' => self::DARK_TAN, 'has_inventory' => 0],
+        ]);
+
+        // Цвета аксессуара видны только из описей наборов, где он лежит.
+        DB::table('bl_inventory')->insert([
+            ['parent_type' => 'S', 'parent_id' => 'set-a', 'child_type' => 'G', 'child_id' => 'case',
+                'color_id' => self::REDDISH_BROWN, 'qty' => 1],
+            ['parent_type' => 'S', 'parent_id' => 'set-b', 'child_type' => 'G', 'child_id' => 'case',
+                'color_id' => self::BLACK, 'qty' => 1],
         ]);
 
         // Деталь известна справочнику в двух цветах; чёрного среди них нет.
@@ -102,6 +114,67 @@ class CatalogColourTest extends TestCase
                 ->has('colours', 3)
                 ->where('colours', fn ($colours) => collect($colours)->pluck('id')->sort()->values()->all()
                     === [self::BLACK, self::DARK_TAN, self::REDDISH_BROWN]));
+    }
+
+    /**
+     * Цвет бывает не только у детали.
+     *
+     * Коробка-органайзер из серии Throwbot в каждом наборе своего цвета, и
+     * таких предметов в справочнике пять сотен. Кодов элементов у них нет, а
+     * цвета видны по описям наборов, где они лежат.
+     */
+    public function test_gear_is_offered_the_colours_it_appears_in(): void
+    {
+        $this->get('/catalog/G/case')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('colour', self::DARK_TAN, 'без цвета в адресе — цвет картинки')
+                ->where('colours', fn ($colours) => collect($colours)->pluck('id')->sort()->values()->all()
+                    === [self::BLACK, self::REDDISH_BROWN]));
+    }
+
+    public function test_gear_opens_in_the_colour_from_the_address(): void
+    {
+        $this->assertSame(self::BLACK, $this->colourOf('/catalog/G/case?color='.self::BLACK));
+    }
+
+    /** Цвет, в котором эта коробка нигде не лежит, отбрасывается как у детали. */
+    public function test_a_colour_gear_never_comes_in_is_dropped(): void
+    {
+        $this->assertSame(self::DARK_TAN, $this->colourOf('/catalog/G/case?color=4242'));
+    }
+
+    /**
+     * Экземпляр помнит свой цвет.
+     *
+     * Иначе получался шов: на карточке выбрали красную коробку, а в разделе
+     * наборов она жёлтая — та, в какой нарисована в справочнике.
+     */
+    public function test_gear_added_in_a_colour_keeps_it(): void
+    {
+        $this->post('/catalog/G/case/add', ['color_id' => self::BLACK])->assertRedirect();
+
+        $entry = \App\Collection\Models\Entry::where('item_id', 'case')->firstOrFail();
+
+        $this->assertSame(self::BLACK, (int) $entry->color_id);
+        $this->assertSame(self::BLACK, (int) $entry->items()->whereNull('parent_id')->value('color_id'));
+
+        // И раздел наборов показывает его в этом цвете, а не в цвете картинки.
+        $this->get('/sets/'.$entry->id)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('entry.image_color_id', self::BLACK)
+                ->where('entry.color_id', self::BLACK));
+    }
+
+    /** У набора цвета нет: ни выбора, ни памяти о нём. */
+    public function test_a_set_added_has_no_colour(): void
+    {
+        $this->post('/catalog/S/set-a/add')->assertRedirect();
+
+        $entry = \App\Collection\Models\Entry::where('item_id', 'set-a')->firstOrFail();
+
+        $this->assertNull($entry->color_id);
     }
 
     /** У набора цвета нет: спрашивать о нём нечего. */

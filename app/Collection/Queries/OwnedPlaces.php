@@ -145,6 +145,7 @@ class OwnedPlaces
                 'e.id as entry_id',
                 'e.acquired_at',
                 'e.created_at',
+                'e.color_id',
                 DB::raw('COALESCE(i.name, e.item_id) as name'),
                 DB::raw('COALESCE(i.image_color_id, 0) as image_color_id'),
                 DB::raw('COALESCE(ci.qty, 1) as qty'),
@@ -155,7 +156,8 @@ class OwnedPlaces
                 'entry_id' => (int) $row->entry_id,
                 'type' => $this->type,
                 'item_id' => $this->id,
-                'image_color_id' => (int) $row->image_color_id,
+                // Свой цвет у экземпляра бывает не только у детали.
+                'image_color_id' => (int) ($row->color_id ?? $row->image_color_id),
                 'title' => $row->name,
                 // Экземпляры одного предмета отличает день приобретения:
                 // название у них одно на всех.

@@ -40,6 +40,16 @@ const props = defineProps({
 
 const isPart = computed(() => props.item.type === 'P');
 
+/*
+ * Бывает ли у этого предмета цвет.
+ *
+ * Долго это значило «деталь ли это», и было верно, пока в составе наборов не
+ * показались аксессуары: коробка-органайзер из серии Throwbot в каждом наборе
+ * своего цвета. Теперь спрашиваем не тип, а список: сервер отдаёт цвета, в
+ * которых предмет существует, и у набора с фигуркой он пуст.
+ */
+const hasColours = computed(() => props.colours.length > 0);
+
 const adding = ref(false);
 const dialog = ref(null);
 
@@ -70,7 +80,7 @@ const wishes = ref([...props.wishes]);
 watch(() => props.wishes, (value) => (wishes.value = [...value]));
 
 const wish = computed(() => {
-    const wanted = isPart.value ? Number(colour.value) : 0;
+    const wanted = hasColours.value ? Number(colour.value) : 0;
 
     return wishes.value.find((row) => row.color_id === wanted) ?? null;
 });
@@ -91,7 +101,7 @@ async function toggleWish() {
             const { data } = await axios.post(url('/wishlist'), {
                 type: props.item.type,
                 id: props.item.id,
-                color_id: isPart.value ? Number(colour.value) : null,
+                color_id: hasColours.value ? Number(colour.value) : null,
             });
 
             wishes.value = [...wishes.value, data.wish];
@@ -117,7 +127,9 @@ function addToCollection(colorId = null) {
     adding.value = true;
     router.post(
         url(`/catalog/${props.item.type}/${encodeURIComponent(props.item.id)}/add`),
-        {},
+        // Цвет, в котором смотрят карточку: экземпляр должен помнить, какого
+        // цвета он на полке, а не какого нарисован в справочнике.
+        hasColours.value ? { color_id: Number(colour.value) } : {},
         { onFinish: () => (adding.value = false) },
     );
 }
@@ -141,7 +153,7 @@ const cardHref = ({
 
     // Цвет картинки в адрес не пишется: это и есть «просто карточка», и ссылка
     // на неё должна остаться короткой.
-    if (isPart.value && Number(colorId) !== Number(props.item.image_color_id)) {
+    if (hasColours.value && Number(colorId) !== Number(props.item.image_color_id)) {
         query.set('color', colorId);
     }
 
@@ -293,7 +305,7 @@ const ownedHref = (row) => {
                              Поэтому он стоит первым, до кнопок, а не между
                              ними. У набора и фигурки выбирать нечего. -->
                         <SearchSelect
-                            v-if="isPart && colourOptions.length"
+                            v-if="colourOptions.length"
                             id="colour"
                             v-model="colour"
                             :options="colourOptions"

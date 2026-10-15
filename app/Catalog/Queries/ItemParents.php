@@ -103,10 +103,10 @@ class ItemParents
      *
      * @return array<int, array<string, mixed>>
      */
-    public function colours(string $id): array
+    public function colours(string $id, string $type = 'P'): array
     {
         $ids = DB::table('bl_inventory')
-            ->where('child_type', 'P')
+            ->where('child_type', $type)
             ->where('child_id', $id)
             ->distinct()
             ->pluck('color_id');

@@ -30,7 +30,11 @@ class AddToCollection
             $entry = Entry::create([
                 'item_type' => $item->type,
                 'item_id' => $item->id,
-                'color_id' => $item->type === 'P' ? ($meta['color_id'] ?? $item->image_color_id) : null,
+                // Цвет есть не только у детали: аксессуар — та же коробка из
+                // набора — выпускается в нескольких, и экземпляр должен помнить
+                // свой. У набора и фигурки цвета не бывает, и спрашивать его
+                // неоткуда: там остаётся null.
+                'color_id' => $meta['color_id'] ?? ($item->type === 'P' ? $item->image_color_id : null),
                 'acquired_at' => $meta['acquired_at'] ?? null,
                 'price' => $meta['price'] ?? null,
                 'source_id' => $meta['source_id'] ?? null,

@@ -150,8 +150,11 @@ function remove() {
                             :missing-figs="flags.flag_missing_figs"
                         />
                         <EntryMetaBadges :meta="meta" :dictionaries="dictionaries" />
+                        <!-- В том же цвете, в каком экземпляр лежит на полке:
+                             у аксессуара цвет бывает свой. -->
                         <Link
-                            :href="`/catalog/${entry.type}/${encodeURIComponent(entry.item_id)}`"
+                            :href="`/catalog/${entry.type}/${encodeURIComponent(entry.item_id)}`
+                                + (entry.color_id === null ? '' : `?color=${entry.color_id}`)"
                             class="btn btn-sm btn-link ms-auto p-0"
                         >
                             {{ t('collection.open_in_catalog') }}

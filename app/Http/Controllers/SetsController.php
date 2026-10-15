@@ -109,7 +109,7 @@ class SetsController extends Controller
             ->first();
 
         return Inertia::render('Sets/Show', [
-            'links' => ExternalLinks::for($entry->item_type, $entry->item_id),
+            'links' => ExternalLinks::for($entry->item_type, $entry->item_id, (int) $entry->color_id),
             'entry' => [
                 'id' => $entry->id,
                 'type' => $entry->item_type,
@@ -117,7 +117,8 @@ class SetsController extends Controller
                 'name' => $catalogItem->name ?? $entry->name ?? $entry->item_id,
                 'year' => $catalogItem->year ?? null,
                 'theme' => $catalogItem?->theme?->path,
-                'image_color_id' => (int) ($catalogItem->image_color_id ?? 0),
+                'image_color_id' => (int) ($entry->color_id ?? $catalogItem->image_color_id ?? 0),
+                'color_id' => $entry->color_id === null ? null : (int) $entry->color_id,
                 'flag_incomplete' => $entry->flag_incomplete,
                 'flag_missing_figs' => $entry->flag_missing_figs,
                 'status_codes' => $entry->statuses()->pluck('ref_statuses.code')->filter()->values(),
@@ -224,7 +225,10 @@ class SetsController extends Controller
             'name' => $entry->item_name ?? $entry->name ?? $entry->item_id,
             'year' => $entry->year,
             'theme' => $entry->theme,
-            'image_color_id' => (int) ($entry->image_color_id ?? 0),
+            // Цвет экземпляра, если он у него есть: аксессуар бывает цветным,
+            // и показывать его картинкой из справочника значило бы показывать
+            // чужой цвет.
+            'image_color_id' => (int) ($entry->color_id ?? $entry->image_color_id ?? 0),
             'flag_incomplete' => $entry->flag_incomplete,
             'flag_missing_figs' => $entry->flag_missing_figs,
             // Codes rather than ids: the card shows an icon per known status,

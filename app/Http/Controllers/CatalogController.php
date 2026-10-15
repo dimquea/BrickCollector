@@ -120,9 +120,9 @@ class CatalogController extends Controller
         // одно лишь желание, и карточка, открытая в Reddish Brown, предлагала
         // добавить деталь в Dark Tan — том цвете, в каком она нарисована.
         $asked = $request->query('color');
-        $asked = $item->type === 'P' && ctype_digit((string) $asked) ? (int) $asked : null;
+        $asked = ctype_digit((string) $asked) ? (int) $asked : null;
 
-        $colours = $item->type === 'P' ? $this->colours($item, $lots, $asked) : [];
+        $colours = $this->colours($item, $lots, $asked);
 
         // Цвет, которого справочник не знает, отбрасывается: адрес правят руками
         // и пересылают, и ?color=нечто заслуживает обычной карточки, а не отказа
@@ -134,7 +134,10 @@ class CatalogController extends Controller
             : (int) $item->image_color_id;
 
         return Inertia::render('Catalog/Show', [
-            'links' => ExternalLinks::for($item->type, $item->id, $colour),
+            // Цвет уходит и во внешние ссылки — но только если у предмета он
+            // вообще бывает: у набора ссылка с цветом ноль ведёт туда же, а
+            // лишний параметр в адресе ни к чему.
+            'links' => ExternalLinks::for($item->type, $item->id, $colours === [] ? 0 : $colour),
             'item' => [
                 'type' => $item->type,
                 'id' => $item->id,
@@ -306,7 +309,11 @@ class CatalogController extends Controller
             );
         }
 
-        $entry = $add->handle($item, ['qty' => $qty]);
+        $entry = $add->handle($item, [
+            'qty' => $qty,
+            // У аксессуара цвет выбирают на карточке, как у детали.
+            'color_id' => $validated['color_id'] ?? null,
+        ]);
 
         $flash = ['message' => __('app.collection.added', ['name' => $item->name])];
 
@@ -413,6 +420,15 @@ class CatalogController extends Controller
      */
     private function colours(Item $item, Collection $lots, ?int $asked = null): array
     {
+        // Цвет считался свойством детали, и это было верно ровно до тех пор,
+        // пока в составе наборов не показались аксессуары: коробка-органайзер
+        // из серии Throwbot в каждом наборе своего цвета, и таких предметов в
+        // справочнике пять сотен. Кодов элементов у них нет ни одного, зато
+        // есть описи наборов, где они лежат, — оттуда цвета и берутся.
+        if ($item->type !== 'P') {
+            return app(ItemParents::class)->colours($item->id, $item->type);
+        }
+
         $known = DB::table('bl_element_codes')
             ->where('item_type', 'P')
             ->where('item_id', $item->id)
