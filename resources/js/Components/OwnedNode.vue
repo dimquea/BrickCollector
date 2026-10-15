@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import Link from '@/Components/AppLink.vue';
 import ItemImage from '@/Components/ItemImage.vue';
+import ColorDot from '@/Components/ColorDot.vue';
 import LotBadges from '@/Components/LotBadges.vue';
 import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
 import LostQuantityInput from '@/Components/LostQuantityInput.vue';
@@ -47,8 +48,9 @@ const lostInside = computed(() => {
                 <ItemImage
                     :type="lot.type"
                     :id="lot.item_id"
-                    :color-id="lot.image_color_id"
+                    :color-id="lot.color_id || lot.image_color_id"
                     :alt="lot.name"
+                    :zoom-subtitle="lot.color_name"
                     zoom
                 />
             </span>
@@ -63,6 +65,14 @@ const lostInside = computed(() => {
                      кнопка выезжала за край карточки. Оно открывается вместе
                      с составом, целиком и с переносами. -->
                 <span class="badge text-bg-secondary flex-shrink-0">{{ lot.item_id }}</span>
+                <!-- Цвет у позиции, которая не деталь, встречается реже, но
+                     встречается: коробка-органайзер из серии Throwbot в каждом
+                     наборе своего цвета, и без него восемь наборов выглядели
+                     одинаково. У набора и фигурки цвета нет вовсе — там ноль,
+                     и точка не рисуется. -->
+                <span v-if="lot.color_id" class="flex-shrink-0">
+                    <ColorDot :rgb="lot.color_rgb" :name="lot.color_name" />
+                </span>
                 <span v-if="lot.qty > 1" class="badge text-bg-light flex-shrink-0">&times;{{ lot.qty }}</span>
                 <span
                     v-if="lot.lost_qty > 0"

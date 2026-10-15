@@ -1,6 +1,7 @@
 <script setup>
 import Link from '@/Components/AppLink.vue';
 import ItemImage from '@/Components/ItemImage.vue';
+import ColorDot from '@/Components/ColorDot.vue';
 import LotBadges from '@/Components/LotBadges.vue';
 import PartsTable from '@/Components/PartsTable.vue';
 import { t } from '@/i18n';
@@ -24,8 +25,9 @@ defineProps({
                 <ItemImage
                     :type="lot.type"
                     :id="lot.id"
-                    :color-id="lot.image_color_id"
+                    :color-id="lot.color_id || lot.image_color_id"
                     :alt="lot.name"
+                    :zoom-subtitle="lot.color_name"
                     zoom
                 />
             </span>
@@ -39,6 +41,14 @@ defineProps({
                      вместе с составом. Внутри кнопки оно не ужималось, и на
                      телефоне кнопка выезжала за край карточки. -->
                 <span class="badge text-bg-secondary flex-shrink-0">{{ lot.id }}</span>
+                <!-- Цвет у позиции, которая не деталь, встречается реже, но
+                     встречается: коробка-органайзер из серии Throwbot в каждом
+                     наборе своего цвета, и без него восемь наборов выглядели
+                     одинаково. У набора и фигурки цвета нет вовсе — там ноль,
+                     и точка не рисуется. -->
+                <span v-if="lot.color_id" class="flex-shrink-0">
+                    <ColorDot :rgb="lot.color_rgb" :name="lot.color_name" />
+                </span>
                 <span v-if="lot.qty > 1" class="badge text-bg-light flex-shrink-0">&times;{{ lot.qty }}</span>
                 <LotBadges :lot="lot" />
             </button>
