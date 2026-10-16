@@ -159,6 +159,8 @@ return [
         'query_hint' => 'Name or item number',
         'type' => 'Type',
         'theme' => 'Theme',
+        'subtheme' => 'Sub-theme',
+        'whole_theme' => 'The whole theme',
         'year' => 'Year',
         'any' => 'Any',
         'reset' => 'Reset',

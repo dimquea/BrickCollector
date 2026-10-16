@@ -39,7 +39,8 @@ class MinifiguresController extends Controller
     {
         $filters = $this->filters($request);
 
-        $facets = $totals->facets();
+        // Фасетам нужен выбранный отбор: от темы зависит список подтем.
+        $facets = $totals->filters($filters)->facets();
         $sort = $this->sort($request);
 
         return Inertia::render('Minifigures/Index', [
@@ -48,6 +49,8 @@ class MinifiguresController extends Controller
             'sort' => $sort,
             'figures' => $totals->filters($filters)->sort($sort)->paginate(Settings::perPage('minifigures')),
             'themes' => $facets['themes'],
+            'subthemes' => $facets['subthemes'],
+            'themeRoot' => $facets['themeRoot'],
             'years' => $facets['years'],
             'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),
         ]);

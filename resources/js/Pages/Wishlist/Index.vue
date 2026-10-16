@@ -15,6 +15,7 @@ import ColorDot from '@/Components/ColorDot.vue';
 import { debounce } from '@/support/debounce';
 import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
+import { useThemeFilter } from '@/support/themeFilter';
 import { t, tChoice } from '@/i18n';
 
 /**
@@ -30,6 +31,9 @@ const props = defineProps({
     items: { type: Object, required: true },
     itemTypes: { type: Array, default: () => [] },
     themes: { type: Array, default: () => [] },
+    // Подтемы выбранного корня: приходят уже плоским списком.
+    subthemes: { type: Array, default: () => [] },
+    themeRoot: { type: Number, default: null },
     years: { type: Array, default: () => [] },
 });
 
@@ -64,7 +68,7 @@ rememberSort('wishlist', form, submit);
 
 function clean() {
     const query = Object.fromEntries(
-        Object.entries(form).filter(([, value]) => value !== null && value !== ''),
+        Object.entries(form).filter(([, value]) => value !== null && value !== '' && value !== false),
     );
 
     // Последнее добавленное сверху — обычный порядок этого раздела.
@@ -91,7 +95,7 @@ watch(() => form.q, debounce(submit, 300));
 watch(() => [form.type, form.theme_id, form.year, form.sort, form.dir], submit);
 
 const typeOptions = computed(() => props.itemTypes.map((type) => ({ value: type.code, label: type.name })));
-const themeOptions = computed(() => props.themes.map((theme) => ({ value: theme.id, label: theme.path })));
+const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props, form);
 const yearOptions = computed(() => props.years.map((year) => ({ value: year, label: String(year) })));
 
 // Деталь хотят в цвете — карточка должна открыться в нём же, а не в том, в
@@ -163,8 +167,22 @@ const shows = (list) => list.length > 1;
                         <label for="theme" class="form-label">{{ t('catalog.theme') }}</label>
                         <SearchSelect
                             id="theme"
-                            v-model="form.theme_id"
+                            v-model="theme"
                             :options="themeOptions"
+                            :placeholder="t('catalog.any')"
+                        />
+                    </div>
+
+                    <!-- Подтема: «Star Wars» — это тысячи наборов, и сузить до
+                         Ultimate Collector Series хочется здесь же. Список
+                         плоский, с путём от корня: одинаковых имён внутри
+                         одного корня хватает. -->
+                    <div v-if="subthemeOptions.length" class="col-12 col-lg-3">
+                        <label for="subtheme" class="form-label">{{ t('catalog.subtheme') }}</label>
+                        <SearchSelect
+                            id="subtheme"
+                            v-model="subtheme"
+                            :options="subthemeOptions"
                             :placeholder="t('catalog.any')"
                         />
                     </div>

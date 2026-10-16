@@ -12,6 +12,7 @@ import { exportItems } from '@/support/exports';
 import { debounce } from '@/support/debounce';
 import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
+import { useThemeFilter } from '@/support/themeFilter';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -20,6 +21,9 @@ const props = defineProps({
     sort: { type: Object, default: () => ({}) },
     figures: { type: Object, required: true },
     themes: { type: Array, default: () => [] },
+    // Подтемы выбранного корня: приходят уже плоским списком.
+    subthemes: { type: Array, default: () => [] },
+    themeRoot: { type: Number, default: null },
     years: { type: Array, default: () => [] },
     tags: { type: Array, default: () => [] },
 });
@@ -56,7 +60,7 @@ rememberSort('minifigures', form, submit);
 
 function clean() {
     const query = Object.fromEntries(
-        Object.entries(form).filter(([, value]) => value !== null && value !== ''),
+        Object.entries(form).filter(([, value]) => value !== null && value !== '' && value !== false),
     );
 
     if (query.dir === 'asc') {
@@ -95,7 +99,7 @@ function togglePlacement(value) {
     form.placement = form.placement === value ? null : value;
 }
 
-const themeOptions = computed(() => props.themes.map((theme) => ({ value: theme.id, label: theme.path })));
+const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props, form);
 const yearOptions = computed(() => props.years.map((year) => ({ value: year, label: String(year) })));
 const tagOptions = computed(() => props.tags.map((tag) => ({ value: tag.id, label: tag.name })));
 
@@ -129,8 +133,22 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
                         <label for="theme" class="form-label">{{ t('catalog.theme') }}</label>
                         <SearchSelect
                             id="theme"
-                            v-model="form.theme_id"
+                            v-model="theme"
                             :options="themeOptions"
+                            :placeholder="t('catalog.any')"
+                        />
+                    </div>
+
+                    <!-- Подтема: «Star Wars» — это тысячи наборов, и сузить до
+                         Ultimate Collector Series хочется здесь же. Список
+                         плоский, с путём от корня: одинаковых имён внутри
+                         одного корня хватает. -->
+                    <div v-if="subthemeOptions.length" class="col-12 col-lg-3">
+                        <label for="subtheme" class="form-label">{{ t('catalog.subtheme') }}</label>
+                        <SearchSelect
+                            id="subtheme"
+                            v-model="subtheme"
+                            :options="subthemeOptions"
                             :placeholder="t('catalog.any')"
                         />
                     </div>

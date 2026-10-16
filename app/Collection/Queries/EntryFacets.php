@@ -2,6 +2,7 @@
 
 namespace App\Collection\Queries;
 
+use App\Catalog\Queries\ThemeOptions;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,15 +16,25 @@ use Illuminate\Support\Facades\DB;
  */
 class EntryFacets
 {
-    /** @param string[] $types item types this section covers */
-    public function __construct(private readonly array $types) {}
+    /**
+     * @param  string[]  $types  item types this section covers
+     * @param  int|null  $themeId  выбранная тема: от неё зависит список подтем
+     */
+    public function __construct(
+        private readonly array $types,
+        private readonly ?int $themeId = null,
+    ) {}
 
     /** @return array<string, mixed> */
     public function all(): array
     {
+        $paths = $this->paths();
+
         return [
             'types' => $this->types(),
-            'themes' => $this->themes(),
+            'themes' => ThemeOptions::roots($paths),
+            'subthemes' => ThemeOptions::under($this->themeId, $paths),
+            'themeRoot' => ThemeOptions::rootId($this->themeId),
             'years' => $this->years(),
         ];
     }
@@ -42,17 +53,16 @@ class EntryFacets
     }
 
     /**
-     * Root themes that are represented.
+     * Пути тем, которые представлены в разделе.
      *
-     * Roots rather than exact paths, because choosing one matches its whole
-     * subtree — the same as in the catalog. A shelf of Star Wars sets spread
-     * across five sub-themes offers "Star Wars" once, not five deep paths.
+     * Из них собираются и корни, и подтемы: предлагать тему, за которой ничего
+     * нет, значит звать человека в пустой список.
      *
-     * @return array<int, array<string, mixed>>
+     * @return \Illuminate\Support\Collection<int, string>
      */
-    private function themes(): array
+    private function paths(): \Illuminate\Support\Collection
     {
-        $paths = DB::table('collection_entries as e')
+        return DB::table('collection_entries as e')
             ->join('bl_items as i', fn ($join) => $join
                 ->on('i.type', '=', 'e.item_type')
                 ->on('i.id', '=', 'e.item_id'))
@@ -60,23 +70,6 @@ class EntryFacets
             ->whereIn('e.item_type', $this->types)
             ->distinct()
             ->pluck('t.path');
-
-        $roots = $paths
-            ->map(fn (string $path) => explode(' / ', $path)[0])
-            ->unique()
-            ->values();
-
-        if ($roots->isEmpty()) {
-            return [];
-        }
-
-        return DB::table('bl_themes')
-            ->whereIn('path', $roots)
-            ->where('depth', 0)
-            ->orderBy('path')
-            ->get(['id', 'path'])
-            ->map(fn ($row) => (array) $row)
-            ->all();
     }
 
     /** @return int[] newest first */

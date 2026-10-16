@@ -11,6 +11,7 @@ import ItemImage from '@/Components/ItemImage.vue';
 import PhotoSearchDialog from '@/Components/PhotoSearchDialog.vue';
 import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
+import { useThemeFilter } from '@/support/themeFilter';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -20,6 +21,9 @@ const props = defineProps({
     results: { type: Object, required: true },
     itemTypes: { type: Array, default: () => [] },
     themes: { type: Array, default: () => [] },
+    // Подтемы выбранного корня: приходят уже плоским списком.
+    subthemes: { type: Array, default: () => [] },
+    themeRoot: { type: Number, default: null },
     years: { type: Array, default: () => [] },
     // Поиск по фото включают в настройках: без согласия кнопки нет.
     photoSearch: { type: Boolean, default: false },
@@ -84,7 +88,7 @@ function reset() {
 watch(() => form.q, debounce(submit, 300));
 watch(() => [form.type, form.theme_id, form.year, form.has_inventory, form.sort, form.dir], submit);
 
-const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: theme.path }));
+const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props, form);
 </script>
 
 <template>
@@ -126,8 +130,22 @@ const themeOptions = props.themes.map((theme) => ({ value: theme.id, label: them
                         <label for="theme" class="form-label">{{ t('catalog.theme') }}</label>
                         <SearchSelect
                             id="theme"
-                            v-model="form.theme_id"
+                            v-model="theme"
                             :options="themeOptions"
+                            :placeholder="t('catalog.any')"
+                        />
+                    </div>
+
+                    <!-- Подтема: «Star Wars» — это тысячи наборов, и сузить до
+                         Ultimate Collector Series хочется здесь же. Список
+                         плоский, с путём от корня: одинаковых имён внутри
+                         одного корня хватает. -->
+                    <div v-if="subthemeOptions.length" class="col-12 col-lg-3">
+                        <label for="subtheme" class="form-label">{{ t('catalog.subtheme') }}</label>
+                        <SearchSelect
+                            id="subtheme"
+                            v-model="subtheme"
+                            :options="subthemeOptions"
                             :placeholder="t('catalog.any')"
                         />
                     </div>

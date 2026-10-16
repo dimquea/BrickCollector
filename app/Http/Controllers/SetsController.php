@@ -47,7 +47,7 @@ class SetsController extends Controller
 
         // Type, theme and year come from what is owned, not from the catalog:
         // a filter that can only return nothing is worse than no filter.
-        $facets = (new EntryFacets(self::TYPES))->all();
+        $facets = (new EntryFacets(self::TYPES, $filters['theme_id'] ?? null))->all();
 
         return Inertia::render('Sets/Index', [
             'cardSize' => Settings::cardSize('sets'),
@@ -56,6 +56,8 @@ class SetsController extends Controller
             'entries' => $entries->through(fn (Entry $entry) => $this->card($entry)),
             'itemTypes' => $facets['types'],
             'themes' => $facets['themes'],
+            'subthemes' => $facets['subthemes'],
+            'themeRoot' => $facets['themeRoot'],
             'years' => $facets['years'],
             'statuses' => $this->statuses(),
             'tags' => Tag::orderBy('sort')->get(['id', 'name', 'color']),

@@ -4,6 +4,7 @@ namespace App\Collection\Queries;
 
 use App\Catalog\Queries\ItemIdentifiers;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Catalog\Queries\ThemeOptions;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -97,10 +98,8 @@ class WishedItems
             ->distinct()
             ->get(['w.item_type', 't.path', 'i.year']);
 
-        $roots = $rows->pluck('path')->filter()
-            ->map(fn (string $path) => explode(' / ', $path)[0])
-            ->unique()
-            ->values();
+        $paths = $rows->pluck('path')->filter();
+        $chosen = ($this->filters['theme_id'] ?? null) === null ? null : (int) $this->filters['theme_id'];
 
         return [
             'types' => DB::table('bl_item_types')
@@ -109,13 +108,9 @@ class WishedItems
                 ->get(['code', 'name'])
                 ->map(fn ($row) => (array) $row)
                 ->all(),
-            'themes' => $roots->isEmpty() ? [] : DB::table('bl_themes')
-                ->whereIn('path', $roots)
-                ->where('depth', 0)
-                ->orderBy('path')
-                ->get(['id', 'path'])
-                ->map(fn ($row) => (array) $row)
-                ->all(),
+            'themes' => ThemeOptions::roots($paths),
+            'subthemes' => ThemeOptions::under($chosen, $paths),
+            'themeRoot' => ThemeOptions::rootId($chosen),
             'years' => $rows->pluck('year')->filter()->unique()->sortDesc()->values()->all(),
         ];
     }

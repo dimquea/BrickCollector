@@ -41,7 +41,8 @@ class WishlistController extends Controller
                 ->all(),
         );
 
-        $facets = $wished->facets();
+        // Фасетам нужен выбранный отбор: от темы зависит список подтем.
+        $facets = $wished->filters($filters)->facets();
 
         return Inertia::render('Wishlist/Index', [
             'cardSize' => Settings::cardSize('wishlist'),
@@ -63,6 +64,8 @@ class WishlistController extends Controller
             ]),
             'itemTypes' => $facets['types'],
             'themes' => $facets['themes'],
+            'subthemes' => $facets['subthemes'],
+            'themeRoot' => $facets['themeRoot'],
             'years' => $facets['years'],
         ]);
     }

@@ -9,6 +9,7 @@ use App\Catalog\Images\ItemImages;
 use App\Catalog\Queries\ItemInventory;
 use App\Catalog\Queries\ItemParents;
 use App\Catalog\Queries\SearchItems;
+use App\Catalog\Queries\ThemeOptions;
 use App\Collection\Actions\AddToCollection;
 use App\Collection\Actions\MoveParts;
 use App\Collection\Actions\ResizeLot;
@@ -83,10 +84,15 @@ class CatalogController extends Controller
                     array_keys(ItemType::BROWSABLE),
                 ))." END")
                 ->get(['code', 'name']),
-            // Root themes only. The tree has 6,394 nodes; shipping even two
-            // levels of it was 3,546 options in every response. Choosing a
-            // root matches its whole subtree, so nothing becomes unreachable.
-            'themes' => Theme::where('depth', 0)->orderBy('path')->get(['id', 'path']),
+            // Корни, а не всё дерево: в нём 6400 узлов, и даже два уровня —
+            // это три с половиной тысячи вариантов в каждом ответе. Выбор
+            // корня захватывает всё поддерево, так что недостижимого нет.
+            'themes' => ThemeOptions::roots(),
+            // Подтемы выбранного корня — второй список, который появляется
+            // после выбора первого. «Star Wars» — это тысячи наборов, и сузить
+            // до Ultimate Collector Series хочется прямо здесь.
+            'subthemes' => ThemeOptions::under($filters['theme_id'] ?? null),
+            'themeRoot' => ThemeOptions::rootId($filters['theme_id'] ?? null),
             'years' => $this->years(),
             // Кнопка поиска по фото появляется только с согласия: снимок уходит
             // наружу, и предлагать её не спросив было бы обещанием, которого
