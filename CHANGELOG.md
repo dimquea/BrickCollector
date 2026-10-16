@@ -3,6 +3,39 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.7.0 — 2026-10-16
+
+### Added
+
+- **The number printed in the instructions finds the part.** A LEGO element number — 4243815 —
+  is what a building instruction and the Pick a Brick shelf call a part, and the catalogue
+  answered nothing to it, although it has known 111 thousand of them all along. The same for
+  BrickLink's alternate item numbers, another 17 thousand sitting unread. Both are matched exactly
+  now, in the catalogue and in the sections of the collection, where the question usually is "do I
+  have this brick". In the parts list the match is exact to the row: an element number names a
+  part in a colour, which is just what a row there is, so 4243814 finds Plate 4 x 4 in red and
+  says how many are in sets, loose or in assemblies. In the catalogue what it finds is shown in
+  that colour and opens in it.
+- **Narrowing a theme to a sub-theme.** "Star Wars" is a thousand sets in the catalogue and half
+  the shelf at home, and it was as narrow as the filter went. A second list appears under the
+  first once a theme is chosen: flat, each entry written as a path from the root — 403 pairs of
+  sub-themes inside one root share a name, and "Star Wars Episode 4/5/6" alone says nothing about
+  which of the three it is. The catalogue offers every sub-theme there is; a section of the
+  collection offers only what it holds, intermediate levels included. The address still carries
+  one theme, so links and bookmarks are untouched.
+- **A colour for everything that has one.** Colour was treated as a property of parts, which held
+  until 1.6.0 started showing gear in the contents of a set: the Throwbot storage case comes in a
+  different colour in each of 8500 through 8507, and five hundred such items appear in inventories
+  with a colour. The card now offers the colours an item is recorded in, outside links follow the
+  choice, and a copy added to the collection remembers it instead of being drawn in the one colour
+  the catalogue pictures it in.
+
+### Fixed
+
+- **A long value made a select stand twice as tall as its neighbours.** The chosen value and the
+  search box share one wrapping line, and on focus the box was pushed onto a second one. The value
+  is clipped with an ellipsis now and the room to type stays where it was.
+
 ## 1.6.0 — 2026-10-15
 
 ### Added
