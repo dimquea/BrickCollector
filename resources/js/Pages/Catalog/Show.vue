@@ -13,6 +13,7 @@ import PartsTable from '@/Components/PartsTable.vue';
 import InventoryNode from '@/Components/InventoryNode.vue';
 import ExternalLinks from '@/Components/ExternalLinks.vue';
 import AddPartDialog from '@/Components/AddPartDialog.vue';
+import PickDialog from '@/Components/PickDialog.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import { kindLabel } from '@/support/itemKinds';
 import { t, tChoice } from '@/i18n';
@@ -52,6 +53,10 @@ const hasColours = computed(() => props.colours.length > 0);
 
 const adding = ref(false);
 const dialog = ref(null);
+
+// Подбирают то, что раскладывается в коллекцию по составу: набор и фигурку.
+const canPick = computed(() => props.item.has_inventory && ['S', 'M'].includes(props.item.type));
+const picker = ref(null);
 
 /*
  * Цвет, в котором смотрят деталь.
@@ -391,6 +396,17 @@ const ownedHref = (row) => {
                             <div class="fs-4 fw-semibold text-warning">{{ totals.extras }}</div>
                             <div class="text-body-secondary small">{{ t('item.extras') }}</div>
                         </div>
+                        <!-- Рядом с тем, что считает: «сколько нужно» стоит здесь
+                             же, а окно отвечает, сколько из этого уже есть. -->
+                        <button
+                            v-if="canPick"
+                            type="button"
+                            class="btn btn-outline-primary ms-auto align-self-center"
+                            @click="picker.open()"
+                        >
+                            <i class="mdi mdi-basket-check-outline"></i>
+                            {{ t('pick.button') }}
+                        </button>
                     </div>
                 </div>
 
@@ -607,5 +623,7 @@ const ownedHref = (row) => {
             :lots="lots"
             :assemblies="assemblies"
         />
+
+        <PickDialog v-if="canPick" ref="picker" :item="item" />
     </AppLayout>
 </template>

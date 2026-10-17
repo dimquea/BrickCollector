@@ -8,6 +8,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LotController;
 use App\Http\Controllers\MinifiguresController;
 use App\Http\Controllers\PartsController;
+use App\Http\Controllers\PickController;
 use App\Http\Controllers\RecognitionController;
 use App\Http\Controllers\SetsController;
 use App\Http\Controllers\SettingsController;
@@ -43,6 +44,18 @@ Route::get('/catalog/{type}/{id}', [CatalogController::class, 'show'])
 Route::post('/catalog/{type}/{id}/add', [CatalogController::class, 'addToCollection'])
     ->where('type', '[A-Z]')
     ->name('catalog.add');
+
+// Подобрать из коллекции: что из нужного уже есть, чего не хватает, и
+// добавить, взяв недостающее у свободных деталей.
+Route::prefix('/catalog/{type}/{id}/pick')
+    ->where(['type' => '[A-Z]'])
+    ->controller(PickController::class)
+    ->group(function () {
+        Route::get('/', 'show')->name('catalog.pick');
+        Route::get('/export', 'export')->name('catalog.pick.export');
+        Route::get('/plan', 'plan')->name('catalog.pick.plan');
+        Route::post('/add', 'add')->name('catalog.pick.add');
+    });
 
 
 /*

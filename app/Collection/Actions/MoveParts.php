@@ -105,6 +105,28 @@ class MoveParts
         });
     }
 
+    /**
+     * Убирает из свободной партии сколько-то деталей, ушедших в набор.
+     *
+     * Партия, потраченная до последней детали, удаляется, как и при сборке:
+     * описывать в ней больше нечего. Куда ушли детали — забота того, кто
+     * зовёт: набор свои строки уже записал из справочника.
+     */
+    public function spend(Entry $lot, int $qty): void
+    {
+        $root = $lot->roots()->first();
+
+        if ($root === null) {
+            return;
+        }
+
+        if ($qty >= $root->qty) {
+            $lot->delete();
+        } else {
+            $this->scale($root, $root->qty - $qty);
+        }
+    }
+
     /** Gives parts back from an assembly to the loose pile, as a new lot. */
     public function outOfAssembly(Entry $assembly, Item $row, int $qty): Entry
     {
