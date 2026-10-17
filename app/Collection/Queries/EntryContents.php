@@ -28,7 +28,7 @@ class EntryContents
             ->orderBy('ci.item_id')
             ->get([
                 'ci.id', 'ci.parent_id', 'ci.item_type', 'ci.item_id', 'ci.color_id',
-                'ci.qty', 'ci.lost_qty', 'ci.counts',
+                'ci.qty', 'ci.lost_qty', 'ci.counts', 'ci.note',
                 'ci.is_extra', 'ci.is_alternate', 'ci.is_counterpart', 'ci.match_id',
                 'it.name', 'it.image_color_id',
                 'c.name as color_name', 'c.rgb as color_rgb',
@@ -54,6 +54,7 @@ class EntryContents
                 'is_alternate' => (bool) $row->is_alternate,
                 'is_counterpart' => (bool) $row->is_counterpart,
                 'match_id' => (int) $row->match_id,
+                'note' => $row->note,
                 'children' => [],
             ];
         }

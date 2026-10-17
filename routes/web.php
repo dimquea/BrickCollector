@@ -158,6 +158,7 @@ Route::delete('/wishlist/{wish}', [WishlistController::class, 'destroy'])->name(
 
 // A lot belongs to a copy of anything, so it sits outside the sections.
 Route::patch('/lots/{item}', [LotController::class, 'updateLost'])->name('lots.lost');
+Route::patch('/lots/{item}/note', [LotController::class, 'updateNote'])->name('lots.note');
 
 /*
  * Settings and the internal dictionaries.

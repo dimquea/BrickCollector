@@ -70,7 +70,10 @@ async function refresh() {
                     · {{ orphan.name }}
                     <span class="badge text-bg-light border">{{ orphan.item_id }}</span>
                     <span v-if="orphan.color">· {{ orphan.color }}</span>
-                    · {{ orphan.lost }}
+                    <span v-if="orphan.lost">· {{ orphan.lost }}</span>
+                    <!-- Комментарий — целиком: его писали руками, и восстановить
+                         его можно только по этому тексту. -->
+                    <span v-if="orphan.note" class="fst-italic">· «{{ orphan.note }}»</span>
                 </li>
             </ul>
         </div>

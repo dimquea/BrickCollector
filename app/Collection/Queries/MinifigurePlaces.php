@@ -12,7 +12,13 @@ class MinifigurePlaces
 {
     public function __construct(private readonly string $itemId) {}
 
-    /** Owned copies that contain this figure, however deep it sits. */
+    /**
+     * Owned copies that contain this figure, however deep it sits.
+     *
+     * With the notes left on the figure there — "a crack in the leg": which
+     * of my three is the damaged one is asked here, not inside each set. Two
+     * of the figure in one set means two notes, joined.
+     */
     public function inEntries(): Collection
     {
         return $this->builtIn()
@@ -26,6 +32,7 @@ class MinifigurePlaces
                 DB::raw('COALESCE(i.image_color_id, 0) as image_color_id'),
                 DB::raw('SUM(ci.qty) as qty'),
                 DB::raw('SUM(ci.lost_qty) as lost'),
+                DB::raw("GROUP_CONCAT(ci.note, '; ') as note"),
             ]);
     }
 

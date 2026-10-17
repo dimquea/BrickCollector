@@ -16,6 +16,9 @@ use Illuminate\Http\Request;
  */
 class LotController extends Controller
 {
+    /** У чего бывает комментарий: фигурка и поднабор в составе экземпляра. */
+    private const NOTED = ['M', 'S'];
+
     /**
      * Answers JSON, not a redirect.
      *
@@ -44,5 +47,31 @@ class LotController extends Controller
                 'flag_missing_figs' => $entry->flag_missing_figs,
             ],
         ]);
+    }
+
+    /**
+     * Комментарий у фигурки или поднабора в составе экземпляра — особая
+     * отметка вроде «трещина на ноге».
+     *
+     * Только у них: у детали в таблице для него нет места, и показывать его
+     * там негде, а принять значение, которое нигде не увидишь, — хуже, чем
+     * отказать.
+     */
+    public function updateNote(Request $request, CollectionItem $item): JsonResponse
+    {
+        // Корень отдельной фигурки — это сам экземпляр, и заметка у него своя.
+        $inside = $item->parent_id !== null || $item->entry->item_type === 'S';
+
+        abort_unless($inside && in_array($item->item_type, self::NOTED, true), 404);
+
+        $validated = $request->validate([
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $note = trim((string) ($validated['note'] ?? ''));
+
+        $item->update(['note' => $note === '' ? null : $note]);
+
+        return response()->json(['note' => $item->note]);
     }
 }

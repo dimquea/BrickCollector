@@ -171,6 +171,9 @@ const money = (minor) =>
                                                     <span class="line-clamp-2">{{ row.name }}</span>
                                                 </Link>
                                                 <div><span class="badge text-bg-light border">{{ row.item_id }}</span></div>
+                                                <div v-if="row.note" class="small text-body-secondary fst-italic mt-1">
+                                                    <i class="mdi mdi-comment-text-outline text-info"></i> {{ row.note }}
+                                                </div>
                                             </td>
                                             <td class="text-end fw-semibold">{{ row.qty }}</td>
                                         </tr>
@@ -203,6 +206,11 @@ const money = (minor) =>
                                                     >
                                                         {{ tag.name }}
                                                     </span>
+                                                </div>
+                                                <!-- Заметка отдельной фигурки — та же особая отметка, что
+                                                     комментарий фигурки в наборе, и стоит так же. -->
+                                                <div v-if="copy.note" class="small text-body-secondary fst-italic mt-1">
+                                                    <i class="mdi mdi-comment-text-outline text-info"></i> {{ copy.note }}
                                                 </div>
                                             </td>
                                             <td class="text-end">{{ money(copy.price) }}</td>

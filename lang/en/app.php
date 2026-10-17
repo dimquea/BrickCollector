@@ -199,6 +199,8 @@ return [
     ],
 
     'lot' => [
+        'note' => 'Note',
+        'note_hint' => 'A crack in a leg, a different head…',
         'item' => 'Item',
         'color' => 'Colour',
         'qty' => 'Qty',
@@ -401,7 +403,7 @@ return [
         'inventories_hint' => 'An inventory is copied into the collection when something is added and lives on its own after that: a set on the shelf does not change because BrickLink edited its page. This rebuilds the inventories of sets and figures from the catalogue as it is now. Marks for missing pieces are carried over to their places; assemblies and loose lots are left alone.',
         'inventories_same' => 'The inventories already match the catalogue: nothing to change.',
         'inventories_done' => 'Copies updated: :changed. Lots gained: :added, gone: :removed.',
-        'inventories_orphaned' => 'Marks for missing pieces with nowhere to go: :count. Those lots are no longer in the inventory:',
+        'inventories_orphaned' => 'Marks for missing pieces and notes with nowhere to go: :count. Those lots are no longer in the inventory:',
         'catalog_update_hint' => 'Downloads a fresh archive and rebuilds the catalogue: 175 thousand items and a million and a half inventory rows. Minutes on a small machine. The collection is not touched — the catalogue and the collection live in different tables.',
         'lists' => 'Lists',
         'lists_hint' => 'How many rows a page shows, and how big the cards are. Card size is chosen separately for a phone and for a wide screen: what reads well on a monitor is too small on a phone.',

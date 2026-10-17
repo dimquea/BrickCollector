@@ -67,7 +67,13 @@ class PartOut
             }
 
             foreach ($plan['figures'] as [$row, $present]) {
-$figure = Entry::create($meta + ['item_type' => 'M', 'item_id' => $row->item_id]);
+                // Комментарий фигурки в наборе — «трещина на ноге» — становится
+                // заметкой её собственного экземпляра: дефект никуда не делся.
+                $figure = Entry::create($meta + [
+                    'item_type' => 'M',
+                    'item_id' => $row->item_id,
+                    'note' => $row->note,
+                ]);
 
                 $this->copy($row, $figure, $present, $row->qty, null, null);
 
@@ -182,6 +188,9 @@ $figure = Entry::create($meta + ['item_type' => 'M', 'item_id' => $row->item_id]
             'is_counterpart' => $parentId === null ? false : $source->is_counterpart,
             'match_id' => $parentId === null ? 0 : $source->match_id,
             'counts' => $parentId === null ? true : $source->counts,
+            // У корня комментарий уехал в заметку экземпляра; у вложенного —
+            // фигурки в фигурке — остаётся на строке.
+            'note' => $parentId === null ? null : $source->note,
         ])->id;
 
         foreach ($source->children()->orderBy('id')->get() as $child) {

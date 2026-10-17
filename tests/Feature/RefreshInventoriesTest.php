@@ -170,6 +170,7 @@ class RefreshInventoriesTest extends TestCase
             'item_id' => 'plate',
             'color_id' => 11,
             'lost' => 1,
+            'note' => null,
             'name' => 'Plate',
             'color' => 'Black',
         ]], $summary['orphans']);

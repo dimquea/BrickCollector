@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { patchField } from '@/support/save';
 import Link from '@/Components/AppLink.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
@@ -37,6 +38,37 @@ const lostInside = computed(() => {
 
     return walk(props.lot.children ?? []);
 });
+
+/*
+ * Комментарий — особая отметка этой фигурки или этого пакета: «трещина на
+ * ноге», «чужая голова». Сохраняется сам, как и недостача, без перерисовки
+ * страницы: раскрытые уровни не должны схлопываться.
+ */
+const canNote = computed(() => ['M', 'S'].includes(props.lot.type));
+const note = ref(props.lot.note ?? '');
+const savingNote = ref(false);
+
+async function saveNote() {
+    const previous = props.lot.note ?? '';
+
+    if (note.value.trim() === previous) {
+        return;
+    }
+
+    savingNote.value = true;
+
+    const result = await patchField(`/lots/${props.lot.id}/note`, { note: note.value }, {
+        onRevert: () => (note.value = previous),
+    });
+
+    if (result) {
+        // Значок в полосе читает строку, а не поле.
+        props.lot.note = result.note;
+        note.value = result.note ?? '';
+    }
+
+    savingNote.value = false;
+}
 </script>
 
 <template>
@@ -88,6 +120,13 @@ const lostInside = computed(() => {
                 >
                     <i class="mdi mdi-alert-circle-outline"></i> {{ lostInside }}
                 </span>
+                <!-- Отметка видна, не раскрывая: ради неё её и ставили. -->
+                <i
+                    v-if="lot.note"
+                    class="mdi mdi-comment-text-outline text-info flex-shrink-0"
+                    :title="lot.note"
+                    :aria-label="lot.note"
+                ></i>
                 <LotBadges :lot="lot" />
             </button>
         </h2>
@@ -116,6 +155,19 @@ const lostInside = computed(() => {
                     >
                         {{ t('item.open') }}
                     </Link>
+                    <div v-if="canNote" class="flex-grow-1" style="min-width: 12rem">
+                        <label :for="`${domId}-note`" class="form-label small mb-1">{{ t('lot.note') }}</label>
+                        <input
+                            :id="`${domId}-note`"
+                            v-model="note"
+                            type="text"
+                            class="form-control form-control-sm"
+                            maxlength="1000"
+                            :placeholder="t('lot.note_hint')"
+                            :disabled="savingNote"
+                            @change="saveNote"
+                        />
+                    </div>
                 </div>
 
                 <OwnedLotsTable :lots="lot.children" @saved="emit('saved', $event)" />

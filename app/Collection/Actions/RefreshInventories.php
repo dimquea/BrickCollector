@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\DB;
  * что перед ним на полке.
  *
  * Пересобирается ровно то, что пришло из справочника. Единственное, что в
- * дереве ввёл человек, — отметки о недостаче, и они переносятся на свои места
- * по пути от корня: тип, артикул, цвет и флаги позиции, а внутри одинаковых —
+ * дереве ввёл человек, — отметки о недостаче и комментарии у фигурок и
+ * поднаборов, и они переносятся на свои места по пути от корня: тип, артикул, цвет и флаги позиции, а внутри одинаковых —
  * порядковый номер. Устойчивого идентификатора у строки описи не существует,
  * в bl_inventory нет даже ключа, поэтому путь — единственное, чем строку можно
  * узнать после пересборки.
@@ -98,8 +98,9 @@ class RefreshInventories
 
         $before = $this->keyed($entry);
         $losses = array_filter(array_map(fn (object $row) => (int) $row->lost_qty, $before));
+        $notes = array_filter(array_map(fn (object $row) => $row->note, $before), fn ($note) => $note !== null);
 
-        $run = function () use ($entry, $tree, $before, $losses) {
+        $run = function () use ($entry, $tree, $before, $losses, $notes) {
             $root = $this->root($before);
 
             $entry->items()->delete();
@@ -129,7 +130,10 @@ class RefreshInventories
             $moved = 0;
             $orphans = [];
 
-            foreach ($losses as $key => $lost) {
+            foreach (array_keys($losses + $notes) as $key) {
+                $lost = $losses[$key] ?? 0;
+                $note = $notes[$key] ?? null;
+
                 if (! isset($after[$key])) {
                     // Позиции, на которой стояла отметка, в новой описи нет.
                     // Молча потерять её нельзя: это единственное, что в дереве
@@ -143,6 +147,7 @@ class RefreshInventories
                         'item_id' => $row->item_id,
                         'color_id' => (int) $row->color_id,
                         'lost' => $lost,
+                        'note' => $note,
                     ];
 
                     continue;
@@ -152,9 +157,12 @@ class RefreshInventories
                 // ужаться, и «не хватает трёх из двух» — не число, а ошибка.
                 DB::table('collection_items')
                     ->where('id', $after[$key]->id)
-                    ->update(['lost_qty' => min($lost, (int) $after[$key]->qty)]);
+                    ->update([
+                        'lost_qty' => min($lost, (int) $after[$key]->qty),
+                        'note' => $note,
+                    ]);
 
-                $moved++;
+                $moved += $lost > 0 ? 1 : 0;
             }
 
             $this->flags->handle($entry->fresh());
@@ -237,7 +245,7 @@ class RefreshInventories
     {
         $rows = DB::table('collection_items')
             ->where('entry_id', $entry->id)
-            ->get(['id', 'parent_id', 'item_type', 'item_id', 'color_id', 'qty', 'lost_qty',
+            ->get(['id', 'parent_id', 'item_type', 'item_id', 'color_id', 'qty', 'lost_qty', 'note',
                 'is_extra', 'is_alternate', 'is_counterpart', 'match_id']);
 
         $children = [];

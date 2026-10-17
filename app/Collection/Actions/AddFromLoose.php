@@ -185,6 +185,13 @@ class AddFromLoose
 
         $this->carry($root, $target, $units, $root->qty);
 
+        // Заметка свободной фигурки — её особая отметка — едет с ней и
+        // становится комментарием строки в наборе. Две фигурки в одну строку
+        // — обе заметки, через точку с запятой.
+        if ($source->note !== null && trim($source->note) !== '') {
+            $target->update(['note' => implode('; ', array_filter([$target->note, trim($source->note)]))]);
+        }
+
         if ($units >= $root->qty) {
             $source->delete();
 
