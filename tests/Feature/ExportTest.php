@@ -347,6 +347,28 @@ class ExportTest extends TestCase
         );
     }
 
+    /**
+     * Под «недостачей» в файл идёт недостача, какой бы вид ни выбрали.
+     *
+     * Опись и корзина прежде брали количество из коллекции: отфильтровали
+     * одну потерянную деталь из четырёх и получили файл на четыре штуки.
+     */
+    public function test_every_kind_carries_the_shortage_under_the_lost_filter(): void
+    {
+        $set = $this->entry('S', 'set-a');
+        $this->row($set, ['item_type' => 'P', 'item_id' => 'brick', 'qty' => 4, 'lost_qty' => 1]);
+        $this->row($set, ['item_type' => 'M', 'item_id' => 'fig-a', 'qty' => 3, 'lost_qty' => 2]);
+
+        $this->assertStringContainsString('<QTY>1</QTY>', $this->xml('/parts/export?lost=true&as=inventory'));
+        $this->assertStringContainsString('<Qty>1</Qty>', $this->xml('/parts/export?lost=true&as=bsx'));
+
+        $this->assertStringContainsString('<QTY>2</QTY>', $this->xml('/minifigures/export?lost=true&as=inventory'));
+        $this->assertStringContainsString('<Qty>2</Qty>', $this->xml('/minifigures/export?lost=true&as=bsx'));
+
+        // Без фильтра опись по-прежнему считает то, что лежит.
+        $this->assertStringContainsString('<QTY>4</QTY>', $this->xml('/parts/export?as=inventory'));
+    }
+
     public function test_the_document_escapes_text_and_trims_a_long_remark(): void
     {
         $xml = BrickLinkXml::wanted([

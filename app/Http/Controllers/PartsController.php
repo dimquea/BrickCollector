@@ -63,10 +63,12 @@ class PartsController extends Controller
     }
 
     /**
-     * Детали в BrickLink XML, по текущему фильтру.
+     * Детали в BrickLink XML или BrickStore, по текущему фильтру.
      *
-     * Без «есть недостача» это опись того, чем владеют. С ней — список
-     * желаемого: сколько штук недостаёт и откуда они пропали.
+     * Без «есть недостача» это опись того, чем владеют. С ней — то, чего
+     * недостаёт, в каком бы виде файл ни попросили: отфильтровали недостачу и
+     * выгрузили — значит, собрались докупать, и количество из коллекции в
+     * таком файле было бы ответом не на тот вопрос.
      */
     public function export(Request $request, PartTotals $totals, LostSources $lost): HttpResponse
     {
@@ -78,7 +80,7 @@ class PartsController extends Controller
         // просят список недостающего, как и раньше.
         $kind = Export::kind($request, ! empty($filters['lost']) ? 'wanted' : 'inventory');
 
-        if ($kind === 'wanted') {
+        if ($kind === 'wanted' || ! empty($filters['lost'])) {
             $sources = $lost->parts();
 
             $missing = match ($placement) {

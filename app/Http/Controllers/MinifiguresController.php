@@ -60,7 +60,7 @@ class MinifiguresController extends Controller
      * Фигурки в BrickLink XML, по текущему фильтру.
      *
      * Без «потеряны» это опись: сколько фигурок в коллекции. С «потеряны» —
-     * список желаемого: сколько их недостаёт и каким наборам.
+     * сколько их недостаёт и каким наборам, в каком бы виде файл ни попросили.
      */
     public function export(Request $request, MinifigureTotals $totals, LostSources $lost): HttpResponse
     {
@@ -71,7 +71,7 @@ class MinifiguresController extends Controller
         // «потеряны» просят не опись, а список того, чего не хватает.
         $kind = Export::kind($request, ! empty($filters['lost']) ? 'wanted' : 'inventory');
 
-        if ($kind === 'wanted') {
+        if ($kind === 'wanted' || ! empty($filters['lost'])) {
             $sources = $lost->minifigures();
 
             return Export::respond($kind, $rows->map(fn (object $row) => [
