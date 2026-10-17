@@ -1,4 +1,5 @@
 import { onMounted, watch } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
 
 /**
  * Запоминает порядок списка — для каждого раздела свой.
@@ -38,10 +39,12 @@ function write(key, value) {
 
 /**
  * @param {string} section  ключ раздела: sets, parts, minifigures, …
- * @param {object} form     реактивная форма списка с полями sort и dir
- * @param {Function} submit перезапрос списка
+ * @param {object} form     реактивная форма списка с полями sort и dir; страница
+ *                          сама перезапрашивает список, когда они меняются
  */
-export function rememberSort(section, form, submit) {
+export function rememberSort(section, form) {
+    const page = usePage();
+
     onMounted(() => {
         const asked = new URLSearchParams(window.location.search);
 
@@ -60,10 +63,32 @@ export function rememberSort(section, form, submit) {
             return;
         }
 
+        // Сообщение, с которым на страницу пришли, — «набор удалён», «набор
+        // расформирован», — сервер отдаёт один раз, и перезапрос с запомненным
+        // порядком вернулся бы уже без него. Человек ушёл бы со страницы, так
+        // и не узнав, чем кончилось действие.
+        const arrived = page.props.flash;
+
+        if (arrived?.message) {
+            // Первым «успехом» может оказаться сам переход, который сюда
+            // привёл: он заканчивается уже после того, как страница
+            // смонтирована. У него сообщение своё, и ждать надо следующего.
+            const stop = router.on('success', (event) => {
+                if (event.detail.page.props.flash?.message) {
+                    return;
+                }
+
+                stop();
+                page.props.flash = arrived;
+            });
+        }
+
+        // Перезапрос делает сама страница: она следит за порядком и отправляет
+        // форму, как только он меняется. Отправить её ещё и отсюда значило бы
+        // два одинаковых запроса на каждый заход, и второй стирал бы то, что
+        // вернул первый.
         form.sort = saved.sort;
         form.dir = saved.dir;
-
-        submit();
     });
 
     watch(() => [form.sort, form.dir], () => write(section, { sort: form.sort, dir: form.dir }));

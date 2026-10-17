@@ -65,7 +65,7 @@ function submit() {
 
 // Порядок этого раздела держится между заходами; адрес с порядком
 // сильнее запомненного.
-rememberSort('sets', form, submit);
+rememberSort('sets', form);
 
 /** Empty filters stay out of the URL so a bare /sets is a clean link. */
 function clean() {

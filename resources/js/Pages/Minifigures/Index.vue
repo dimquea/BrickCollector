@@ -56,7 +56,7 @@ function submit() {
 
 // Порядок этого раздела держится между заходами; адрес с порядком
 // сильнее запомненного.
-rememberSort('minifigures', form, submit);
+rememberSort('minifigures', form);
 
 function clean() {
     const query = Object.fromEntries(
