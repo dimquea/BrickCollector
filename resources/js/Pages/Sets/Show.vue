@@ -14,6 +14,8 @@ import EntryMetaBadges from '@/Components/EntryMetaBadges.vue';
 import EntryMetaRows from '@/Components/EntryMetaRows.vue';
 import EntryNote from '@/Components/EntryNote.vue';
 import ExternalLinks from '@/Components/ExternalLinks.vue';
+import ExportButton from '@/Components/ExportButton.vue';
+import { exportItems } from '@/support/exports';
 import { t } from '@/i18n';
 
 const props = defineProps({
@@ -85,6 +87,10 @@ const groups = computed(() => {
                 // of it, so they are counted apart from the total.
                 extras: walk(lots, (lot) => (lot.is_extra ? lot.qty : 0)),
                 lost: walk(lots, (lot) => (lot.counts ? lot.lost_qty : 0)),
+                // Есть ли что выгружать: тот же отбор, что у сервера, — парная
+                // строка в коробке лежит, и её недостачу считают тоже.
+                short: walk(lots, (lot) => (lot.counts || lot.is_counterpart ? lot.lost_qty : 0)) > 0,
+                shortage: exportItems(`/sets/${props.entry.id}/shortage/${type}`, ['wanted', 'inventory', 'bsx']),
             };
         })
         .filter((group) => group.lots.length > 0);
@@ -232,6 +238,18 @@ function remove() {
 
                         <div :id="`group-${group.key}`" class="accordion-collapse collapse">
                             <div class="accordion-body" :class="{ 'p-0': group.key === 'P' }">
+                                <!-- Над списком, а не в заголовке: заголовок
+                                     группы — это сама кнопка аккордеона, и
+                                     вложить в неё меню нельзя. Выгружается всё
+                                     поддерево группы, сколь угодно глубокое. -->
+                                <div
+                                    v-if="group.short"
+                                    class="d-flex justify-content-end"
+                                    :class="group.key === 'P' ? 'p-2 border-bottom' : 'mb-3'"
+                                >
+                                    <ExportButton :items="group.shortage" :label="t('collection.export_shortage')" />
+                                </div>
+
                                 <OwnedLotsTable
                                     v-if="group.key === 'P'"
                                     :lots="contents"

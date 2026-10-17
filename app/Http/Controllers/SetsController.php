@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Catalog\Models\Item as CatalogItem;
 use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\Export\Export;
+use App\Collection\Export\Shortage;
 use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Status;
@@ -87,6 +88,29 @@ class SetsController extends Controller
             ]);
 
         return Export::respond(Export::kind($request), $items, 'sets');
+    }
+
+    /**
+     * Недостача одной группы экземпляра, со всем, что внутри неё.
+     *
+     * Группа — та же, что на странице: детали, фигурки, поднаборы. Внутри
+     * поднабора лежат пакеты, внутри пакетов фигурки, и выгружается всё
+     * поддерево, а не только верхние строки. По умолчанию — список желаемого:
+     * за этой кнопкой идут докупать.
+     */
+    public function shortage(Request $request, Entry $entry, string $group, EntryContents $contents): HttpResponse
+    {
+        abort_unless(in_array($entry->item_type, self::TYPES, true), 404);
+
+        $lots = array_values(array_filter($contents->tree($entry), fn (array $lot) => $lot['type'] === $group));
+
+        $rows = array_map(fn (array $row) => $row + [
+            // Откуда недостаёт: в магазине это разница между «взять одну» и
+            // «взять три».
+            'remarks' => $entry->item_id,
+        ], Shortage::of($lots));
+
+        return Export::respond(Export::kind($request, 'wanted'), $rows, 'shortage-'.$entry->item_id);
     }
 
     public function show(Entry $entry, EntryContents $contents): Response|RedirectResponse

@@ -316,6 +316,7 @@ return [
         'missing_figs_hint' => 'A minifigure of this set is marked missing.',
         'open_in_catalog' => 'Open in catalog',
         'danger_zone' => 'Danger zone',
+        'export_shortage' => 'Export the shortage',
         'manage' => 'Manage',
         'acquired_at' => 'Acquired on',
         'price' => 'Price paid',

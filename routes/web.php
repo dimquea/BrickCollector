@@ -58,6 +58,11 @@ Route::get('/sets/export', [SetsController::class, 'export'])->name('sets.export
 Route::get('/sets/{entry}', [SetsController::class, 'show'])->name('sets.show');
 Route::patch('/sets/{entry}', [SetsController::class, 'update'])->name('sets.update');
 Route::delete('/sets/{entry}', [SetsController::class, 'destroy'])->name('sets.destroy');
+// Недостача одной группы экземпляра — деталей, фигурок, поднаборов — со
+// всем, что внутри неё.
+Route::get('/sets/{entry}/shortage/{group}', [SetsController::class, 'shortage'])
+    ->where('group', '[A-Z]')
+    ->name('sets.shortage');
 
 /*
  * Parts are counted, not owned in copies: the same brick sits in several
