@@ -14,18 +14,33 @@ minifigure is missing from that set, and what did the whole shelf cost?
 
 **The catalogue.** Every LEGO set, minifigure and part BrickLink knows about —
 175 thousand items with their contents, colours, themes and release years.
-Search by name or item number, filter by type, theme and year. Updated from the
-interface whenever you want it updated.
+Search by name, by item number or by the element number printed in a building
+instruction; filter by type, by theme and sub-theme, and by year. A card says
+whether the thing is already in the collection and where, and its pictures open
+at their own size, with the wheel or two fingers to look closer. Updated from
+the interface whenever you want it updated.
 
 **Sets you own.** Adding a set copies its whole contents: parts, minifigures,
-the parts inside those minifigures, and boxed sub-sets down the chain. Every
-copy is its own record, so three of the same set are three sets with three
-prices, three storage places and three stories.
+the parts inside those minifigures, boxed sub-sets down the chain, and whatever
+else is in the box — gear, a book. Every copy is its own record, so three of the
+same set are three sets with three prices, three storage places and three
+stories. When BrickLink corrects an inventory, the copies can be rebuilt from
+the catalogue by hand, with your marks carried over.
 
 **What went missing.** Any lot can be marked short, down to a single part
 inside a minifigure inside a set. A set then knows it is incomplete without
 your having to open it. A spare part is not a missing one — losing a spare
-leaves the set complete.
+leaves the set complete. What a set is short of exports straight from its page,
+and a minifigure or a sub-set inside it takes a note of its own — a crack in a
+leg — which the minifigure's card shows too.
+
+**Building from what you have.** The catalogue card of a set or a minifigure
+tells how much of it the collection already holds — anywhere, in other sets, or
+loose — and exports what is short. It can then be added built from loose parts:
+a CSV says beforehand which lots it takes and where they are stored, and
+whatever is not found is marked missing. The other way round, a set can be
+parted out: its parts go to the loose pile and its minifigures become copies of
+their own. Either way not a brick is created or lost.
 
 **Minifigures.** A figure built into a set and one bought on its own are the
 same figure, so a single card counts both. Open it to see which sets hold it,
@@ -57,10 +72,10 @@ opens filtered to exactly what was counted.
 catalogue — a part in a colour, since that is how a part is wanted. A list and
 nothing more: a price and a storage place describe something you already own.
 
-**Export.** Any list, exactly as you have filtered it, as BrickLink XML: what
-you hold as an inventory, what you are missing as a wanted list with the sets it
-is missing from written in the remarks. An assembly exports both — what it is
-made of, and what it still needs.
+**Export.** Any list, exactly as you have filtered it, as BrickLink XML or as a
+BrickStore basket: what you hold as an inventory, what you are missing as a
+wanted list with the sets it is missing from written in the remarks. An assembly
+exports both — what it is made of, and what it still needs.
 
 **Import.** The other direction: a BrickLink XML file, read and shown before
 anything is created. Tick what to take and say where it goes — into the
@@ -70,7 +85,9 @@ know about the purchase, once for everything or line by line.
 **Search by photo.** Photograph a brick or pick a picture, and the catalogue
 finds it. It works through [Brickognize][bg], an outside service: the image is
 sent there, so the feature is off by default. Read [its terms][bgterms] before
-turning it on.
+turning it on. A camera button can open the phone camera straight away; inside
+the Home Assistant panel the camera is not available, so that needs the
+application opened directly.
 
 **Elsewhere.** Buttons to BrickLink, Rebrickable and Brickset on every detail
 page, plus two blocks for whatever else you use. The addresses are patterns you
@@ -83,6 +100,7 @@ matches.
 **The look.** Light, dark, or whatever the device is set to. Lists order
 themselves by item number, name, year or how much is held, and the order lives
 in the address, so a filtered and sorted list is a link you can send to someone.
+Each section remembers how you last sorted it.
 
 ## Installing
 
@@ -125,8 +143,9 @@ php artisan catalog:import --download
 
 BrickCollector has no accounts and no passwords, on purpose: it is built for a
 home network, or for the Home Assistant panel, which does the guarding. The
-add-on exposes no port of its own — the panel is the only way in. Do not put it
-on the open internet as it stands.
+add-on is reached through the panel; a direct port, there for the camera, stays
+closed until you enter one under Network, and there is no login behind it. Do
+not put it on the open internet as it stands.
 
 ## Thanks
 

@@ -3,6 +3,60 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.8.0 — 2026-10-17
+
+### Added
+
+- **"Pick from the collection" on the catalogue card of a set or a minifigure.** Whether a set
+  can be built from what is already here was a question the application could not answer without
+  opening the part page of every lot. A dialog now lists what the set needs beside what the
+  collection holds — everywhere, in other sets, or loose, switched in place — with the total, the
+  shortfall and the share at hand on top. What is needed is every counted part of the tree with
+  sub-sets unfolded and quantities multiplied, minus the parts inside minifigures: a figure is
+  taken whole, and the figures have a list of their own. What is short exports as a wanted list,
+  an inventory or a BrickStore basket.
+- **Adding a set built from loose parts.** From the same dialog. Only loose lots are taken from —
+  a brick in another set belongs to that set — oldest first, the way an assembly takes them, and a
+  lot spent to the last brick is deleted. What is not found is marked missing on the new copy,
+  spares included, after what is needed. A loose minifigure moves into the set only when ticked,
+  and brings the losses of its parts and its note with it; an unticked one stays loose and counts
+  as lost in the set. A CSV downloaded beforehand says which lots will go, with their storage
+  places and tags, sorted by storage so the bricks can be collected drawer by drawer — it comes
+  from the same code as the move itself, so it promises exactly what will happen.
+- **Parting a set out.** "Part out" in the danger zone of a set lays its contents out into the
+  loose pile: parts, counted and spare, as one new lot per part and colour; minifigures as copies
+  of their own, with the losses of their parts; gear, a book, a catalogue as copies of their
+  type. Sub-sets are laid out the same way, however deep. What is missing is not carried — it was
+  not in the box either. The new copies take the storage place and purchase date of the set; the
+  price and the tags stay behind, since one price for the whole box divided by its bricks would be
+  a number made up. A confirmation says beforehand what goes where.
+- **The shortage of a set exports from its page.** Each group of a set — parts, minifigures,
+  sub-sets — has an export button once something in it is missing, and it takes the whole subtree,
+  however deep: a sub-set holds packets, a packet holds a figure. A figure lost whole goes as one
+  line and its parts do not, or it would be ordered twice; a figure short a piece goes as that
+  piece.
+- **A note on a minifigure or a sub-set inside a set** — a crack in a leg, a head that is not its
+  own. A figure inside a set has no copy of its own, so there was nowhere to say such a thing. The
+  note sits next to "Open", saves by itself, and shows as an icon on the row without opening it.
+  It survives everything done to the figure: refreshing the inventories carries it like a loss
+  mark and names it if it has nowhere to go, parting out turns it into the note of the figure's
+  own copy, and the figure's card lists it where the figure lies.
+- **A camera button in the photo search**, under Settings → Search by photo, off by default. It
+  opens the phone camera straight away. Inside the Home Assistant panel the camera is not
+  available — the panel shows the application in a frame that may not use it — so the button
+  works when the application is opened directly, which the add-on can now allow.
+
+### Fixed
+
+- **Under the "missing" filter an inventory and a basket exported what is held.** Only the wanted
+  list counted what is missing; the other two kinds took the quantity in the collection, so one
+  lost brick out of four exported as four. In the parts and minifigure sections every kind
+  carries the shortage now.
+- **Opening a section sent two identical requests.** Restoring the remembered order changed the
+  form, which the page re-sends by itself, and then sent it again. Besides the waste, the second
+  answer arrived without the message the first one carried, so "set removed" vanished as soon as
+  it appeared. One request now, and the message stays.
+
 ## 1.7.0 — 2026-10-16
 
 ### Added
