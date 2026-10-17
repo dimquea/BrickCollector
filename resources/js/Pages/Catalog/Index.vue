@@ -27,6 +27,7 @@ const props = defineProps({
     years: { type: Array, default: () => [] },
     // Поиск по фото включают в настройках: без согласия кнопки нет.
     photoSearch: { type: Boolean, default: false },
+    cameraButton: { type: Boolean, default: false },
 });
 
 const photoDialog = ref(null);
@@ -215,7 +216,7 @@ const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props,
             </div>
         </div>
 
-        <PhotoSearchDialog v-if="photoSearch" ref="photoDialog" />
+        <PhotoSearchDialog v-if="photoSearch" ref="photoDialog" :camera="cameraButton" />
 
         <p v-if="results.data.length === 0" class="text-body-secondary">
             {{ t('catalog.nothing_found') }}

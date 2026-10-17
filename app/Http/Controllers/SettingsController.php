@@ -50,6 +50,7 @@ class SettingsController extends Controller
             'currency' => Settings::currency(),
             'theme' => Settings::theme(),
             'photoSearch' => Settings::photoSearch(),
+            'cameraButton' => Settings::cameraButton(),
             // proxyImages сюда не передаётся: она общая для всех страниц и
             // едет в разделяемых свойствах, откуда Inertia подставит её в
             // проп страницы сама. Два источника одного значения разошлись бы.
@@ -149,6 +150,7 @@ class SettingsController extends Controller
             'currency' => ['nullable', 'string', 'size:3', 'alpha'],
             'theme' => ['nullable', 'string', 'in:system,light,dark'],
             'photo_search' => ['nullable', 'boolean'],
+            'camera_button' => ['nullable', 'boolean'],
             'proxy_images' => ['nullable', 'boolean'],
             'locale' => ['nullable', 'string', 'in:'.implode(',', SetLocale::SUPPORTED)],
             'per_page' => ['array'],
@@ -187,6 +189,10 @@ class SettingsController extends Controller
         // потому что это выбор человека, а не настройка развёртывания.
         if (array_key_exists('photo_search', $validated)) {
             Settings::put('photo_search', $validated['photo_search'] ? '1' : '0');
+        }
+
+        if (array_key_exists('camera_button', $validated)) {
+            Settings::put('camera_button', $validated['camera_button'] ? '1' : '0');
         }
 
         if (array_key_exists('proxy_images', $validated)) {

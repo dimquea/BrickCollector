@@ -144,6 +144,9 @@ return [
         'failed' => 'The service did not answer. Try again later.',
         'score' => 'Confidence',
         'colour_guess' => 'Colour, most likely',
+        'shoot' => 'Take a photo',
+        'camera' => 'Show the camera button',
+        'camera_hint' => 'Opens the phone camera straight away. Inside the Home Assistant panel the camera is not available, and the button only picks a file; it works when the app is opened directly.',
     ],
 
     'home' => [

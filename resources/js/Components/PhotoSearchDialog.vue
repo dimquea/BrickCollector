@@ -22,8 +22,14 @@ import { t } from '@/i18n';
  * Переход открывается после того, как модалка закроется. Уйти со страницы при
  * открытой модалке — значит оставить её подложку висеть над следующей.
  */
+defineProps({
+    /** Кнопка съёмки — по настройке: под Ingress камеры нет, напрямую есть. */
+    camera: { type: Boolean, default: false },
+});
+
 const el = ref(null);
 const picker = ref(null);
+const shooter = ref(null);
 let modal = null;
 let pending = null;
 
@@ -51,8 +57,10 @@ function reset() {
     colours.value = [];
     searched.value = false;
 
-    if (picker.value) {
-        picker.value.value = '';
+    for (const input of [picker.value, shooter.value]) {
+        if (input) {
+            input.value = '';
+        }
     }
 }
 
@@ -65,6 +73,14 @@ defineExpose({ open });
 
 function choose(event) {
     const chosen = event.target.files?.[0] ?? null;
+
+    // Снимок с камеры и выбранный файл — два поля на один снимок. Оставшееся
+    // в соседнем поле имя файла обещало бы, что уйдёт он, а не новый снимок.
+    for (const input of [picker.value, shooter.value]) {
+        if (input && input !== event.target) {
+            input.value = '';
+        }
+    }
 
     forget();
     file.value = chosen;
@@ -209,21 +225,42 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="modal-body">
-                    <!-- Отдельной кнопки «снять камерой» здесь нет намеренно.
-                         Под панелью Home Assistant приложение живёт в iframe,
-                         которому камера не разрешена, и capture там молча
-                         оборачивается тем же выбором файла — обещать съёмку
-                         значило бы обещать то, чего в аддоне не произойдёт.
-                         Системный выбор на телефоне и так предлагает снять. -->
+                    <!-- Кнопка «Снять» — только по настройке. Под панелью Home
+                         Assistant приложение живёт в iframe, которому камера
+                         не разрешена, и capture там молча оборачивается тем же
+                         выбором файла. Открытое напрямую — запускает камеру
+                         телефона сразу. Это не живой видоискатель: тот требует
+                         HTTPS, а прямой порт аддона — обычный http. -->
                     <label for="photoFile" class="form-label">{{ t('recognition.file') }}</label>
-                    <input
-                        id="photoFile"
-                        ref="picker"
-                        type="file"
-                        accept="image/*"
-                        class="form-control"
-                        @change="choose"
-                    />
+                    <div class="d-flex gap-2">
+                        <input
+                            id="photoFile"
+                            ref="picker"
+                            type="file"
+                            accept="image/*"
+                            class="form-control"
+                            @change="choose"
+                        />
+                        <template v-if="camera">
+                            <input
+                                ref="shooter"
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                class="d-none"
+                                @change="choose"
+                            />
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary text-nowrap"
+                                :title="t('recognition.shoot')"
+                                @click="shooter.click()"
+                            >
+                                <i class="mdi mdi-camera-outline"></i>
+                                <span class="ms-1 d-none d-sm-inline">{{ t('recognition.shoot') }}</span>
+                            </button>
+                        </template>
+                    </div>
 
                     <div v-if="preview" class="text-center my-3">
                         <img :src="preview" :alt="t('recognition.search')" class="img-fluid rounded" style="max-height: 14rem" />

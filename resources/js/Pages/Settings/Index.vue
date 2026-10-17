@@ -18,6 +18,7 @@ const props = defineProps({
     currency: { type: String, default: 'RUB' },
     theme: { type: String, default: 'system' },
     photoSearch: { type: Boolean, default: false },
+    cameraButton: { type: Boolean, default: false },
     proxyImages: { type: Boolean, default: true },
     links: { type: Array, default: () => [] },
     appearance: { type: Object, default: () => ({ lists: [] }) },
@@ -115,6 +116,19 @@ async function savePhotoSearch() {
         notify(data.message, 'success', 2000);
     } catch (error) {
         photoSearch.value = props.photoSearch;
+        notify(error.response?.data?.message ?? t('errors.save_failed'));
+    }
+}
+
+const cameraButton = ref(props.cameraButton);
+
+async function saveCameraButton() {
+    try {
+        const { data } = await axios.patch(url('/settings'), { camera_button: cameraButton.value });
+
+        notify(data.message, 'success', 2000);
+    } catch (error) {
+        cameraButton.value = props.cameraButton;
         notify(error.response?.data?.message ?? t('errors.save_failed'));
     }
 }
@@ -318,6 +332,24 @@ const sections = [
                             <label class="form-check-label" for="photoSearch">
                                 {{ t('recognition.enable') }}
                             </label>
+                        </div>
+
+                        <!-- Под поиском и только вместе с ним: без поиска
+                             снимать незачем. -->
+                        <div class="form-check form-switch mt-2">
+                            <input
+                                id="cameraButton"
+                                v-model="cameraButton"
+                                class="form-check-input"
+                                type="checkbox"
+                                role="switch"
+                                :disabled="! photoSearch"
+                                @change="saveCameraButton"
+                            />
+                            <label class="form-check-label" for="cameraButton">
+                                {{ t('recognition.camera') }}
+                            </label>
+                            <div class="form-text">{{ t('recognition.camera_hint') }}</div>
                         </div>
 
                         <div class="alert alert-light border small d-flex gap-2 mt-3">

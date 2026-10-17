@@ -98,6 +98,7 @@ class CatalogController extends Controller
             // наружу, и предлагать её не спросив было бы обещанием, которого
             // приложение в остальном не даёт.
             'photoSearch' => Settings::photoSearch(),
+            'cameraButton' => Settings::photoSearch() && Settings::cameraButton(),
         ]);
     }
 
