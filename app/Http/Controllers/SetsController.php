@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Catalog\Models\Item as CatalogItem;
+use App\Collection\Actions\PartOut;
 use App\Collection\Actions\UpdateEntryMeta;
 use App\Collection\Export\Export;
 use App\Collection\Export\Shortage;
@@ -195,6 +196,56 @@ class SetsController extends Controller
         $entry->delete();
 
         return to_route('sets.index')->with('flash', ['message' => __('app.collection.removed')]);
+    }
+
+    /** Что получится при расформировании — для подтверждения, без записи. */
+    public function partOutPreview(Entry $entry, PartOut $partOut): JsonResponse
+    {
+        abort_unless($entry->item_type === 'S', 404);
+
+        $summary = $partOut->preview($entry);
+
+        return response()->json($summary + ['message' => $this->partOutMessage('app.partout.confirm', $summary)]);
+    }
+
+    /**
+     * Расформировать набор: детали и фигурки — в свободные.
+     *
+     * Возвращаемся в список наборов, как и после удаления: этого набора больше
+     * нет, а куда что легло, говорит сообщение.
+     */
+    public function partOut(Entry $entry, PartOut $partOut): RedirectResponse
+    {
+        abort_unless($entry->item_type === 'S', 404);
+
+        $summary = $partOut->handle($entry);
+
+        return to_route('sets.index')->with('flash', [
+            'message' => $this->partOutMessage('app.partout.done', $summary),
+        ]);
+    }
+
+    /** @param  array{parts: int, lots: int, figures: int, others: int, lost: int}  $summary */
+    private function partOutMessage(string $key, array $summary): string
+    {
+        $lines = [__($key, [
+            'parts' => trans_choice('app.partout.parts', $summary['parts'], ['count' => $summary['parts']]),
+            'lots' => trans_choice('app.partout.lots', $summary['lots'], ['count' => $summary['lots']]),
+        ])];
+
+        if ($summary['figures'] > 0) {
+            $lines[] = trans_choice('app.partout.figures', $summary['figures'], ['count' => $summary['figures']]);
+        }
+
+        if ($summary['others'] > 0) {
+            $lines[] = trans_choice('app.partout.others', $summary['others'], ['count' => $summary['others']]);
+        }
+
+        if ($summary['lost'] > 0) {
+            $lines[] = trans_choice('app.partout.lost', $summary['lost'], ['count' => $summary['lost']]);
+        }
+
+        return implode(' ', $lines);
     }
 
     /**

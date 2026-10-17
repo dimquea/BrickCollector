@@ -340,6 +340,16 @@ return [
         ],
     ],
 
+    'partout' => [
+        'confirm' => 'Part out this set? :parts into :lots.',
+        'done' => 'The set was parted out: :parts into :lots.',
+        'parts' => ':count part|:count parts',
+        'lots' => ':count new lot|:count new lots',
+        'figures' => 'Minifigures as separate copies: :count.',
+        'others' => 'Other items as separate copies: :count.',
+        'lost' => 'Not carried over, marked lost: :count.',
+    ],
+
     'collection' => [
         'title' => 'Collection',
         'add' => 'Add to collection',
@@ -357,6 +367,8 @@ return [
         'open_in_catalog' => 'Open in catalog',
         'danger_zone' => 'Danger zone',
         'export_shortage' => 'Export the shortage',
+        'partout' => 'Part out',
+        'partout_hint' => 'Parts and minifigures go to the loose pile, with storage and purchase date; the set itself is removed.',
         'manage' => 'Manage',
         'acquired_at' => 'Acquired on',
         'price' => 'Price paid',

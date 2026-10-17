@@ -76,6 +76,10 @@ Route::delete('/sets/{entry}', [SetsController::class, 'destroy'])->name('sets.d
 Route::get('/sets/{entry}/shortage/{group}', [SetsController::class, 'shortage'])
     ->where('group', '[A-Z]')
     ->name('sets.shortage');
+// Расформировать: детали и фигурки — в свободные. Сначала спрашивают, что
+// получится, и только потом делают.
+Route::get('/sets/{entry}/partout', [SetsController::class, 'partOutPreview'])->name('sets.partout.preview');
+Route::post('/sets/{entry}/partout', [SetsController::class, 'partOut'])->name('sets.partout');
 
 /*
  * Parts are counted, not owned in copies: the same brick sits in several

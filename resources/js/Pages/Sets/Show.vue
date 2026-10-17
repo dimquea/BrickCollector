@@ -1,5 +1,7 @@
 <script setup>
+import axios from 'axios';
 import { url } from '@/support/base';
+import { notify } from '@/support/toasts';
 import { computed, reactive, ref } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
@@ -101,6 +103,36 @@ function remove() {
         router.delete(url(`/sets/${props.entry.id}`));
     }
 }
+
+/*
+ * Расформировать: детали и фигурки — в свободные.
+ *
+ * Сначала сервер говорит, что получится, — сколько деталей в сколько партий,
+ * сколько фигурок, что потеряно, — и только с этим текстом перед глазами
+ * человек соглашается. Обратного действия нет: набор после этого удалён.
+ */
+const partingOut = ref(false);
+
+async function partOut() {
+    partingOut.value = true;
+
+    try {
+        const { data } = await axios.get(url(`/sets/${props.entry.id}/partout`));
+
+        if (! window.confirm(data.message)) {
+            partingOut.value = false;
+
+            return;
+        }
+
+        router.post(url(`/sets/${props.entry.id}/partout`), {}, {
+            onFinish: () => (partingOut.value = false),
+        });
+    } catch (error) {
+        partingOut.value = false;
+        notify(error.response?.data?.message ?? t('errors.save_failed'));
+    }
+}
 </script>
 
 <template>
@@ -195,6 +227,21 @@ function remove() {
                         </h2>
                         <div id="dangerZone" class="accordion-collapse collapse">
                             <div class="accordion-body">
+                                <!-- Только у набора: у снаряжения и книги
+                                     раскладывать нечего. -->
+                                <template v-if="entry.type === 'S'">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-warning w-100"
+                                        :disabled="partingOut"
+                                        @click="partOut"
+                                    >
+                                        <span v-if="partingOut" class="spinner-border spinner-border-sm me-1"></span>
+                                        {{ t('collection.partout') }}
+                                    </button>
+                                    <div class="form-text mb-3">{{ t('collection.partout_hint') }}</div>
+                                </template>
+
                                 <button type="button" class="btn btn-outline-danger w-100" @click="remove">
                                     {{ t('collection.remove') }}
                                 </button>

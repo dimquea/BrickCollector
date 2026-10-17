@@ -236,6 +236,14 @@ request path reads the cache and records what is missing.
   purchase, and half a receipt belongs to nobody. Giving back always makes a new lot with no date and
   no price: where the brick came from was forgotten when it went in. Deleting an assembly returns its
   parts rather than eating them, unlike a set, whose contents *were* the set.
+- **The same law holds for a set built from loose parts and for a set parted out** (`AddFromLoose`,
+  `PartOut`). Only loose lots are taken from — a brick in another set belongs to that set. What is
+  not found is marked lost on the new copy, and **spares are taken too**, after what is needed: a
+  spare written in "as is" went back to the loose pile on parting out, and the pile grew by fourteen
+  bricks on every round trip. The test that guards it adds a set and parts it out again and
+  compares the pile. A loose minifigure moves into a set only when ticked, and carries the losses
+  of its parts with it. The plan the user downloads beforehand and the move itself come from one
+  piece of code (`LoosePlan`), so the file promises exactly what will happen.
 
 ## List filters
 
