@@ -3,6 +3,40 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.9.0 — 2026-10-19
+
+### Added
+
+- **Finding a set by a handful of its parts.** At the bottom of the catalogue filters: rows of an
+  item number and a colour, with [+] for another. What comes back are the sets that hold at least
+  one of each part in that colour anywhere in their tree — loose in the box, inside a minifigure,
+  in a sub-set. Spares count, since they are in the box; alternates and counterparts do not. The
+  item field takes an element number from the instructions too, and 4243815 turns into 3031 in
+  blue by itself. It combines with the search, theme and year, and lives in the address like
+  every other filter.
+- **New or used, as a field of a copy.** Condition was kept as a tag, and a tag gets deleted,
+  renamed and dropped on parting out. Now a switch in the management block of a set, a loose lot
+  or a loose figure says it, and a badge on the card shows it. The import reads `CONDITION` from a
+  BrickLink file. It travels with the bricks: a used set parts out into used lots, and a set built
+  from loose parts is used if anything it took was. A "Used" filter in sets, parts and
+  minifigures.
+- **Stock for a store.** Two new kinds in the export menu — a BrickStore document and a BrickLink
+  Mass-Upload file — list the lots themselves rather than totals: each loose lot, loose figure and
+  set with its quantity at hand, unit price, condition, completeness for a set, and its note as the
+  remark. The BrickStore file carries the currency and our lot number as the row's marker;
+  Mass-Upload has no currency, and the menu says so. Parts inside sets are not stock — they are
+  sold with the box.
+
+### Changed
+
+- **"BrickStore basket" is "BrickStore document".** A basket in BrickStore is a cart imported from
+  BrickLink; the file was never that.
+
+### Fixed
+
+- **A list's value could be lost when its options arrived with it.** A colour chosen in the same
+  moment its list of colours was replaced fell back to the empty choice.
+
 ## 1.8.0 — 2026-10-17
 
 ### Added

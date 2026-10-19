@@ -15,7 +15,8 @@ minifigure is missing from that set, and what did the whole shelf cost?
 **The catalogue.** Every LEGO set, minifigure and part BrickLink knows about —
 175 thousand items with their contents, colours, themes and release years.
 Search by name, by item number or by the element number printed in a building
-instruction; filter by type, by theme and sub-theme, and by year. A card says
+instruction; filter by type, by theme and sub-theme, and by year; or find the
+set a handful of loose parts came from. A card says
 whether the thing is already in the collection and where, and its pictures open
 at their own size, with the wheel or two fingers to look closer. Updated from
 the interface whenever you want it updated.
@@ -60,7 +61,8 @@ a photo and notes. Parts move in from the loose pile and back out again, so the
 collection holds the same bricks either way, and an assembly knows what it is
 still short of.
 
-**Your own notes.** Purchase date, price, source and storage place; tags and
+**Your own notes.** Purchase date, price, source and storage place; new or used;
+tags and
 statuses you define yourself; a free-form note. Only the two statuses that ship
 with the application — box and instructions — cannot be deleted.
 
@@ -73,9 +75,11 @@ catalogue — a part in a colour, since that is how a part is wanted. A list and
 nothing more: a price and a storage place describe something you already own.
 
 **Export.** Any list, exactly as you have filtered it, as BrickLink XML or as a
-BrickStore basket: what you hold as an inventory, what you are missing as a
+BrickStore document: what you hold as an inventory, what you are missing as a
 wanted list with the sets it is missing from written in the remarks. An assembly
-exports both — what it is made of, and what it still needs.
+exports both — what it is made of, and what it still needs. For a store there is
+stock: every loose lot, figure and set as a lot of its own, with its price,
+condition and note, for BrickStore or for a BrickLink Mass-Upload.
 
 **Import.** The other direction: a BrickLink XML file, read and shown before
 anything is created. Tick what to take and say where it goes — into the
