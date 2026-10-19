@@ -26,6 +26,7 @@ class Entry extends Model
         'price' => 'integer',
         'flag_incomplete' => 'boolean',
         'flag_missing_figs' => 'boolean',
+        'is_used' => 'boolean',
     ];
 
     public function items(): HasMany

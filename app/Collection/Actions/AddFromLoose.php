@@ -73,6 +73,13 @@ class AddFromLoose
                 $this->figures($rows, $taken[$id] ?? []);
             }
 
+            // Набор, в который ушла хоть одна б/у партия или фигурка, — б/у:
+            // продать такой новым значило бы обмануть покупателя, а смесь
+            // новых и б/у деталей у BrickLink и называется б/у.
+            if (in_array(true, array_column($plan->takes, 'is_used'), true)) {
+                $entry->update(['is_used' => true]);
+            }
+
             return $this->flags->handle($entry);
         });
     }

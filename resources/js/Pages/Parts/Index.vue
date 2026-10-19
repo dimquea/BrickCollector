@@ -38,6 +38,7 @@ const form = reactive({
     placement: props.filters.placement ?? null,
     tag_id: props.filters.tag_id ?? null,
     lost: Boolean(props.filters.lost),
+    used: Boolean(props.filters.used),
     sort: chosenSort,
     dir: props.sort.dir ?? 'asc',
 });
@@ -93,12 +94,12 @@ const exportHref = computed(() => {
 
 function reset() {
     Object.assign(form, {
-        q: '', color_id: null, placement: null, tag_id: null, lost: false, sort: null, dir: 'asc',
+        q: '', color_id: null, placement: null, tag_id: null, lost: false, used: false, sort: null, dir: 'asc',
     });
 }
 
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.color_id, form.placement, form.tag_id, form.lost, form.sort, form.dir], submit);
+watch(() => [form.color_id, form.placement, form.tag_id, form.lost, form.used, form.sort, form.dir], submit);
 
 /** A badge or a colour dot in the table is also a way to narrow the list. */
 function filterByArticle(itemId) {
@@ -199,6 +200,14 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             <label class="form-check-label" for="missing">{{ t('parts.missing') }}</label>
                         </div>
                         <div class="form-text">{{ t('parts.missing_hint') }}</div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input id="used" v-model="form.used" class="form-check-input" type="checkbox" />
+                            <label class="form-check-label" for="used">{{ t('collection.used') }}</label>
+                        </div>
+                        <div class="form-text">{{ t('parts.used_hint') }}</div>
                     </div>
 
                     <!-- Порядок — отдельной строкой внизу: он отвечает не на

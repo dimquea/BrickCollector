@@ -118,6 +118,11 @@ class PartsController extends Controller
             $held = 'loose_tagged';
         }
 
+        // Под «б/у» — только то, что лежит в б/у экземплярах.
+        if (! empty($filters['used'])) {
+            $held = 'used_qty';
+        }
+
         return Export::respond($kind, $rows->map(fn (object $row) => [
             'type' => 'P',
             'id' => $row->item_id,
@@ -199,6 +204,7 @@ class PartsController extends Controller
                 'source_id' => $entry->source_id,
                 'storage_id' => $entry->storage_id,
                 'note' => $entry->note,
+                'is_used' => $entry->is_used,
                 // A loose part has no box and no instructions, so the status
                 // dictionary is not offered here; tags are.
                 'status_ids' => [],
@@ -224,6 +230,7 @@ class PartsController extends Controller
             'source_id' => ['nullable', 'integer', 'exists:ref_sources,id'],
             'storage_id' => ['nullable', 'integer', 'exists:ref_storages,id'],
             'note' => ['nullable', 'string', 'max:5000'],
+            'is_used' => ['sometimes', 'boolean'],
             'tag_ids' => ['array'],
             'tag_ids.*' => ['integer', 'exists:ref_tags,id'],
         ]);
@@ -286,7 +293,7 @@ class PartsController extends Controller
             'color_id' => ['integer'],
             'placement' => ['string', 'in:set,minifigure,loose,assembly'],
             'tag_id' => ['integer'],
-        ], switches: ['lost']);
+        ], switches: ['lost', 'used']);
     }
 
     /** @return array{by: string, dir: string} */

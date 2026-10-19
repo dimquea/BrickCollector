@@ -1,8 +1,9 @@
 <script setup>
 import { computed } from 'vue';
+import { t } from '@/i18n';
 
 /**
- * Статусы и теги экземпляра словами.
+ * Состояние, статусы и теги экземпляра словами.
  *
  * Идут в подвале карточки следом за значками «коробка» и «инструкция»: те
  * рисуются иконками, потому что стоят почти на каждом наборе и слова заняли бы
@@ -28,6 +29,9 @@ const tags = computed(() =>
 </script>
 
 <template>
+    <!-- Состояние — первым: для продажи это половина цены. -->
+    <span v-if="meta.is_used" class="badge text-bg-secondary">{{ t('collection.used') }}</span>
+
     <span
         v-for="status in statuses"
         :key="`status-${status.id}`"

@@ -144,6 +144,11 @@ class PartTotals
                 DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 AND ci.parent_item_type IS NULL
                     AND e.item_type IS NULL THEN ci.qty END), 0) as in_assemblies'),
                 DB::raw('COALESCE(SUM(CASE WHEN ci.is_extra = 1 THEN ci.qty END), 0) as spares'),
+                // Сколько лежит в б/у экземплярах — где бы ни было: б/у набор
+                // состоит из б/у деталей. Отбор «б/у» ниже смотрит на это
+                // число, а не урезает строки, чтобы остальные колонки
+                // по-прежнему сходились с итогом.
+                DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 AND e.is_used = 1 THEN ci.qty END), 0) as used_qty'),
                 // Недостача. Считается по строкам в зачёте и по парным: парная
                 // деталь — тот же кирпичик, описанный дважды, с наклейкой и
                 // без. В количество она не идёт, иначе в коллекции окажется на
@@ -261,6 +266,10 @@ class PartTotals
         // этом месте. Требовать вдобавок «и держится здесь» нельзя — деталь,
         // которая есть в наборе только парной строкой, не держится нигде, а
         // не хватает именно её.
+        if (! empty($this->filters['used'])) {
+            $query->havingRaw('used_qty > 0');
+        }
+
         if (! empty($this->filters['lost'])) {
             $query->havingRaw(match ($placement) {
                 'set' => 'lost_in_sets > 0',

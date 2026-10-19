@@ -54,6 +54,7 @@ const form = reactive({
     status_id: props.filters.status_id ?? null,
     tag_id: props.filters.tag_id ?? null,
     incomplete: Boolean(props.filters.incomplete),
+    used: Boolean(props.filters.used),
     missing_figs: Boolean(props.filters.missing_figs),
     sort: chosenSort,
     dir: props.sort.dir ?? 'desc',
@@ -92,7 +93,7 @@ const exportHref = computed(() => {
 function reset() {
     Object.assign(form, {
         q: '', type: null, theme_id: null, year: null,
-        status_id: null, tag_id: null, incomplete: false, missing_figs: false,
+        status_id: null, tag_id: null, incomplete: false, missing_figs: false, used: false,
         sort: null, dir: 'desc',
     });
 }
@@ -101,7 +102,7 @@ watch(() => form.q, debounce(submit, 300));
 watch(
     () => [
         form.type, form.theme_id, form.year, form.status_id, form.tag_id,
-        form.incomplete, form.missing_figs, form.sort, form.dir,
+        form.incomplete, form.missing_figs, form.used, form.sort, form.dir,
     ],
     submit,
 );
@@ -221,6 +222,10 @@ const shows = (list) => list.length > 1;
                     </div>
 
                     <div class="col-12 col-lg-6 d-flex align-items-end gap-3 flex-wrap">
+                        <div class="form-check">
+                            <input id="used" v-model="form.used" class="form-check-input" type="checkbox" />
+                            <label class="form-check-label" for="used">{{ t('collection.used') }}</label>
+                        </div>
                         <div class="form-check">
                             <input
                                 id="incomplete"

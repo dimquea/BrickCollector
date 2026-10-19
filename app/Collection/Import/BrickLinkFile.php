@@ -80,6 +80,9 @@ final class BrickLinkFile
                 'color_id' => $colour === '' ? null : (int) $colour,
                 'qty' => max(1, (int) $this->text($minimum ? $node->MINQTY : $node->QTY)),
                 'remarks' => $this->text($node->REMARKS),
+                // Состояние: U — б/у. В описи набора его нет вовсе, и
+                // отсутствие значит «новое», как и у BrickLink.
+                'used' => strtoupper($this->text($node->CONDITION)) === 'U',
                 'is_extra' => $this->flag($node->EXTRA),
                 'is_alternate' => $this->flag($node->ALTERNATE),
                 'is_counterpart' => $this->flag($node->COUNTERPART),

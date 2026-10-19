@@ -244,6 +244,9 @@ request path reads the cache and records what is missing.
   compares the pile. A loose minifigure moves into a set only when ticked, and carries the losses
   of its parts with it. The plan the user downloads beforehand and the move itself come from one
   piece of code (`LoosePlan`), so the file promises exactly what will happen.
+- **Condition is a field, not a tag** (`collection_entries.is_used`). It travels with the bricks: parting
+  out a used set gives used lots, and a set built from loose parts is used if any lot or figure it
+  took was. The import reads `CONDITION` into it.
 
 ## List filters
 

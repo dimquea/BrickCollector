@@ -40,6 +40,7 @@ class AddToCollection
                 'source_id' => $meta['source_id'] ?? null,
                 'storage_id' => $meta['storage_id'] ?? null,
                 'note' => $meta['note'] ?? null,
+                'is_used' => (bool) ($meta['is_used'] ?? false),
                 // Set here rather than left to the column default: otherwise
                 // the object handed back carries null until something reloads
                 // it, and callers reasonably expect a boolean.

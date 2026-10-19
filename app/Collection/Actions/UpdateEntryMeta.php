@@ -18,6 +18,7 @@ class UpdateEntryMeta
      *     source_id?: ?int,
      *     storage_id?: ?int,
      *     note?: ?string,
+     *     is_used?: bool,
      *     status_ids?: array<int, int>,
      *     tag_ids?: array<int, int>,
      * }  $data
@@ -34,7 +35,15 @@ class UpdateEntryMeta
                 'source_id' => $data['source_id'] ?? null,
                 'storage_id' => $data['storage_id'] ?? null,
                 'note' => $data['note'] ?? null,
-            ])->save();
+            ]);
+
+            // Только если прислали: у сборки этого поля нет — её не продают, — и
+            // её сохранение не должно сбрасывать то, чего она не знает.
+            if (array_key_exists('is_used', $data)) {
+                $entry->is_used = (bool) $data['is_used'];
+            }
+
+            $entry->save();
 
             if (array_key_exists('status_ids', $data)) {
                 $entry->statuses()->sync($data['status_ids'] ?? []);

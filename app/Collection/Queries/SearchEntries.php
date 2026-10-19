@@ -134,7 +134,7 @@ class SearchEntries
 
         // The two derived statuses filter like any other, which is the whole
         // point of caching them on the row.
-        foreach (['incomplete' => 'flag_incomplete', 'missing_figs' => 'flag_missing_figs'] as $filter => $column) {
+        foreach (['incomplete' => 'flag_incomplete', 'missing_figs' => 'flag_missing_figs', 'used' => 'is_used'] as $filter => $column) {
             if (! empty($this->filters[$filter])) {
                 $query->where("e.{$column}", 1);
             }

@@ -71,6 +71,7 @@ class MinifiguresController extends Controller
         // «потеряны» просят не опись, а список того, чего не хватает.
         $kind = Export::kind($request, ! empty($filters['lost']) ? 'wanted' : 'inventory');
 
+
         if ($kind === 'wanted' || ! empty($filters['lost'])) {
             $sources = $lost->minifigures();
 
@@ -92,6 +93,10 @@ class MinifiguresController extends Controller
             'loose' => 'loose',
             default => 'total',
         };
+
+        if (! empty($filters['used'])) {
+            $held = 'used_qty';
+        }
 
         return Export::respond($kind, $rows->map(fn (object $row) => [
             'type' => 'M',
@@ -153,6 +158,7 @@ class MinifiguresController extends Controller
                 'source_id' => $entry->source_id,
                 'storage_id' => $entry->storage_id,
                 'note' => $entry->note,
+                'is_used' => $entry->is_used,
                 // A figure has no box and no instructions, so the status
                 // dictionary is not offered here; tags are.
                 'status_ids' => [],
@@ -178,6 +184,7 @@ class MinifiguresController extends Controller
             'source_id' => ['nullable', 'integer', 'exists:ref_sources,id'],
             'storage_id' => ['nullable', 'integer', 'exists:ref_storages,id'],
             'note' => ['nullable', 'string', 'max:5000'],
+            'is_used' => ['sometimes', 'boolean'],
             'tag_ids' => ['array'],
             'tag_ids.*' => ['integer', 'exists:ref_tags,id'],
         ]);
@@ -212,7 +219,7 @@ class MinifiguresController extends Controller
             'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
             'tag_id' => ['integer'],
             'placement' => ['string', 'in:set,loose'],
-        ], switches: ['lost', 'incomplete']);
+        ], switches: ['lost', 'incomplete', 'used']);
     }
 
     /** @return array{by: string, dir: string} */

@@ -18,6 +18,9 @@ import { locale, t } from '@/i18n';
  * бывает раскрыто несколько разом, и «id=note» в каждом заставил бы подписи
  * указывать не на своё поле.
  *
+ * «Б/у» — тоже не всегда: у сборки его нет, её не продают. Переключатель есть,
+ * когда в форме есть поле is_used; форма сборки его просто не заводит.
+ *
  * Статусы показываются не всегда: у детали нет ни коробки, ни инструкции, а при
  * импорте их не спрашивают вовсе. Решает это состав словарей, а не отдельный
  * признак — пустой словарь и значит «здесь не о чем спрашивать».
@@ -45,6 +48,19 @@ const hasDictionary = (name) => (props.dictionaries[name] ?? []).length > 0;
 
 <template>
     <div class="row g-3">
+        <div v-if="'is_used' in form" class="col-12">
+            <div class="form-check form-switch">
+                <input
+                    :id="field('used')"
+                    v-model="form.is_used"
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    @change="emit('changed')"
+                />
+                <label class="form-check-label" :for="field('used')">{{ t('collection.used') }}</label>
+            </div>
+        </div>
         <div class="col-12 col-sm-6">
             <label :for="field('acquired')" class="form-label">{{ t('collection.acquired_at') }}</label>
             <input

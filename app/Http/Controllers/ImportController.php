@@ -131,6 +131,7 @@ class ImportController extends Controller
             $prefix.'.source_id' => ['nullable', 'integer', 'exists:ref_sources,id'],
             $prefix.'.storage_id' => ['nullable', 'integer', 'exists:ref_storages,id'],
             $prefix.'.note' => ['nullable', 'string', 'max:5000'],
+            $prefix.'.is_used' => ['nullable', 'boolean'],
             $prefix.'.tag_ids' => ['nullable', 'array'],
             $prefix.'.tag_ids.*' => ['integer', 'exists:ref_tags,id'],
         ];

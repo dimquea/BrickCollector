@@ -59,12 +59,14 @@ function blank() {
         source_id: null,
         storage_id: null,
         note: '',
+        // null — «не задавали»: строка уступает общему, как и прочие поля.
+        is_used: null,
         status_ids: [],
         tag_ids: [],
     };
 }
 
-const shared = reactive(blank());
+const shared = reactive({ ...blank(), is_used: false });
 
 const toCollection = computed(() => destination.value === 'collection');
 
@@ -162,7 +164,12 @@ async function choose(event) {
             // получает свои поля сразу, с уже вписанной заметкой: её видно,
             // можно поправить, и общая заметка ей уступает — частное описание
             // точнее общего. Строки без примечания берут общее.
-            meta: row.remarks ? { ...blank(), note: row.remarks } : null,
+            //
+            // То же с состоянием: «б/у» из файла — сведение об этой позиции, и
+            // строка получает свои поля с уже включённым переключателем.
+            meta: row.remarks || row.used
+                ? { ...blank(), note: row.remarks || '', is_used: row.used ? true : null }
+                : null,
         }));
 
         total.value = data.total;
@@ -195,6 +202,7 @@ function payload(meta) {
         source_id: meta.source_id ? Number(meta.source_id) : null,
         storage_id: meta.storage_id ? Number(meta.storage_id) : null,
         note: meta.note || null,
+        is_used: meta.is_used === null ? null : Boolean(meta.is_used),
         // Пустой список — это «не задавали», а не «снять все теги сверху».
         tag_ids: meta.tag_ids.length ? meta.tag_ids : null,
     };
@@ -421,6 +429,9 @@ const copies = (row) => (row.type === 'P' ? 1 : row.qty);
                                         <!-- Сам текст примечания в таблицу не
                                              помещается и не нужен: важно, что
                                              оно есть. -->
+                                        <span v-if="row.used" class="badge text-bg-secondary">
+                                            {{ t('collection.used') }}
+                                        </span>
                                         <i
                                             v-if="row.remarks"
                                             class="mdi mdi-note-text-outline text-body-secondary"

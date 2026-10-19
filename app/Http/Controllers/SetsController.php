@@ -156,6 +156,7 @@ class SetsController extends Controller
                 'source_id' => $entry->source_id,
                 'storage_id' => $entry->storage_id,
                 'note' => $entry->note,
+                'is_used' => $entry->is_used,
                 'status_ids' => $entry->statuses()->pluck('ref_statuses.id')->all(),
                 'tag_ids' => $entry->tags()->pluck('ref_tags.id')->all(),
             ],
@@ -179,6 +180,7 @@ class SetsController extends Controller
             'source_id' => ['nullable', 'integer', 'exists:ref_sources,id'],
             'storage_id' => ['nullable', 'integer', 'exists:ref_storages,id'],
             'note' => ['nullable', 'string', 'max:5000'],
+            'is_used' => ['sometimes', 'boolean'],
             'status_ids' => ['array'],
             'status_ids.*' => ['integer', 'exists:ref_statuses,id'],
             'tag_ids' => ['array'],
@@ -263,7 +265,7 @@ class SetsController extends Controller
             'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
             'status_id' => ['integer'],
             'tag_id' => ['integer'],
-        ], switches: ['incomplete', 'missing_figs']);
+        ], switches: ['incomplete', 'missing_figs', 'used']);
     }
 
     /**

@@ -139,7 +139,7 @@ final class LoosePlan
                 ->orderBy('e.id')
                 ->get([
                     'e.id as entry_id', 'e.item_id', 'ci.color_id', 'ci.id as root_id', 'ci.qty', 'ci.lost_qty',
-                    'e.acquired_at', 's.name as storage',
+                    'e.acquired_at', 'e.is_used', 's.name as storage',
                 ]);
 
             $tags = DB::table('entry_tags as et')
@@ -164,6 +164,7 @@ final class LoosePlan
                         'storage' => $row->storage,
                         'tags' => ($tags->get($row->entry_id) ?? collect())->pluck('name')->implode(', '),
                         'acquired_at' => $row->acquired_at === null ? null : substr((string) $row->acquired_at, 0, 10),
+                        'is_used' => (bool) $row->is_used,
                     ],
                 ];
             }

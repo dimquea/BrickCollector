@@ -31,6 +31,8 @@ const form = reactive({
     note: props.meta.note ?? '',
     status_ids: [...props.meta.status_ids],
     tag_ids: [...props.meta.tag_ids],
+    // Только у того, что продают: у сборки поля нет, и форма его не заводит.
+    ...('is_used' in props.meta ? { is_used: Boolean(props.meta.is_used) } : {}),
 });
 
 const emit = defineEmits(['saved']);
@@ -68,6 +70,7 @@ async function save() {
             note: form.note || null,
             status_ids: form.status_ids,
             tag_ids: form.tag_ids,
+            ...('is_used' in form ? { is_used: form.is_used } : {}),
         },
         { onRevert: () => Object.assign(form, lastAccepted) },
     );
@@ -89,6 +92,7 @@ async function save() {
                 note: form.note || null,
                 status_ids: [...form.status_ids],
                 tag_ids: [...form.tag_ids],
+                ...('is_used' in form ? { is_used: form.is_used } : {}),
             },
         });
         notify(result.message ?? t('collection.saved'), 'success', 2500);

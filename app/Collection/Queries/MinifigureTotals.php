@@ -150,6 +150,10 @@ class MinifigureTotals
 
                 DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 THEN ci.lost_qty END), 0) as lost'),
 
+                // Сколько их в б/у экземплярах: отдельных и тех наборов, что
+                // отмечены б/у, — фигурка из б/у коробки тоже б/у.
+                DB::raw('COALESCE(SUM(CASE WHEN ci.counts = 1 AND e.is_used = 1 THEN ci.qty END), 0) as used_qty'),
+
                 // Экземпляры, внутри которых чего-то не хватает. Детали лежат
                 // прямо под фигуркой, поэтому достаточно посмотреть на детей.
                 // Считается здесь, а не отбором по строке: отбор до GROUP BY
@@ -209,6 +213,10 @@ class MinifigureTotals
         // просто нет, и правильный ответ удалить экземпляр, а не помечать его.
         if (! empty($this->filters['lost'])) {
             $query->havingRaw('lost > 0');
+        }
+
+        if (! empty($this->filters['used'])) {
+            $query->havingRaw('used_qty > 0');
         }
 
         // «Некомплект» — про внутренности фигурки, а не про неё саму: деталь
