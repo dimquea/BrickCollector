@@ -6,6 +6,7 @@ use App\Catalog\Models\Item;
 use App\Catalog\Models\ItemType;
 use App\Catalog\Models\Theme;
 use App\Catalog\Images\ItemImages;
+use App\Catalog\Queries\ItemIdentifiers;
 use App\Catalog\Queries\ItemInventory;
 use App\Catalog\Queries\ItemParents;
 use App\Catalog\Queries\SearchItems;
@@ -17,6 +18,7 @@ use App\Collection\Models\Entry;
 use App\Collection\Models\Wish;
 use App\Collection\Queries\OwnedPlaces;
 use App\Collection\Queries\PartPlaces;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Support\ExternalLinks;
 use App\Support\Settings;
@@ -38,6 +40,8 @@ class CatalogController extends Controller
             'type' => ['string', 'in:'.implode(',', ItemType::BROWSABLE)],
             'theme_id' => ['integer'],
             'year' => ['integer', 'min:1949', 'max:'.(date('Y') + 1)],
+            // «3001:11,3023:» — детали, которые должны быть в наборе.
+            'parts' => ['string', 'max:800'],
         ], switches: ['has_inventory']);
 
         // «default» — не поле, а отсутствие выбора: справочник тогда работает
@@ -99,6 +103,45 @@ class CatalogController extends Controller
             // приложение в остальном не даёт.
             'photoSearch' => Settings::photoSearch(),
             'cameraButton' => Settings::photoSearch() && Settings::cameraButton(),
+        ]);
+    }
+
+    /**
+     * Деталь для поиска набора по деталям — по тому, что вписали в поле.
+     *
+     * Вписывают артикул, а иногда номер из инструкции: 4243815 называет деталь
+     * вместе с цветом, и тогда цвет подставляется сам. Второе имя предмета
+     * цвета не знает. Цвета в ответе — только те, в которых деталь встречается
+     * в описях: в другом её не найдётся ни в одном наборе.
+     */
+    public function lookupPart(Request $request, ItemParents $parents): JsonResponse
+    {
+        $term = trim((string) $request->query('q', ''));
+
+        if ($term === '' || mb_strlen($term) > 60) {
+            return response()->json(['found' => false]);
+        }
+
+        $item = Item::where('type', 'P')->where('id', $term)->first();
+        $colour = null;
+
+        if ($item === null) {
+            $named = ItemIdentifiers::resolve($term)->firstWhere('type', 'P');
+
+            $item = $named === null ? null : Item::where('type', 'P')->where('id', $named->id)->first();
+            $colour = $named?->color_id === null ? null : (int) $named->color_id;
+        }
+
+        if ($item === null) {
+            return response()->json(['found' => false]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'id' => $item->id,
+            'name' => $item->name,
+            'color_id' => $colour,
+            'colours' => $parents->colours($item->id),
         ]);
     }
 

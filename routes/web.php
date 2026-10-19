@@ -35,6 +35,9 @@ Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 // настройкой и без неё отвечает 404 — даже если адрес набрали руками.
 Route::post('/catalog/recognise', [RecognitionController::class, 'identify'])->name('catalog.recognise');
 
+// Деталь для поиска набора по деталям: артикул или номер из инструкции.
+Route::get('/catalog/parts/lookup', [CatalogController::class, 'lookupPart'])->name('catalog.parts.lookup');
+
 Route::get('/catalog/{type}/{id}', [CatalogController::class, 'show'])
     ->where('type', '[A-Z]')
     ->name('catalog.show');

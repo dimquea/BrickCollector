@@ -9,6 +9,7 @@ import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import PhotoSearchDialog from '@/Components/PhotoSearchDialog.vue';
+import PartsFilter from '@/Components/PartsFilter.vue';
 import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
 import { useThemeFilter } from '@/support/themeFilter';
@@ -53,6 +54,7 @@ const form = reactive({
     theme_id: props.filters.theme_id ?? null,
     year: props.filters.year ?? null,
     has_inventory: Boolean(props.filters.has_inventory),
+    parts: props.filters.parts ?? '',
     sort: chosenSort,
     dir: props.sort.dir ?? 'asc',
 });
@@ -81,13 +83,21 @@ function clean() {
 
 function reset() {
     Object.assign(form, {
-        q: '', type: null, theme_id: null, year: null, has_inventory: false, sort: null, dir: 'asc',
+        q: '', type: null, theme_id: null, year: null, has_inventory: false, parts: '', sort: null, dir: 'asc',
     });
 }
 
 // Typing fires a request per keystroke otherwise.
 watch(() => form.q, debounce(submit, 300));
-watch(() => [form.type, form.theme_id, form.year, form.has_inventory, form.sort, form.dir], submit);
+watch(() => [form.type, form.theme_id, form.year, form.has_inventory, form.parts, form.sort, form.dir], submit);
+
+// Поиск по деталям ищет наборы — и тип это говорит вслух, а не держит в уме:
+// иначе выбранная раньше «деталь» молча давала бы пустой список.
+watch(() => form.parts, (parts) => {
+    if (parts && form.type !== 'S') {
+        form.type = 'S';
+    }
+});
 
 const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props, form);
 </script>
@@ -211,6 +221,35 @@ const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props,
                             :options="sortOptions"
                             class="flex-grow-1"
                         />
+                    </div>
+
+                    <!-- В самом низу и свёрнут: это не ещё одно поле, а
+                         отдельный вопрос — «из какого набора эти детали», — и
+                         ответ на него ищут нечасто. Открыт сам, если отбор уже
+                         пришёл в адресе. -->
+                    <div class="col-12">
+                        <div class="accordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button
+                                        class="accordion-button"
+                                        :class="{ collapsed: ! form.parts }"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#partsSearch"
+                                    >
+                                        <i class="mdi mdi-puzzle-outline me-2"></i>
+                                        {{ t('catalog.parts_search') }}
+                                    </button>
+                                </h2>
+                                <div id="partsSearch" class="accordion-collapse collapse" :class="{ show: form.parts }">
+                                    <div class="accordion-body">
+                                        <p class="form-text mt-0">{{ t('catalog.parts_search_hint') }}</p>
+                                        <PartsFilter v-model="form.parts" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

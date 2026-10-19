@@ -101,6 +101,9 @@ class SearchItems
             $query->where('i.has_inventory', 1);
         }
 
+        // Поиск набора по горсти деталей: остаются наборы, где есть каждая.
+        SetsHoldingParts::apply($query, SetsHoldingParts::parse($this->filters['parts'] ?? null), 'i.type', 'i.id');
+
         $columns = ['id' => 'i.id', 'name' => 'i.name', 'year' => 'i.year'];
         $by = $this->sort['by'] ?? null;
 
