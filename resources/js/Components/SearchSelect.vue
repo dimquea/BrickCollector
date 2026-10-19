@@ -92,7 +92,12 @@ watch(
             return;
         }
 
-        const chosen = instance.getValue();
+        // Из v-model, а не из самого Tom Select. Значение и список, к которому
+        // оно относится, иногда приходят разом — цвет, названный номером из
+        // инструкции, вместе с цветами этой детали, — и значение выставляется,
+        // пока стоит ещё старый список, где Tom Select его не принимает.
+        // Вернуть то, что держит он, значило бы вернуть этот отказ.
+        const chosen = props.modelValue == null ? '' : String(props.modelValue);
 
         instance.clearOptions();
         instance.addOption({ value: '', text: '' });
