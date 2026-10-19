@@ -7,7 +7,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
 import ExportButton from '@/Components/ExportButton.vue';
-import { exportItems } from '@/support/exports';
+import { exportItems, exportModes } from '@/support/exports';
 import ItemImage from '@/Components/ItemImage.vue';
 import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
 import { debounce } from '@/support/debounce';
@@ -255,7 +255,7 @@ const shows = (list) => list.length > 1;
                          иначе строка встала бы в остаток предыдущей. -->
                     <div class="w-100"></div>
                     <div class="col-12 col-lg-4 d-flex align-items-end gap-2">
-                        <ExportButton :items="exportItems(exportHref)" />
+                        <ExportButton :items="exportItems(exportHref, exportModes(form))" />
                         <SortControl
                             v-model:by="form.sort"
                             v-model:dir="form.dir"

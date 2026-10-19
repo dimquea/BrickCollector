@@ -42,6 +42,60 @@ final class BrickLinkXml
         return self::document($items, 'MINQTY');
     }
 
+    /**
+     * Склад для BrickLink Mass-Upload: партии, которые выставляют в магазин.
+     *
+     * Тот же корень INVENTORY, но строка здесь — лот магазина: с ценой за штуку,
+     * состоянием и, у набора, полнотой. Порядок и вид полей — как у BrickStore,
+     * который пишет этот же формат: цена с точкой и тремя знаками, категория из
+     * справочника рядом с номером.
+     *
+     * Валюты в формате нет вовсе: BrickLink читает цены в валюте магазина. Это
+     * сказано у пункта меню — рублёвая цена в долларовом магазине молча станет
+     * долларовой.
+     *
+     * @param  iterable<int, array<string, mixed>>  $lots  Stock::lots()
+     */
+    public static function massUpload(iterable $lots): string
+    {
+        $lines = ['<INVENTORY>'];
+
+        foreach ($lots as $lot) {
+            $lines[] = '  <ITEM>';
+            $lines[] = '    <ITEMID>'.self::escape((string) $lot['id']).'</ITEMID>';
+            $lines[] = '    <ITEMTYPE>'.self::escape((string) $lot['type']).'</ITEMTYPE>';
+            $lines[] = '    <COLOR>'.(int) $lot['color'].'</COLOR>';
+
+            if ($lot['category'] !== null) {
+                $lines[] = '    <CATEGORY>'.(int) $lot['category'].'</CATEGORY>';
+            }
+
+            $lines[] = '    <QTY>'.(int) $lot['qty'].'</QTY>';
+            $lines[] = '    <PRICE>'.self::money((float) $lot['price']).'</PRICE>';
+            $lines[] = '    <CONDITION>'.($lot['used'] ? 'U' : 'N').'</CONDITION>';
+
+            if ($lot['remarks'] !== null) {
+                $lines[] = '    <REMARKS>'.self::escape(self::fit($lot['remarks'])).'</REMARKS>';
+            }
+
+            if ($lot['subcondition'] !== null) {
+                $lines[] = '    <SUBCONDITION>'.$lot['subcondition'].'</SUBCONDITION>';
+            }
+
+            $lines[] = '  </ITEM>';
+        }
+
+        $lines[] = '</INVENTORY>';
+
+        return implode("\n", $lines)."\n";
+    }
+
+    /** Цена так, как её читают BrickLink и BrickStore: точка и три знака. */
+    public static function money(float $value): string
+    {
+        return number_format($value, 3, '.', '');
+    }
+
     /** Готовый файл: имя говорит, из какого раздела он и чем является. */
     public static function download(string $xml, string $section, string $kind): Response
     {

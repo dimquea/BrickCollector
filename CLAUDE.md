@@ -247,6 +247,14 @@ request path reads the cache and records what is missing.
 - **Condition is a field, not a tag** (`collection_entries.is_used`). It travels with the bricks: parting
   out a used set gives used lots, and a set built from loose parts is used if any lot or figure it
   took was. The import reads `CONDITION` into it.
+- **Stock lists copies, not totals** (`App\Collection\Export\Stock`). A row is a loose lot, a loose
+  minifigure or a set — each with its own price, condition and note; a part inside a set is never
+  stock. **The unit price is the copy's price divided by its current quantity, and that is a
+  deliberate assumption**: a lot that gave part of itself to an assembly or a set keeps its whole
+  price, so its unit price drifts up. This is a collection manager, not an accounting system; the
+  owner keeps an eye on it. Do not "fix" it by rescaling prices on every move — the analytics count
+  what was spent. Our lot number goes into BSX `MarkerText`, never `LotID`: that one is BrickLink's,
+  and BrickStore opens store pages and sends Mass-Update changes by it.
 
 ## List filters
 

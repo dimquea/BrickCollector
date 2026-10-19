@@ -80,6 +80,23 @@ class PartsController extends Controller
         // просят список недостающего, как и раньше.
         $kind = Export::kind($request, ! empty($filters['lost']) ? 'wanted' : 'inventory');
 
+        // Склад — свободные партии тех деталей, что в списке, каждая сама по
+        // себе: у неё свои цена, состояние и заметка. Тег и «б/у» — свойства
+        // партии, и отбирают партии, а не детали.
+        if (Export::isStock($kind)) {
+            $pairs = $rows->mapWithKeys(fn (object $row) => [$row->item_id.'/'.(int) $row->color_id => true]);
+
+            $lots = Entry::where('item_type', 'P')
+                ->when(($filters['tag_id'] ?? null) !== null, fn ($query) => $query
+                    ->whereHas('tags', fn ($tags) => $tags->where('ref_tags.id', $filters['tag_id'])))
+                ->when(! empty($filters['used']), fn ($query) => $query->where('is_used', true))
+                ->get(['id', 'item_id', 'color_id'])
+                ->filter(fn (Entry $lot) => $pairs->has($lot->item_id.'/'.(int) $lot->color_id))
+                ->pluck('id');
+
+            return Export::stock($kind, $lots, 'parts');
+        }
+
         if ($kind === 'wanted' || ! empty($filters['lost'])) {
             $sources = $lost->parts();
 

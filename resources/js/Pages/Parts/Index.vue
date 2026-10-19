@@ -9,7 +9,7 @@ import ColorDot from '@/Components/ColorDot.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
 import ExportButton from '@/Components/ExportButton.vue';
-import { exportItems } from '@/support/exports';
+import { exportItems, exportModes } from '@/support/exports';
 import { debounce } from '@/support/debounce';
 import { rememberSort } from '@/support/sortMemory';
 import { t, tChoice } from '@/i18n';
@@ -215,7 +215,7 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                          иначе строка встала бы в остаток предыдущей. -->
                     <div class="w-100"></div>
                     <div class="col-12 col-lg-4 d-flex align-items-end gap-2">
-                        <ExportButton :items="exportItems(exportHref)" />
+                        <ExportButton :items="exportItems(exportHref, exportModes(form))" />
                         <SortControl
                             v-model:by="form.sort"
                             v-model:dir="form.dir"

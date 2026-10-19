@@ -89,7 +89,10 @@ return [
         'title' => 'Выгрузить',
         'inventory' => 'Опись — BrickLink XML',
         'wanted' => 'Список желаемого — BrickLink XML',
-        'bsx' => 'Корзина BrickStore — BSX',
+        'bsx' => 'Документ BrickStore — BSX',
+        'stock_bsx' => 'Склад — BrickStore BSX',
+        'stock_xml' => 'Склад — BrickLink Mass-Upload XML',
+        'stock_xml_hint' => 'Валюты в этом формате нет: BrickLink прочтёт цены в валюте вашего магазина.',
         'shortage' => 'Недостача — BrickLink XML',
     ],
 

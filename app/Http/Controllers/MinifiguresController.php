@@ -71,6 +71,18 @@ class MinifiguresController extends Controller
         // «потеряны» просят не опись, а список того, чего не хватает.
         $kind = Export::kind($request, ! empty($filters['lost']) ? 'wanted' : 'inventory');
 
+        // Склад — отдельные экземпляры фигурок из списка: фигурку в наборе
+        // продают вместе с набором.
+        if (Export::isStock($kind)) {
+            $copies = Entry::where('item_type', 'M')
+                ->whereIn('item_id', $rows->pluck('item_id'))
+                ->when(($filters['tag_id'] ?? null) !== null, fn ($query) => $query
+                    ->whereHas('tags', fn ($tags) => $tags->where('ref_tags.id', $filters['tag_id'])))
+                ->when(! empty($filters['used']), fn ($query) => $query->where('is_used', true))
+                ->pluck('id');
+
+            return Export::stock($kind, $copies, 'minifigures');
+        }
 
         if ($kind === 'wanted' || ! empty($filters['lost'])) {
             $sources = $lost->minifigures();

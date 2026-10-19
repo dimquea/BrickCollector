@@ -97,7 +97,7 @@ class PickController extends Controller
         }
 
         // Ноль штук — не строка, а отсутствие строки: выгрузка их и так
-        // пропускает, но корзине BrickStore лишние строки ни к чему.
+        // пропускает, но документу BrickStore лишние строки ни к чему.
         $rows = array_values(array_filter($rows, fn (array $row) => $row['qty'] > 0));
 
         return Export::respond(Export::kind($request, 'wanted'), $rows, 'pick-'.$id);

@@ -8,7 +8,8 @@ use Illuminate\Http\Response;
 /**
  * Какой файл просят и чем его собрать.
  *
- * Видов три: опись BrickLink, список желаемого BrickLink и корзина BrickStore.
+ * Видов пять: опись BrickLink, список желаемого BrickLink, документ BrickStore
+ * и склад — в BrickStore и для BrickLink Mass-Upload.
  * Первые два отличаются не только разметкой, но и смыслом строк — «сколько
  * есть» против «сколько не хватает», — поэтому строки собирает вызывающий, а
  * здесь остаётся выбор вида и сборка документа.
@@ -18,7 +19,10 @@ use Illuminate\Http\Response;
  */
 final class Export
 {
-    private const KINDS = ['inventory', 'wanted', 'bsx'];
+    private const KINDS = ['inventory', 'wanted', 'bsx', 'stock-bsx', 'stock-xml'];
+
+    /** Склад: строки — экземпляры, а не итоги, и собирает их Stock. */
+    public const STOCK = ['stock-bsx', 'stock-xml'];
 
     /** Вид из адреса; что-то неизвестное — не повод отказывать, берём обычное. */
     public static function kind(Request $request, string $fallback = 'inventory'): string
@@ -26,6 +30,25 @@ final class Export
         $asked = (string) $request->query('as', '');
 
         return in_array($asked, self::KINDS, true) ? $asked : $fallback;
+    }
+
+    public static function isStock(string $kind): bool
+    {
+        return in_array($kind, self::STOCK, true);
+    }
+
+    /**
+     * Склад из экземпляров коллекции.
+     *
+     * @param  iterable<int, int>  $entryIds
+     */
+    public static function stock(string $kind, iterable $entryIds, string $section): Response
+    {
+        $lots = Stock::lots($entryIds);
+
+        return $kind === 'stock-xml'
+            ? BrickLinkXml::download(BrickLinkXml::massUpload($lots), $section, 'stock')
+            : BrickStoreBsx::download(BrickStoreBsx::stock($lots), $section.'-stock');
     }
 
     /**

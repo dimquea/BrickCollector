@@ -80,6 +80,14 @@ class SetsController extends Controller
             ->ofTypes(self::TYPES)
             ->all();
 
+        // Склад — каждый экземпляр своей строкой: у двух одинаковых наборов
+        // бывают разные цена, состояние и полнота.
+        $kind = Export::kind($request);
+
+        if (Export::isStock($kind)) {
+            return Export::stock($kind, $copies->pluck('id'), 'sets');
+        }
+
         $items = $copies
             ->groupBy(fn (Entry $entry) => $entry->item_type.'/'.$entry->item_id)
             ->map(fn ($group) => [
@@ -88,7 +96,7 @@ class SetsController extends Controller
                 'qty' => $group->count(),
             ]);
 
-        return Export::respond(Export::kind($request), $items, 'sets');
+        return Export::respond($kind, $items, 'sets');
     }
 
     /**

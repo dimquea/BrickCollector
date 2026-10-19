@@ -36,7 +36,12 @@ defineProps({
 
         <ul class="dropdown-menu dropdown-menu-end">
             <li v-for="item in items" :key="item.key">
-                <a class="dropdown-item" :href="url(item.href)" download>{{ t(item.label) }}</a>
+                <a class="dropdown-item" :href="url(item.href)" download>
+                    {{ t(item.label) }}
+                    <span v-if="item.hint" class="d-block small text-body-secondary text-wrap" style="max-width: 18rem">
+                        {{ t(item.hint) }}
+                    </span>
+                </a>
             </li>
         </ul>
     </div>

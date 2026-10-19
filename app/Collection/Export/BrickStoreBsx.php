@@ -43,7 +43,7 @@ final class BrickStoreBsx
         foreach ($items as $item) {
             $qty = (int) $item['qty'];
 
-            // Позиция, которой ноль, в корзине не нужна: строка попадает сюда
+            // Позиция, которой ноль, в документе не нужна: строка попадает сюда
             // и просто потому, что по ней записана недостача.
             if ($qty < 1) {
                 continue;
@@ -63,6 +63,74 @@ final class BrickStoreBsx
 
             if (! empty($item['remarks'])) {
                 $lines[] = '   <Remarks>'.self::escape($item['remarks']).'</Remarks>';
+            }
+
+            $lines[] = '  </Item>';
+        }
+
+        $lines[] = ' </Inventory>';
+        $lines[] = '</BrickStoreXML>';
+
+        return implode("\n", $lines)."\n";
+    }
+
+    /**
+     * Склад: лоты с ценой, состоянием и заметкой — то, что BrickStore заливает
+     * в магазин.
+     *
+     * В отличие от простого документа здесь каждая строка — экземпляр
+     * коллекции. Наш номер партии едет в MarkerText: это метка строки, видна
+     * только в BrickStore и в магазин не уходит, — чтобы там было понятно, какая
+     * это партия у нас. LotID для этого не годится: это номер лота на
+     * BrickLink, и BrickStore по нему открывает страницу в магазине и шлёт
+     * правки при Mass-Update.
+     *
+     * Названия предмета и цвета пишутся рядом с номерами: BrickStore берёт их,
+     * только если номер не нашёлся, — так переименование в каталоге не
+     * превращает строку в загадку. ItemTypeName по-прежнему не пишем.
+     *
+     * @param  iterable<int, array<string, mixed>>  $lots  Stock::lots()
+     */
+    public static function stock(iterable $lots, ?string $currency = null): string
+    {
+        $currency = $currency ?? Settings::currency();
+
+        $lines = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<BrickStoreXML>',
+            ' <Inventory Currency="'.self::escape($currency).'">',
+        ];
+
+        foreach ($lots as $lot) {
+            $lines[] = '  <Item>';
+            $lines[] = '   <ItemID>'.self::escape((string) $lot['id']).'</ItemID>';
+            $lines[] = '   <ItemTypeID>'.self::escape((string) $lot['type']).'</ItemTypeID>';
+            $lines[] = '   <ColorID>'.(int) $lot['color'].'</ColorID>';
+            $lines[] = '   <Status>I</Status>';
+            $lines[] = '   <Qty>'.(int) $lot['qty'].'</Qty>';
+            $lines[] = '   <Price>'.BrickLinkXml::money((float) $lot['price']).'</Price>';
+            $lines[] = '   <Condition>'.($lot['used'] ? 'U' : 'N').'</Condition>';
+
+            if ($lot['subcondition'] !== null) {
+                $lines[] = '   <SubCondition>'.$lot['subcondition'].'</SubCondition>';
+            }
+
+            if ($lot['remarks'] !== null) {
+                $lines[] = '   <Remarks>'.self::escape($lot['remarks']).'</Remarks>';
+            }
+
+            $lines[] = '   <MarkerText>#'.(int) $lot['entry_id'].'</MarkerText>';
+
+            if ($lot['name'] !== null) {
+                $lines[] = '   <ItemName>'.self::escape($lot['name']).'</ItemName>';
+            }
+
+            if ($lot['color_name'] !== null && (int) $lot['color'] !== 0) {
+                $lines[] = '   <ColorName>'.self::escape($lot['color_name']).'</ColorName>';
+            }
+
+            if ($lot['category'] !== null) {
+                $lines[] = '   <CategoryID>'.(int) $lot['category'].'</CategoryID>';
             }
 
             $lines[] = '  </Item>';

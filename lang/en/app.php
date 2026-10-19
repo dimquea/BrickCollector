@@ -87,7 +87,10 @@ return [
         'title' => 'Export',
         'inventory' => 'Inventory — BrickLink XML',
         'wanted' => 'Wanted list — BrickLink XML',
-        'bsx' => 'BrickStore basket — BSX',
+        'bsx' => 'BrickStore document — BSX',
+        'stock_bsx' => 'Stock — BrickStore BSX',
+        'stock_xml' => 'Stock — BrickLink Mass-Upload XML',
+        'stock_xml_hint' => 'No currency in this format: BrickLink reads the prices in your store currency.',
         'shortage' => 'What is missing — BrickLink XML',
     ],
 

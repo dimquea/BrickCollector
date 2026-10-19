@@ -81,7 +81,7 @@ class WishlistController extends Controller
         $rows = $wished->filters($this->filters($request))->sort($this->sort($request))->all();
 
         // Описи у желаемого не бывает: им не владеют. Остаётся список
-        // желаемого и корзина, с которой идут в магазин.
+        // желаемого и документ BrickStore, с которым идут в магазин.
         return Export::respond(Export::kind($request, 'wanted'), $rows->map(fn (object $row) => [
             'type' => $row->type,
             'id' => $row->item_id,

@@ -297,7 +297,7 @@ class ExportTest extends TestCase
      * сверены с исходниками BrickStore: без Condition позиция читается как
      * б/у, а цена с запятой — как ноль.
      */
-    public function test_the_basket_is_a_brickstore_document(): void
+    public function test_the_bsx_file_is_a_brickstore_document(): void
     {
         $this->entry('S', 'set-a');
 
@@ -321,7 +321,7 @@ class ExportTest extends TestCase
         $this->assertNotFalse(simplexml_load_string($body), 'документ должен разбираться');
     }
 
-    public function test_the_basket_carries_the_colour_of_a_part(): void
+    public function test_the_bsx_file_carries_the_colour_of_a_part(): void
     {
         $set = $this->entry('S', 'set-a');
         $this->row($set, ['item_type' => 'P', 'item_id' => 'brick', 'qty' => 4]);
@@ -350,7 +350,7 @@ class ExportTest extends TestCase
     /**
      * Под «недостачей» в файл идёт недостача, какой бы вид ни выбрали.
      *
-     * Опись и корзина прежде брали количество из коллекции: отфильтровали
+     * Опись и документ BrickStore прежде брали количество из коллекции: отфильтровали
      * одну потерянную деталь из четырёх и получили файл на четыре штуки.
      */
     public function test_every_kind_carries_the_shortage_under_the_lost_filter(): void
