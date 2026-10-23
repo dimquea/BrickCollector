@@ -18,6 +18,11 @@ const props = defineProps({
     inMinifigures: { type: Array, default: () => [] },
     otherColours: { type: Array, default: () => [] },
     missingIn: { type: Array, default: () => [] },
+    // Для справки, в итоги не входит: составные детали коллекции, внутри
+    // которых сидит эта, и сколько её там; и из чего собрана она сама.
+    composites: { type: Array, default: () => [] },
+    inside: { type: Number, default: 0 },
+    composition: { type: Array, default: () => [] },
 });
 
 const page = usePage();
@@ -34,7 +39,12 @@ const tabs = [
     { key: 'minifigures', label: 'parts.tab_minifigures', count: props.inMinifigures.length },
     { key: 'colours', label: 'parts.tab_colours', count: props.otherColours.length },
     { key: 'missing', label: 'parts.tab_missing', count: props.missingIn.length },
+    { key: 'composites', label: 'parts.tab_composites', count: props.composites.length },
 ].filter((tab) => tab.count > 0);
+
+// Состав — то, что в коробке у этой детали внутри: альтернатива и парная
+// строка — другие способы описать то же, и в списке «из чего» они лишние.
+const parts = computed(() => props.composition.filter((lot) => ! lot.is_alternate && ! lot.is_counterpart));
 
 const active = ref(tabs[0]?.key ?? null);
 
@@ -120,6 +130,15 @@ const lotDate = (lot) =>
                         <li v-if="part.spares" class="list-group-item d-flex justify-content-between gap-2">
                             <span class="text-body-secondary">{{ t('item.extras') }}</span>
                             <span>{{ part.spares }}</span>
+                        </li>
+                        <!-- Кисти в торсах лежат в коллекции целыми торсами, и в
+                             «Всего» они не идут — иначе одна деталь считалась бы
+                             дважды. Число здесь — для справки. -->
+                        <li v-if="inside" class="list-group-item d-flex justify-content-between gap-2">
+                            <span class="text-body-secondary" :title="t('parts.in_composites_hint')">
+                                {{ t('parts.in_composites') }}
+                            </span>
+                            <span>{{ inside }}</span>
                         </li>
                     </ul>
 
@@ -295,6 +314,34 @@ const lotDate = (lot) =>
                                     </tr>
                                 </template>
 
+                                <template v-else-if="active === 'composites'">
+                                    <tr v-for="row in composites" :key="`${row.item_id}/${row.color_id}/${row.per}`">
+                                        <td style="width: 4rem">
+                                            <ItemImage
+                                                type="P"
+                                                :id="row.item_id"
+                                                :color-id="row.color_id"
+                                                :alt="row.name"
+                                                :zoom-subtitle="row.color_name"
+                                                zoom
+                                            />
+                                        </td>
+                                        <td>
+                                            <Link :href="colourHref(row)" class="text-decoration-none">
+                                                <span class="line-clamp-2">{{ row.name }}</span>
+                                            </Link>
+                                            <div class="d-flex align-items-center gap-2 mt-1">
+                                                <span class="badge text-bg-light border">{{ row.item_id }}</span>
+                                                <ColorDot :rgb="row.color_rgb" :name="row.color_name" />
+                                            </div>
+                                        </td>
+                                        <td class="text-end text-nowrap">
+                                            <span class="fw-semibold">{{ row.inside }}</span>
+                                            <div class="small text-body-secondary">{{ row.held }} × {{ row.per }}</div>
+                                        </td>
+                                    </tr>
+                                </template>
+
                                 <template v-else>
                                     <tr v-for="row in missingIn" :key="row.entry_id" class="table-warning">
                                         <td style="width: 4rem">
@@ -315,6 +362,49 @@ const lotDate = (lot) =>
                                         <td class="text-end fw-semibold">{{ row.lost }} / {{ row.qty }}</td>
                                     </tr>
                                 </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Из чего собрана составная деталь — по справочнику и для
+                     справки: в коллекции она лежит целиком, и её части в
+                     количество не идут. Ссылки ведут к этим частям в
+                     коллекции — там видно, сколько их у вас и где. -->
+                <div v-if="parts.length" class="card shadow-sm mt-4">
+                    <div class="card-header">
+                        {{ t('parts.composition') }}
+                        <span class="small text-body-secondary ms-1">{{ t('parts.composition_hint') }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <tbody>
+                                <tr v-for="lot in parts" :key="`${lot.id}/${lot.color_id}/${lot.is_extra}`">
+                                    <td style="width: 4rem">
+                                        <ItemImage
+                                            type="P"
+                                            :id="lot.id"
+                                            :color-id="lot.color_id"
+                                            :alt="lot.name"
+                                            :zoom-subtitle="lot.color_name"
+                                            zoom
+                                        />
+                                    </td>
+                                    <td>
+                                        <Link
+                                            :href="`/parts/${encodeURIComponent(lot.id)}/${lot.color_id}`"
+                                            class="text-decoration-none"
+                                        >
+                                            <span class="line-clamp-2">{{ lot.name }}</span>
+                                        </Link>
+                                        <div class="d-flex align-items-center gap-2 mt-1">
+                                            <span class="badge text-bg-light border">{{ lot.id }}</span>
+                                            <span v-if="lot.is_extra" class="badge text-bg-light border">{{ t('item.extras') }}</span>
+                                        </div>
+                                    </td>
+                                    <td><ColorDot :rgb="lot.color_rgb" :name="lot.color_name" /></td>
+                                    <td class="text-end fw-semibold">{{ lot.qty }}</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

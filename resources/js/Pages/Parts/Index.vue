@@ -123,7 +123,20 @@ const placements = [
     { value: 'minifigure', label: 'parts.in_minifigures' },
     { value: 'loose', label: 'parts.loose' },
     { value: 'assembly', label: 'assembly.in_assemblies' },
+    // Кисти в торсах, шпалы в рельсах: в коллекции они лежат целыми
+    // составными деталями и в «Всего» не идут, но спросить о них можно.
+    { value: 'composite', label: 'parts.in_composites' },
 ];
+
+const insideComposites = computed(() => form.placement === 'composite');
+
+// Внутри составной детали ничего не отмечают потерянным — потеря стоит на
+// самом торсе, — так что «недостача» под этим местом ничего не отберёт.
+watch(insideComposites, (inside) => {
+    if (inside) {
+        form.lost = false;
+    }
+});
 
 const placementOptions = computed(() => placements.map((place) => ({ value: place.value, label: t(place.label) })));
 
@@ -196,10 +209,18 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
 
                     <div class="col-12">
                         <div class="form-check">
-                            <input id="missing" v-model="form.lost" class="form-check-input" type="checkbox" />
+                            <input
+                                id="missing"
+                                v-model="form.lost"
+                                class="form-check-input"
+                                type="checkbox"
+                                :disabled="insideComposites"
+                            />
                             <label class="form-check-label" for="missing">{{ t('parts.missing') }}</label>
                         </div>
-                        <div class="form-text">{{ t('parts.missing_hint') }}</div>
+                        <div class="form-text">
+                            {{ insideComposites ? t('parts.missing_in_composites') : t('parts.missing_hint') }}
+                        </div>
                     </div>
 
                     <div class="col-12">
@@ -252,6 +273,9 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             <th class="text-nowrap text-end">{{ t('assembly.in_assemblies') }}</th>
                             <th class="text-nowrap text-end">{{ t('item.extras') }}</th>
                             <th class="text-nowrap text-end">{{ t('collection.lost') }}</th>
+                            <th v-if="insideComposites" class="text-nowrap text-end" :title="t('parts.in_composites_hint')">
+                                {{ t('parts.in_composites') }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -347,6 +371,7 @@ const href = (part) => `/parts/${encodeURIComponent(part.item_id)}/${part.color_
                             <td class="text-end">{{ part.in_assemblies || '' }}</td>
                             <td class="text-end text-body-secondary">{{ part.spares || '' }}</td>
                             <td class="text-end text-warning-emphasis">{{ part.lost || '' }}</td>
+                            <td v-if="insideComposites" class="text-end fw-semibold">{{ part.inside }}</td>
                         </tr>
                     </tbody>
                 </table>

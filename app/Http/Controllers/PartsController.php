@@ -11,6 +11,7 @@ use App\Collection\Models\Entry;
 use App\Collection\Models\Source;
 use App\Collection\Models\Storage;
 use App\Collection\Models\Tag;
+use App\Collection\Queries\Composites;
 use App\Collection\Queries\EntryContents;
 use App\Collection\Queries\LostSources;
 use App\Collection\Queries\PartPlaces;
@@ -97,6 +98,18 @@ class PartsController extends Controller
             return Export::stock($kind, $lots, 'parts');
         }
 
+        // Внутри составных — то, что внутри них и есть: кисти в торсах. Недостачи
+        // там не отмечают, так что и выгружать по этому месту можно только
+        // количество.
+        if ($placement === 'composite') {
+            return Export::respond($kind, $rows->map(fn (object $row) => [
+                'type' => 'P',
+                'id' => $row->item_id,
+                'color' => (int) $row->color_id,
+                'qty' => (int) $row->inside,
+            ]), 'parts');
+        }
+
         if ($kind === 'wanted' || ! empty($filters['lost'])) {
             $sources = $lost->parts();
 
@@ -150,9 +163,14 @@ class PartsController extends Controller
 
     public function show(string $id, int $color, PartTotals $totals, AssemblyImages $images): Response
     {
-        $part = $totals->one($id, $color);
+        // Деталь, которая есть только внутри составных — кисть в торсе, — тоже
+        // открывается: «есть ли у меня такая» спрашивают как раз о ней.
+        $part = $totals->one($id, $color)
+            ?? (new PartTotals())->filters(['placement' => 'composite'])->one($id, $color);
 
         abort_if($part === null, 404);
+
+        $holding = Composites::holding($id, $color);
 
         $places = new PartPlaces($id, $color);
         $loose = $places->loose();
@@ -185,6 +203,13 @@ class PartsController extends Controller
             'inMinifigures' => $places->inMinifigures(),
             'otherColours' => $totals->otherColours($id, $color),
             'missingIn' => $places->missingIn(),
+            // Для справки, в итоги не входит: в каких составных деталях
+            // коллекции сидит эта, и из чего собрана она сама.
+            'composites' => $holding->values(),
+            'inside' => (int) $holding->sum('inside'),
+            'composition' => CatalogItem::where('type', 'P')->where('id', $id)->value('has_inventory')
+                ? Composites::composition($id)
+                : [],
         ]);
     }
 
@@ -308,7 +333,7 @@ class PartsController extends Controller
         return ListFilters::read($request, [
             'q' => ['string', 'max:120'],
             'color_id' => ['integer'],
-            'placement' => ['string', 'in:set,minifigure,loose,assembly'],
+            'placement' => ['string', 'in:set,minifigure,loose,assembly,composite'],
             'tag_id' => ['integer'],
         ], switches: ['lost', 'used']);
     }

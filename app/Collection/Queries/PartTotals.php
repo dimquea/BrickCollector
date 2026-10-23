@@ -111,6 +111,10 @@ class PartTotals
 
     private function base(): Builder
     {
+        if (($this->filters['placement'] ?? null) === 'composite') {
+            return $this->insideComposites();
+        }
+
         $query = DB::table('collection_items as ci')
             ->join('collection_entries as e', 'e.id', '=', 'ci.entry_id')
             ->leftJoin('bl_items as i', fn ($join) => $join
@@ -184,28 +188,7 @@ class PartTotals
                 DB::raw('MAX(ci.is_extra) as has_extra'),
             ]);
 
-        $term = trim((string) ($this->filters['q'] ?? ''));
-
-        if ($term !== '') {
-            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
-
-            // Номер из инструкции — тоже имя детали, и притом точное: код
-            // элемента называет артикул вместе с цветом, то есть ровно одну
-            // строку этого списка.
-            $identifiers = ItemIdentifiers::resolve($term);
-
-            $query->where(function ($where) use ($escaped, $identifiers) {
-                $where
-                    ->where('ci.item_id', 'like', "{$escaped}%")
-                    ->orWhere('i.name', 'like', "%{$escaped}%");
-
-                ItemIdentifiers::match($where, $identifiers, 'ci.item_type', 'ci.item_id', 'ci.color_id');
-            });
-        }
-
-        if (($this->filters['color_id'] ?? null) !== null && $this->filters['color_id'] !== '') {
-            $query->where('ci.color_id', $this->filters['color_id']);
-        }
+        $this->narrow($query);
 
         // Тег принадлежит партии, а не детали, поэтому отбор идёт по парам
         // «артикул + цвет», встречающимся в помеченных партиях, — и уже потому
@@ -291,5 +274,80 @@ class PartTotals
         };
 
         return $query;
+    }
+
+    /**
+     * «Внутри составных деталей»: кисти в торсах, шпалы в рельсах.
+     *
+     * Таких строк в коллекции нет — составная деталь лежит целиком, — поэтому
+     * основой списка здесь служат не строки коллекции, а их справочный состав
+     * (Composites::inside), а обычные итоги подцепляются к нему: кисть, которая
+     * лежит и сама по себе, показывает и то, и другое. В «Всего» внутреннее не
+     * складывается — оно идёт своей колонкой, для справки.
+     *
+     * Недостача, теги и «б/у» здесь не отбирают: внутри составной детали ничего
+     * не отмечают потерянным, и теги стоят на партиях, а не на их кистях.
+     */
+    private function insideComposites(): Builder
+    {
+        $held = (new self())->filters([])->base();
+
+        $zero = fn (string $column) => DB::raw("COALESCE(r.{$column}, 0) as {$column}");
+
+        $query = DB::query()
+            ->fromSub(Composites::inside(), 'ci')
+            ->leftJoinSub($held, 'r', fn ($join) => $join
+                ->on('r.item_id', '=', 'ci.item_id')
+                ->on('r.color_id', '=', 'ci.color_id'))
+            ->leftJoin('bl_items as i', fn ($join) => $join
+                ->on('i.type', '=', 'ci.item_type')
+                ->on('i.id', '=', 'ci.item_id'))
+            ->leftJoin('bl_colors as c', 'c.id', '=', 'ci.color_id')
+            ->where('ci.inside', '>', 0)
+            ->select([
+                'ci.item_id',
+                'ci.color_id',
+                DB::raw('COALESCE(i.name, ci.item_id) as name'),
+                'c.name as color_name',
+                'c.rgb as color_rgb',
+                DB::raw('COALESCE(i.image_color_id, 0) as image_color_id'),
+                ...array_map($zero, [
+                    'total', 'in_sets', 'in_minifigures', 'loose', 'in_assemblies', 'spares', 'used_qty',
+                    'lost', 'lost_in_sets', 'lost_in_minifigures', 'lost_loose', 'lost_in_assemblies',
+                    'has_alternate', 'has_counterpart', 'has_extra',
+                ]),
+                'ci.inside',
+            ]);
+
+        $this->narrow($query);
+
+        return $query;
+    }
+
+    /** Отбор по номеру, названию и цвету — одинаковый для обоих списков. */
+    private function narrow(Builder $query): void
+    {
+        $term = trim((string) ($this->filters['q'] ?? ''));
+
+        if ($term !== '') {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
+
+            // Номер из инструкции — тоже имя детали, и притом точное: код
+            // элемента называет артикул вместе с цветом, то есть ровно одну
+            // строку этого списка.
+            $identifiers = ItemIdentifiers::resolve($term);
+
+            $query->where(function ($where) use ($escaped, $identifiers) {
+                $where
+                    ->where('ci.item_id', 'like', "{$escaped}%")
+                    ->orWhere('i.name', 'like', "%{$escaped}%");
+
+                ItemIdentifiers::match($where, $identifiers, 'ci.item_type', 'ci.item_id', 'ci.color_id');
+            });
+        }
+
+        if (($this->filters['color_id'] ?? null) !== null && $this->filters['color_id'] !== '') {
+            $query->where('ci.color_id', $this->filters['color_id']);
+        }
     }
 }

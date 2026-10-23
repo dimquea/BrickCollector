@@ -213,6 +213,12 @@ request path reads the cache and records what is missing.
 - Part accounting always filters by `item_type = 'P'`.
 - **Assembled parts (`P` inside `P`) are never expanded** into the collection. A torso is one part,
   not a pair of arms. Show its composition on the part's own page instead.
+- **What sits inside a composite part is shown for reference and never counted** (`Composites`). It
+  is worked out on the fly from the composites the collection holds and their catalogue inventory:
+  the part page lists the composites a part sits in, and the parts section offers "inside composite
+  parts" as a placement of its own, with its own column. Nothing of it reaches "in the collection".
+  A lost composite holds nothing. Climb from the collection's rows by the parent index — the
+  `+inv.child_type` keeps SQLite off the child index, which made the query take nine seconds.
 - Subsets and minifigures, by contrast, are expanded recursively and the intermediate node is kept.
   Depth limit 8, with cycle protection along the traversal path.
 - **A minifigure inside a minifigure is a part of it, not a second figure.** BrickLink describes a
