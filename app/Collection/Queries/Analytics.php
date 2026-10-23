@@ -159,26 +159,51 @@ class Analytics
     /**
      * Деньги.
      *
-     * Считаем только по тем экземплярам, у которых цена указана: средняя по
-     * всей коллекции, где половина без цены, — это не средняя цена покупки, а
-     * ничто.
+     * «Всего» — все затраты на коллекцию: наборы, отдельные фигурки, свободные
+     * партии, сборки, снаряжение. Остальное — по видам, потому что средняя
+     * цена покупки осмысленна только внутри вида: набор за восемьдесят тысяч и
+     * партия за рубль в одной средней дают число, которое не говорит ни о чём.
+     *
+     * Внутри вида считаем только по экземплярам с ценой: средняя, где половина
+     * без цены, — это не средняя цена покупки, а ничто.
      *
      * @return array<string, mixed>
      */
     public function finance(): array
     {
+        return [
+            'total' => (int) DB::table('collection_entries')->sum('price'),
+            'sets' => $this->spending('S'),
+            'figures' => $this->spending('M'),
+            // У свободной партии средняя и «самая дорогая» не говорят ничего:
+            // партия бывает и в одну деталь, и в двести.
+            'parts' => ['total' => (int) DB::table('collection_entries')->where('item_type', 'P')->sum('price')],
+        ];
+    }
+
+    /**
+     * Сколько ушло на один вид экземпляров: всего, у скольких цена указана,
+     * в среднем и самая дорогая покупка.
+     *
+     * @return array<string, mixed>
+     */
+    private function spending(string $type): array
+    {
         $row = DB::table('collection_entries')
-            ->whereNotNull('price')
+            ->where('item_type', $type)
+            ->selectRaw('COUNT(*) as entries')
+            ->selectRaw('COUNT(price) as priced')
             ->selectRaw('COALESCE(SUM(price), 0) as total')
-            ->selectRaw('COUNT(*) as priced')
             ->first();
 
         $priciest = DB::table('collection_entries as e')
             ->leftJoin('bl_items as i', fn ($join) => $join
                 ->on('i.type', '=', 'e.item_type')
                 ->on('i.id', '=', 'e.item_id'))
+            ->where('e.item_type', $type)
             ->whereNotNull('e.price')
             ->orderByDesc('e.price')
+            ->orderBy('e.id')
             ->first([
                 'e.id',
                 'e.item_id',
@@ -188,6 +213,7 @@ class Analytics
 
         return [
             'total' => (int) $row->total,
+            'entries' => (int) $row->entries,
             'priced' => (int) $row->priced,
             'average' => $row->priced > 0 ? (int) round($row->total / $row->priced) : null,
             'priciest' => $priciest === null ? null : [

@@ -118,20 +118,33 @@ class AnalyticsTest extends TestCase
     }
 
     /**
-     * Средняя по коллекции, где половина без цены, — не средняя цена покупки,
-     * а ничто.
+     * «Всего» — все затраты: наборы, фигурки, партии, сборки, снаряжение. Средняя
+     * и самая дорогая — по видам, и только по экземплярам с ценой: набор за
+     * тысячу и партия за три рубля в одной средней не значат ничего.
      */
-    public function test_money_is_counted_over_priced_copies_only(): void
+    public function test_money_is_told_apart_by_kind(): void
     {
         $this->collection();
         Entry::create(['item_type' => 'S', 'item_id' => 'set-b']);
+        Entry::where('item_type', 'P')->update(['price' => 300]);
+        Entry::create(['item_type' => null, 'name' => 'Моя модель', 'price' => 200]);
+        DB::table('bl_item_types')->insertOrIgnore([['code' => 'G', 'name' => 'Gear']]);
+        Entry::create(['item_type' => 'G', 'item_id' => 'case', 'price' => 50]);
 
         $finance = app(Analytics::class)->finance();
 
-        $this->assertSame(100500, $finance['total']);
-        $this->assertSame(2, $finance['priced']);
-        $this->assertSame(50250, $finance['average']);
-        $this->assertSame('set-a', $finance['priciest']['item_id']);
+        $this->assertSame(101050, $finance['total'], 'и сборка, и снаряжение — в общем итоге');
+
+        $this->assertSame(100000, $finance['sets']['total']);
+        $this->assertSame(2, $finance['sets']['entries']);
+        $this->assertSame(1, $finance['sets']['priced']);
+        $this->assertSame(100000, $finance['sets']['average'], 'набор без цены в среднюю не входит');
+        $this->assertSame('set-a', $finance['sets']['priciest']['item_id']);
+
+        $this->assertSame(500, $finance['figures']['total']);
+        $this->assertSame('fig-b', $finance['figures']['priciest']['item_id']);
+
+        $this->assertSame(['total' => 300], $finance['parts']);
     }
 
     public function test_money_says_so_when_nothing_has_a_price(): void
@@ -141,8 +154,10 @@ class AnalyticsTest extends TestCase
         $finance = app(Analytics::class)->finance();
 
         $this->assertSame(0, $finance['total']);
-        $this->assertNull($finance['average']);
-        $this->assertNull($finance['priciest']);
+        $this->assertSame(0, $finance['sets']['priced']);
+        $this->assertNull($finance['sets']['average']);
+        $this->assertNull($finance['sets']['priciest']);
+        $this->assertNull($finance['figures']['priciest']);
     }
 
     /** Тема берётся корневая: лист повторял бы список наборов построчно. */
@@ -191,7 +206,8 @@ class AnalyticsTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->component('Analytics/Index')
                 ->where('counts.sets.total', 1)
-                ->where('finance.priced', 2)
+                ->where('finance.sets.priced', 1)
+                ->where('finance.figures.priced', 1)
                 ->has('themes', 1)
                 ->has('years', 1));
     }

@@ -36,6 +36,17 @@ const groups = [
     { key: 'minifigures', fields: ['total', 'in_sets', 'loose', 'unique', 'incomplete'] },
     { key: 'parts', fields: ['total', 'in_sets', 'loose', 'assemblies', 'unique', 'lost', 'missing_assemblies'] },
 ];
+
+/*
+ * Деньги по видам. Снаряжение и сборки отдельного блока не получают — их
+ * единицы, — но входят в «Всего». У свободных деталей только сумма: партия
+ * бывает и в одну деталь, и в двести, и средняя по партиям ничего не скажет.
+ */
+const spending = [
+    { key: 'sets', title: 'analytics.money_sets', data: props.finance.sets, href: (id) => `/sets/${id}` },
+    { key: 'figures', title: 'analytics.money_figures', data: props.finance.figures, href: (id) => `/minifigures/copy/${id}` },
+    { key: 'parts', title: 'analytics.money_parts', data: props.finance.parts, href: null },
+];
 </script>
 
 <template>
@@ -173,48 +184,58 @@ const groups = [
                         </h2>
                         <div id="analyticsFinance" class="accordion-collapse collapse show">
                             <div class="accordion-body">
-                                <div class="d-flex flex-wrap gap-4">
-                                    <div>
-                                        <div class="fs-4 fw-semibold">{{ money(finance.total) }}</div>
-                                        <div class="text-body-secondary small">
-                                            {{ t('analytics.spent') }}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="fs-4 fw-semibold">{{ number(finance.priced) }}</div>
-                                        <div class="text-body-secondary small">
-                                            {{ t('analytics.priced') }}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="fs-4 fw-semibold">{{ money(finance.average) }}</div>
-                                        <div class="text-body-secondary small">
-                                            {{ t('analytics.average') }}
-                                        </div>
-                                    </div>
+                                <!-- Всего — все затраты на коллекцию, какого бы вида ни
+                                     были покупки. Средняя и самая дорогая — только
+                                     внутри вида: набор и партия в одной средней не
+                                     значат ничего. Сложено так же, как «Что в
+                                     коллекции»: заголовок группы и ряд чисел. -->
+                                <div class="mb-4">
+                                    <div class="fs-4 fw-semibold">{{ money(finance.total) }}</div>
+                                    <div class="text-body-secondary small">{{ t('analytics.spent') }}</div>
                                 </div>
 
-                                <div v-if="finance.priciest" class="mt-3">
-                                    <div class="text-body-secondary small">
-                                        {{ t('analytics.priciest') }}
-                                    </div>
-                                    <Link
-                                        :href="`/sets/${finance.priciest.entry_id}`"
-                                        class="text-decoration-none"
-                                    >
-                                        <span class="badge text-bg-light border me-1">
-                                            {{ finance.priciest.item_id }}
-                                        </span>
-                                        {{ finance.priciest.name }}
-                                    </Link>
-                                    <span class="fw-semibold ms-1">
-                                        {{ money(finance.priciest.price) }}
-                                    </span>
-                                </div>
-
-                                <p v-else class="text-body-secondary mb-0">
+                                <p v-if="! finance.total" class="text-body-secondary mb-0">
                                     {{ t('analytics.no_prices') }}
                                 </p>
+
+                                <template v-else>
+                                    <div v-for="block in spending" :key="block.key" class="mb-4 last-child-mb-0">
+                                        <h3 class="h6">{{ t(block.title) }}</h3>
+
+                                        <div class="d-flex flex-wrap gap-4">
+                                            <div>
+                                                <div class="fs-4 fw-semibold">{{ money(block.data.total) }}</div>
+                                                <div class="text-body-secondary small">{{ t('analytics.spent') }}</div>
+                                            </div>
+                                            <template v-if="'priced' in block.data">
+                                                <div>
+                                                    <div class="fs-4 fw-semibold">
+                                                        {{ t('analytics.priced_of', {
+                                                            priced: number(block.data.priced),
+                                                            entries: number(block.data.entries),
+                                                        }) }}
+                                                    </div>
+                                                    <div class="text-body-secondary small">{{ t('analytics.priced') }}</div>
+                                                </div>
+                                                <div>
+                                                    <div class="fs-4 fw-semibold">{{ money(block.data.average) }}</div>
+                                                    <div class="text-body-secondary small">{{ t('analytics.average') }}</div>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <div v-if="block.data.priciest" class="mt-2">
+                                            <div class="text-body-secondary small">{{ t('analytics.priciest') }}</div>
+                                            <Link :href="block.href(block.data.priciest.entry_id)" class="text-decoration-none">
+                                                <span class="badge text-bg-light border me-1">
+                                                    {{ block.data.priciest.item_id }}
+                                                </span>
+                                                {{ block.data.priciest.name }}
+                                            </Link>
+                                            <span class="fw-semibold ms-1">{{ money(block.data.priciest.price) }}</span>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
