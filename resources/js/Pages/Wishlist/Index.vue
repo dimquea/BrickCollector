@@ -1,4 +1,5 @@
 <script setup>
+import MasonryGrid from '@/Components/MasonryGrid.vue';
 import axios from 'axios';
 import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
@@ -13,7 +14,6 @@ import { exportItems } from '@/support/exports';
 import ItemImage from '@/Components/ItemImage.vue';
 import ColorDot from '@/Components/ColorDot.vue';
 import { debounce } from '@/support/debounce';
-import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
 import { useThemeFilter } from '@/support/themeFilter';
 import { t, tChoice } from '@/i18n';
@@ -222,8 +222,8 @@ const shows = (list) => list.length > 1;
             <Link href="/catalog">{{ t('wishlist.empty_hint') }}</Link>
         </p>
 
-        <div :class="masonry(cardSize)">
-            <div v-for="item in items.data" :key="item.wish_id" class="card shadow-sm">
+        <MasonryGrid :items="items.data" :size="cardSize" :item-key="(item) => item.wish_id" v-slot="{ item: item }">
+            <div class="card shadow-sm">
                 <Link
                     :href="href(item)"
                     class="card-header d-flex align-items-center gap-2 text-truncate text-decoration-none"
@@ -261,7 +261,7 @@ const shows = (list) => list.length > 1;
                     </button>
                 </div>
             </div>
-        </div>
+        </MasonryGrid>
 
         <nav v-if="items.last_page > 1" class="mt-4">
             <ul class="pagination justify-content-center flex-wrap">

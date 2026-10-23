@@ -1,4 +1,5 @@
 <script setup>
+import MasonryGrid from '@/Components/MasonryGrid.vue';
 import { url } from '@/support/base';
 import { computed, reactive, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
@@ -10,7 +11,6 @@ import SortControl from '@/Components/SortControl.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import PhotoSearchDialog from '@/Components/PhotoSearchDialog.vue';
 import PartsFilter from '@/Components/PartsFilter.vue';
-import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
 import { useThemeFilter } from '@/support/themeFilter';
 import { t, tChoice } from '@/i18n';
@@ -261,8 +261,8 @@ const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props,
             {{ t('catalog.nothing_found') }}
         </p>
 
-        <div :class="masonry(cardSize)">
-            <div v-for="item in results.data" :key="`${item.type}/${item.id}`" class="card shadow-sm">
+        <MasonryGrid :items="results.data" :size="cardSize" :item-key="(item) => `${item.type}/${item.id}`" v-slot="{ item: item }">
+            <div class="card shadow-sm">
                 <div class="card-header d-flex align-items-center gap-2 text-truncate">
                     <span class="badge text-bg-secondary flex-shrink-0">{{ item.id }}</span>
                     <span class="text-truncate" :title="item.name">{{ item.name }}</span>
@@ -293,7 +293,7 @@ const { themeOptions, subthemeOptions, theme, subtheme } = useThemeFilter(props,
                     ></i>
                 </div>
             </div>
-        </div>
+        </MasonryGrid>
 
         <nav v-if="results.last_page > 1" class="mt-4">
             <ul class="pagination justify-content-center flex-wrap">

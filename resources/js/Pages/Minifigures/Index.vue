@@ -1,4 +1,5 @@
 <script setup>
+import MasonryGrid from '@/Components/MasonryGrid.vue';
 import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
@@ -10,7 +11,6 @@ import SortControl from '@/Components/SortControl.vue';
 import ExportButton from '@/Components/ExportButton.vue';
 import { exportItems, exportModes } from '@/support/exports';
 import { debounce } from '@/support/debounce';
-import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
 import { useThemeFilter } from '@/support/themeFilter';
 import { t, tChoice } from '@/i18n';
@@ -265,8 +265,8 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
             <Link href="/catalog">{{ t('collection.empty_hint') }}</Link>
         </p>
 
-        <div :class="masonry(cardSize)">
-            <div v-for="figure in figures.data" :key="figure.item_id" class="card shadow-sm">
+        <MasonryGrid :items="figures.data" :size="cardSize" :item-key="(figure) => figure.item_id" v-slot="{ item: figure }">
+            <div class="card shadow-sm">
                 <Link
                     :href="href(figure)"
                     class="card-header d-flex align-items-center gap-2 text-truncate text-decoration-none"
@@ -305,7 +305,7 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
                     </span>
                 </div>
             </div>
-        </div>
+        </MasonryGrid>
 
         <nav v-if="figures.last_page > 1" class="mt-4">
             <ul class="pagination justify-content-center flex-wrap">

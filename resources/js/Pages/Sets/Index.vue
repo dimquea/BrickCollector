@@ -1,4 +1,5 @@
 <script setup>
+import MasonryGrid from '@/Components/MasonryGrid.vue';
 import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
@@ -11,7 +12,6 @@ import { exportItems, exportModes } from '@/support/exports';
 import ItemImage from '@/Components/ItemImage.vue';
 import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
 import { debounce } from '@/support/debounce';
-import { masonry } from '@/support/cards';
 import { rememberSort } from '@/support/sortMemory';
 import { useThemeFilter } from '@/support/themeFilter';
 import { t, tChoice } from '@/i18n';
@@ -272,8 +272,8 @@ const shows = (list) => list.length > 1;
             <Link href="/catalog">{{ t('collection.empty_hint') }}</Link>
         </p>
 
-        <div :class="masonry(cardSize)">
-            <div v-for="entry in entries.data" :key="entry.id" class="card shadow-sm">
+        <MasonryGrid :items="entries.data" :size="cardSize" :item-key="(entry) => entry.id" v-slot="{ item: entry }">
+            <div class="card shadow-sm">
                 <Link
                     :href="`/sets/${entry.id}`"
                     class="card-header d-flex align-items-center gap-2 text-truncate text-decoration-none"
@@ -309,7 +309,7 @@ const shows = (list) => list.length > 1;
                     </span>
                 </div>
             </div>
-        </div>
+        </MasonryGrid>
 
         <nav v-if="entries.last_page > 1" class="mt-4">
             <ul class="pagination justify-content-center flex-wrap">

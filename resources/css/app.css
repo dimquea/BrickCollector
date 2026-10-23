@@ -45,17 +45,29 @@
     max-width: none;
 }
 
-/* Masonry grid for card listings. Bootstrap has no masonry, so this is ours. */
+/*
+ * Masonry grid for card listings. Bootstrap has no masonry, so this is ours.
+ *
+ * MasonryGrid.vue lays the cards out row by row, round-robin into columns;
+ * how many columns there are is decided here, as a variable it reads.
+ */
 .masonry {
-    column-gap: 1rem;
-}
-.masonry > * {
-    break-inside: avoid;
+    --masonry-columns: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
     margin-bottom: 1rem;
 }
-@media (min-width: 576px)  { .masonry { column-count: 2; } }
-@media (min-width: 992px)  { .masonry { column-count: 3; } }
-@media (min-width: 1400px) { .masonry { column-count: 4; } }
+.masonry__column {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+@media (min-width: 576px)  { .masonry { --masonry-columns: 2; } }
+@media (min-width: 992px)  { .masonry { --masonry-columns: 3; } }
+@media (min-width: 1400px) { .masonry { --masonry-columns: 4; } }
 
 /*
  * Маленькая карточка — вдвое больше колонок на той же ширине, то есть карточка
@@ -64,19 +76,19 @@
  * решает мобильная настройка.
  */
 @media (max-width: 575.98px) {
-    .masonry--mobile-small { column-count: 2; }
+    .masonry--mobile-small { --masonry-columns: 2; }
 }
 @media (min-width: 576px) and (max-width: 767.98px) {
-    .masonry--mobile-small { column-count: 4; }
+    .masonry--mobile-small { --masonry-columns: 4; }
 }
 @media (min-width: 768px) and (max-width: 991.98px) {
-    .masonry--desktop-small { column-count: 4; }
+    .masonry--desktop-small { --masonry-columns: 4; }
 }
 @media (min-width: 992px) and (max-width: 1399.98px) {
-    .masonry--desktop-small { column-count: 6; }
+    .masonry--desktop-small { --masonry-columns: 6; }
 }
 @media (min-width: 1400px) {
-    .masonry--desktop-small { column-count: 8; }
+    .masonry--desktop-small { --masonry-columns: 8; }
 }
 
 /* В узкой карточке подписи и отступы крупноваты: ужимаем заодно. */

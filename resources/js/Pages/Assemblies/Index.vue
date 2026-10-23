@@ -1,4 +1,5 @@
 <script setup>
+import MasonryGrid from '@/Components/MasonryGrid.vue';
 import { url } from '@/support/base';
 import { reactive, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
@@ -6,7 +7,6 @@ import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssemblyImage from '@/Components/AssemblyImage.vue';
 import { debounce } from '@/support/debounce';
-import { masonry } from '@/support/cards';
 import { t, tChoice } from '@/i18n';
 
 const props = defineProps({
@@ -95,8 +95,8 @@ function create() {
             {{ t('collection.empty') }}
         </p>
 
-        <div :class="masonry(cardSize)">
-            <div v-for="assembly in assemblies.data" :key="assembly.id" class="card shadow-sm">
+        <MasonryGrid :items="assemblies.data" :size="cardSize" :item-key="(assembly) => assembly.id" v-slot="{ item: assembly }">
+            <div class="card shadow-sm">
                 <div class="card-header text-truncate" :title="assembly.name">
                     {{ assembly.name || t('assembly.untitled') }}
                 </div>
@@ -124,7 +124,7 @@ function create() {
                     </span>
                 </div>
             </div>
-        </div>
+        </MasonryGrid>
 
         <nav v-if="assemblies.last_page > 1" class="mt-4">
             <ul class="pagination justify-content-center flex-wrap">
