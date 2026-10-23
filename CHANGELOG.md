@@ -3,6 +3,35 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.10.0 — 2026-10-23
+
+### Added
+
+- **What sits inside a composite part.** A torso lies in the collection whole, one row: its arms
+  and hands are the same plastic, and counting them apart would count a part twice — so a hand
+  inside a torso could not be found anywhere, and "do I have this hand in dark grey" had no
+  answer. Now, for reference and never added to the counts:
+  - the page of a composite part shows what it is made of, by the catalogue, each part linking to
+    its own page in the collection;
+  - the page of a part has a tab "Inside other parts" — which composites of the collection hold it
+    and how many — and opens even for a part held only inside them;
+  - "Where it is" in the parts section gains "Inside composite parts", with a column of its own; the
+    search and the colour work as usual, and an export under it counts what is inside.
+- **Sorting and filtering the parts of a set.** Above the parts of a copy: "Missing only", when
+  anything is missing; a colour from those in the set; an order by number, colour or quantity,
+  remembered between visits. All in place, with no reload — the open groups stay open.
+- **Money by kind.** "Total" is still everything the collection cost, assemblies and gear
+  included. Below it sets and loose minifigures each show their total, how many have a price, the
+  average and the dearest one, and loose parts their total. An average over a set for eighty
+  thousand and a lot for one rouble told nothing.
+
+### Changed
+
+- **Cards read row by row.** The card lists were columns filled top to bottom, so the third card
+  sat under the first and a list sorted by year read in columns. Cards are dealt into the columns in
+  turn now: the first row is the first cards. The columns may end at different heights.
+- **An export button with a label shrinks to its icon on a phone.**
+
 ## 1.9.0 — 2026-10-19
 
 ### Added

@@ -50,7 +50,9 @@ own purchase details.
 
 **Parts.** Counted across the collection rather than listed box by box: how
 many you have in total, how many sit in sets, how many inside minifigures, how
-many loose — and which copies each of them came from.
+many loose — and which copies each of them came from. What sits inside a
+composite part, a hand in a torso, is shown too, for reference and apart from
+the counts.
 
 **Loose parts.** A part bought on its own is a lot: a date, a price, a drawer, a
 page of its own and a quantity you can change. Adding one asks how many, in
@@ -66,8 +68,9 @@ tags and
 statuses you define yourself; a free-form note. Only the two statuses that ship
 with the application — box and instructions — cannot be deleted.
 
-**Analytics.** What the collection holds, what it cost, and both broken down by
-theme and by release year. The numbers are links: click one and the section
+**Analytics.** What the collection holds and what it cost — in total, and for
+sets, loose minifigures and loose parts apart — and both broken down by theme
+and by release year. The numbers are links: click one and the section
 opens filtered to exactly what was counted.
 
 **A wishlist.** What the collection does not hold but you want, added from the
