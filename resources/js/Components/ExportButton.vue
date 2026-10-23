@@ -31,7 +31,9 @@ defineProps({
             :aria-label="label ?? t('export.title')"
         >
             <i class="mdi mdi-tray-arrow-down"></i>
-            <span v-if="label" class="ms-1">{{ label }}</span>
+            <!-- На телефоне — только значок: подпись съедала целую строку, а
+                 значок и подсказка и так говорят, что это. -->
+            <span v-if="label" class="ms-1 d-none d-sm-inline">{{ label }}</span>
         </button>
 
         <ul class="dropdown-menu dropdown-menu-end">

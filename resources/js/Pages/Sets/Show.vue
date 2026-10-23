@@ -8,7 +8,7 @@ import Link from '@/Components/AppLink.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import { KIND_ORDER, kindLabel } from '@/support/itemKinds';
-import OwnedLotsTable from '@/Components/OwnedLotsTable.vue';
+import SetPartsList from '@/Components/SetPartsList.vue';
 import OwnedNode from '@/Components/OwnedNode.vue';
 import EntryMetaForm from '@/Components/EntryMetaForm.vue';
 import EntryStatusBadges from '@/Components/EntryStatusBadges.vue';
@@ -289,17 +289,16 @@ async function partOut() {
                                      группы — это сама кнопка аккордеона, и
                                      вложить в неё меню нельзя. Выгружается всё
                                      поддерево группы, сколь угодно глубокое. -->
-                                <div
-                                    v-if="group.short"
-                                    class="d-flex justify-content-end"
-                                    :class="group.key === 'P' ? 'p-2 border-bottom' : 'mb-3'"
-                                >
+                                <div v-if="group.short && group.key !== 'P'" class="d-flex justify-content-end mb-3">
                                     <ExportButton :items="group.shortage" :label="t('collection.export_shortage')" />
                                 </div>
 
-                                <OwnedLotsTable
+                                <!-- У деталей выгрузка стоит в одной строке с отбором и
+                                     порядком: это один и тот же вопрос о недостаче. -->
+                                <SetPartsList
                                     v-if="group.key === 'P'"
                                     :lots="contents"
+                                    :shortage="group.short ? group.shortage : null"
                                     @saved="applySaved"
                                 />
 
