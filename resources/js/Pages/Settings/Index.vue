@@ -9,6 +9,7 @@ import LinkEditor from '@/Components/LinkEditor.vue';
 import ListAppearance from '@/Components/ListAppearance.vue';
 import CatalogUpdate from '@/Components/CatalogUpdate.vue';
 import InventoryRefresh from '@/Components/InventoryRefresh.vue';
+import ImageRetry from '@/Components/ImageRetry.vue';
 import { notify } from '@/support/toasts';
 import { locale, t } from '@/i18n';
 
@@ -18,6 +19,7 @@ const props = defineProps({
     currency: { type: String, default: 'RUB' },
     theme: { type: String, default: 'system' },
     photoSearch: { type: Boolean, default: false },
+    imageFailures: { type: Object, default: () => ({ error: 0, missing: 0 }) },
     cameraButton: { type: Boolean, default: false },
     proxyImages: { type: Boolean, default: true },
     links: { type: Array, default: () => [] },
@@ -401,6 +403,8 @@ const sections = [
                         <CatalogUpdate :catalog="catalog" />
 
                         <InventoryRefresh />
+
+                        <ImageRetry :failures="imageFailures" />
                     </div>
                 </div>
             </div>

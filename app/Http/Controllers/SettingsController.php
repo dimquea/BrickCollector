@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Catalog\Images\ItemImages;
 use App\Catalog\Import\CatalogRefresh;
 use App\Catalog\Import\CatalogStatus;
 use App\Collection\Actions\RefreshInventories;
@@ -67,6 +68,9 @@ class SettingsController extends Controller
                     ->values(),
             ],
             'catalog' => $this->catalog(),
+            // Сколько картинок не скачалось и почему: служба повторяет их сама,
+            // но человек должен видеть, что они есть.
+            'imageFailures' => app(ItemImages::class)->failures(),
         ]);
     }
 
@@ -121,6 +125,25 @@ class SettingsController extends Controller
                 ? __('app.settings.inventories_orphaned', ['count' => $summary['orphaned']])
                 : null,
             'orphans' => $summary['orphans'],
+        ]);
+    }
+
+    /**
+     * Ставит все неудачные картинки на ближайший прогон службы.
+     *
+     * Не качает сама: картинок бывает сотни, по десять секунд ожидания на
+     * каждую, и запрос оборвался бы на середине. Служба подхватит их за пару
+     * прогонов — сначала новые, потом эти.
+     */
+    public function retryImages(ItemImages $images): JsonResponse
+    {
+        $count = $images->retryNow();
+
+        return response()->json([
+            'queued' => $count,
+            'message' => $count === 0
+                ? __('app.settings.images_nothing')
+                : trans_choice('app.settings.images_queued', $count, ['count' => $count]),
         ]);
     }
 

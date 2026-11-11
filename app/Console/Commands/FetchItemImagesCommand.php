@@ -19,7 +19,7 @@ class FetchItemImagesCommand extends Command
 {
     protected $signature = 'catalog:images
                             {--limit=200 : How many images to fetch in this run}
-                            {--retry : Also retry lookups that previously failed}
+                            {--retry : Retry every failed lookup now, not on its schedule}
                             {--pause=100 : Milliseconds to wait between requests}
                             {--no-queue : Do not look for newly owned items first}';
 

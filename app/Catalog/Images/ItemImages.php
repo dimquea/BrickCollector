@@ -27,8 +27,19 @@ class ItemImages
 {
     private const DISK = 'images';
 
-    /** How long before a failed lookup is worth another attempt. */
-    private const RETRY_AFTER_DAYS = 7;
+    /**
+     * Когда пробовать снова — в днях, для первой неудачи и потолок.
+     *
+     * Сетевой сбой обычно временный: назавтра картинка скачается. «Нет
+     * картинки» — источник ответил, но не снимком — меняется редко: у предмета
+     * просто нет фотографии, и спрашивать о ней чаще раза в месяц незачем.
+     * Каждая следующая неудача удваивает срок: то, что не находится годами, не
+     * должно занимать очередь каждый прогон.
+     */
+    private const RETRY = [
+        'error' => ['first' => 1, 'cap' => 30],
+        'missing' => ['first' => 30, 'cap' => 180],
+    ];
 
     /**
      * Cached file for an item, or null when we do not have one.
@@ -120,40 +131,81 @@ class ItemImages
 
             if ($response->successful() && str_starts_with((string) $response->header('Content-Type'), 'image/')) {
                 Storage::disk(self::DISK)->put($path, $response->body());
-                $this->remember($item->type, $item->id, $colorId, $path, 'ok', now()->toDateTimeString());
+                $this->remember($item->type, $item->id, $colorId, $path, 'ok');
 
                 return 'ok';
             }
 
-            $this->remember($item->type, $item->id, $colorId, null, 'missing', now()->toDateTimeString());
+            // «Нет картинки» — только когда источник так и сказал: 404. Отказ
+            // (403 — BrickLink так отвечает сети, которую не пускает), перегрузка
+            // и всё прочее — не свойство предмета, а состояние источника, и
+            // ждать из-за них месяц незачем: это сбой, повтор назавтра.
+            $status = $response->status() === 404 ? 'missing' : 'error';
 
-            return 'missing';
+            $this->remember($item->type, $item->id, $colorId, null, $status);
+
+            return $status;
         } catch (Throwable) {
-            $this->remember($item->type, $item->id, $colorId, null, 'error', now()->toDateTimeString());
+            $this->remember($item->type, $item->id, $colorId, null, 'error');
 
             return 'error';
         }
     }
 
     /**
-     * Images worth fetching: never tried, or last tried long enough ago that
-     * the source may have gained a picture since.
+     * Что качать в этот прогон: сначала новое, потом неудачи, чей срок подошёл.
+     *
+     * Новое идёт первым — это то, что человек только что добавил и сейчас
+     * разглядывает; повторы занимают остаток пачки. Неудача без срока — из тех,
+     * что накопились до расписания, или та, которую попросили повторить
+     * кнопкой, — подходит сразу. $now — «все неудачи сейчас, без расписания».
      *
      * @return \Illuminate\Support\Collection<int, object>
      */
-    public function pending(int $limit, bool $includeFailed = false)
+    public function pending(int $limit, bool $now = false)
     {
-        $query = DB::table('image_cache')->where('status', 'pending');
+        return DB::table('image_cache')
+            ->where(fn ($query) => $query
+                ->where('status', 'pending')
+                ->orWhere(fn ($failed) => $failed
+                    ->whereIn('status', ['missing', 'error'])
+                    ->when(! $now, fn ($due) => $due->where(fn ($when) => $when
+                        ->whereNull('retry_at')
+                        ->orWhere('retry_at', '<=', now()->toDateTimeString())))))
+            ->orderByRaw("CASE status WHEN 'pending' THEN 0 ELSE 1 END")
+            ->orderBy('retry_at')
+            ->limit($limit)
+            ->get();
+    }
 
-        if ($includeFailed) {
-            $cutoff = now()->subDays(self::RETRY_AFTER_DAYS)->toDateTimeString();
+    /**
+     * Сколько картинок не скачалось — по причинам, для настроек.
+     *
+     * @return array{error: int, missing: int}
+     */
+    public function failures(): array
+    {
+        $counts = DB::table('image_cache')
+            ->whereIn('status', ['missing', 'error'])
+            ->groupBy('status')
+            ->pluck(DB::raw('COUNT(*)'), 'status');
 
-            $query->orWhere(fn ($w) => $w
-                ->whereIn('status', ['missing', 'error'])
-                ->where(fn ($inner) => $inner->whereNull('fetched_at')->orWhere('fetched_at', '<', $cutoff)));
-        }
+        return ['error' => (int) ($counts['error'] ?? 0), 'missing' => (int) ($counts['missing'] ?? 0)];
+    }
 
-        return $query->limit($limit)->get();
+    /**
+     * Ставит все неудачи на ближайший прогон — по кнопке в настройках.
+     *
+     * Счёт попыток не сбрасывается: если картинки и правда нет, следующая
+     * неудача отложит её так же далеко, как отложила бы и без кнопки.
+     *
+     * @return int сколько поставлено
+     */
+    public function retryNow(): int
+    {
+        return DB::table('image_cache')
+            ->whereIn('status', ['missing', 'error'])
+            ->update(['retry_at' => null]);
     }
 
     /**
@@ -251,14 +303,20 @@ class ItemImages
      * the same missing picture both saw no row, both inserted, and the loser
      * got a UNIQUE violation — a 500 in place of an image.
      */
-    private function remember(
-        string $type,
-        string $id,
-        int $colorId,
-        ?string $path,
-        string $status,
-        ?string $fetchedAt,
-    ): void {
+    private function remember(string $type, string $id, int $colorId, ?string $path, string $status): void
+    {
+        // Удача обнуляет счёт; неудача прибавляет попытку и назначает
+        // следующую — тем дальше, чем больше их было.
+        $attempts = 0;
+        $retryAt = null;
+
+        if (isset(self::RETRY[$status])) {
+            $attempts = (int) ($this->row($type, $id, $colorId)?->attempts ?? 0) + 1;
+            $rule = self::RETRY[$status];
+            $days = min($rule['cap'], $rule['first'] * 2 ** min($attempts - 1, 10));
+            $retryAt = now()->addDays($days)->toDateTimeString();
+        }
+
         DB::table('image_cache')->upsert(
             [[
                 'item_type' => $type,
@@ -266,10 +324,12 @@ class ItemImages
                 'color_id' => $colorId,
                 'path' => $path,
                 'status' => $status,
-                'fetched_at' => $fetchedAt,
+                'fetched_at' => now()->toDateTimeString(),
+                'attempts' => $attempts,
+                'retry_at' => $retryAt,
             ]],
             ['item_type', 'item_id', 'color_id'],
-            ['path', 'status', 'fetched_at'],
+            ['path', 'status', 'fetched_at', 'attempts', 'retry_at'],
         );
     }
 }

@@ -193,6 +193,10 @@ Route::get('/settings/catalog', [SettingsController::class, 'catalogStatus'])
 Route::post('/settings/inventories', [SettingsController::class, 'refreshInventories'])
     ->name('settings.inventories.refresh');
 
+// Неудачные картинки — на ближайший прогон службы, не дожидаясь их срока.
+Route::post('/settings/images/retry', [SettingsController::class, 'retryImages'])
+    ->name('settings.images.retry');
+
 // Отвечает ли служба распознавания: пустой запрос без данных, поэтому доступен
 // и до того, как функцию включили.
 Route::get('/settings/recognition', [RecognitionController::class, 'health'])
