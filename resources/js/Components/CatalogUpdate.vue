@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import axios from 'axios';
 import { url } from '@/support/base';
+import RenameReport from '@/Components/RenameReport.vue';
 import { notify } from '@/support/toasts';
 import { locale, t } from '@/i18n';
 
@@ -18,6 +19,9 @@ const props = defineProps({
 });
 
 const state = ref({ ...props.catalog });
+
+// «Обновить описи» тоже переименовывает и приносит свежее состояние.
+watch(() => props.catalog, (catalog) => (state.value = { ...catalog }));
 const starting = ref(false);
 let timer = null;
 
@@ -112,4 +116,6 @@ async function refresh() {
     </button>
 
     <p class="text-body-secondary small mt-2 mb-0">{{ t('settings.catalog_update_hint') }}</p>
+
+    <RenameReport v-if="!running" :report="state.renames" />
 </template>

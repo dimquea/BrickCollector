@@ -28,6 +28,11 @@ const props = defineProps({
 });
 
 const page = usePage();
+
+// Состояние справочника вместе с отчётом о переименованиях: «Обновить описи»
+// тоже переименовывает и возвращает его свежим.
+const catalogState = ref(props.catalog);
+
 const supported = ref(page.props.supportedLocales ?? []);
 const currency = ref(props.currency);
 const theme = ref(props.theme);
@@ -400,9 +405,9 @@ const sections = [
                 </h2>
                 <div id="settingsCatalog" class="accordion-collapse collapse">
                     <div class="accordion-body">
-                        <CatalogUpdate :catalog="catalog" />
+                        <CatalogUpdate :catalog="catalogState" />
 
-                        <InventoryRefresh />
+                        <InventoryRefresh @refreshed="(catalog) => (catalogState = catalog)" />
 
                         <ImageRetry :failures="imageFailures" />
                     </div>

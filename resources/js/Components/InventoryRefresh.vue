@@ -18,16 +18,20 @@ import { t } from '@/i18n';
  * справочника, и заводить ради неё отдельный процесс со своим файлом
  * состояния было бы больше машинерии, чем дела.
  */
+const emit = defineEmits(['refreshed']);
+
 const running = ref(false);
 const result = ref(null);
 const orphaned = ref(null);
 const orphans = ref([]);
+const renamed = ref(null);
 
 async function refresh() {
     running.value = true;
     result.value = null;
     orphaned.value = null;
     orphans.value = [];
+    renamed.value = null;
 
     try {
         const { data } = await axios.post(url('/settings/inventories'));
@@ -35,6 +39,11 @@ async function refresh() {
         result.value = data.message;
         orphaned.value = data.orphaned;
         orphans.value = data.orphans ?? [];
+        renamed.value = data.renamed;
+
+        if (data.catalog) {
+            emit('refreshed', data.catalog);
+        }
         notify(data.message, 'success', 4000);
     } catch (error) {
         notify(error.response?.data?.message ?? t('errors.save_failed'));
@@ -56,7 +65,10 @@ async function refresh() {
 
         <div class="form-text">{{ t('settings.inventories_hint') }}</div>
 
-        <p v-if="result" class="alert alert-info mt-3 mb-0">{{ result }}</p>
+        <p v-if="result" class="alert alert-info mt-3 mb-0">
+            {{ result }}
+            <template v-if="renamed"><br />{{ renamed }}</template>
+        </p>
         <div v-if="orphaned" class="alert alert-warning mt-3 mb-0">
             <p class="mb-2">{{ orphaned }}</p>
 
