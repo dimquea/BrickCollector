@@ -26,7 +26,9 @@ the parts inside those minifigures, boxed sub-sets down the chain, and whatever
 else is in the box — gear, a book. Every copy is its own record, so three of the
 same set are three sets with three prices, three storage places and three
 stories. When BrickLink corrects an inventory, the copies can be rebuilt from
-the catalogue by hand, with your marks carried over.
+the catalogue by hand, with your marks carried over. When BrickLink renumbers an
+item or merges two, the collection follows it after the catalogue update by
+itself — quantities, losses and notes stay put — and Settings says what moved.
 
 **What went missing.** Any lot can be marked short, down to a single part
 inside a minifigure inside a set. A set then knows it is incomplete without

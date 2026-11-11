@@ -3,6 +3,35 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.11.0 — 2026-11-11
+
+### Added
+
+- **The collection follows BrickLink renames.** The collection keeps an item number as it was on
+  the day it was added, and BrickLink renumbers items and merges duplicates. A renamed part
+  pointed at nothing — no name, no picture — and "Refresh inventories" could not find its row in
+  the fresh inventory, so its missing mark and note were lost. Now, after every catalogue update,
+  numbers that are gone from the catalogue are followed through the BrickLink changelog to where
+  they lead today: copies, inventory rows and wishes move to the new number with their
+  quantities, losses and notes. "Refresh inventories" does the same first. A number that still
+  exists is left alone, even if it once meant something else.
+  - A change of type — a minifigure that became a part — is not written into an inventory row on
+    the spot; "Refresh inventories" rebuilds the row and carries the mark over. A copy whose own
+    type changed stays as it was and is listed for you to fix by hand.
+  - Settings → Catalogue says when the last renames happened, how many items and how many with
+    marks, and lists them old → new, with the name and where each one occurred.
+- **Pictures that failed are tried again.** A failed download stayed failed for good, and most
+  failures are a network hiccup. A failure is tried again after a day if the network or the source
+  failed, after a month if BrickLink answered that there is no such picture; each further failure
+  doubles the wait, up to 30 and 180 days. Settings → Catalogue shows how many pictures are not
+  downloaded and why, with "Retry now".
+
+### Fixed
+
+- **The page of a common part hung.** The "Inside other parts" tab from 1.10.0 made SQLite compare
+  every part of the collection with every inventory row of the part — tens of millions of
+  comparisons for an axle in black, which never opened. The tab takes a fraction of a second now.
+
 ## 1.10.0 — 2026-10-23
 
 ### Added
