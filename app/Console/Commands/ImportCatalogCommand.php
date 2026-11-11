@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Catalog\Import\CatalogArchive;
 use App\Catalog\Import\CatalogStatus;
 use App\Catalog\Import\ImportCatalog;
+use App\Collection\Actions\ApplyRenames;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -17,7 +18,7 @@ class ImportCatalogCommand extends Command
 
     protected $description = 'Import the BrickLink catalog from a brickstore-database archive';
 
-    public function handle(ImportCatalog $import): int
+    public function handle(ImportCatalog $import, ApplyRenames $renames): int
     {
         $path = $this->option('archive') ?: config('brickcollector.archive_path');
 
@@ -49,6 +50,16 @@ class ImportCatalogCommand extends Command
                 // а брошенный процесс перестаёт обновлять состояние.
                 CatalogStatus::step($step);
             });
+
+            // Сразу за справочником — коллекция на его нынешние артикулы: что
+            // BrickLink переименовал, иначе осталось бы без названия и картинки.
+            // Отдельно от ввоза: тот трогает только bl_*, и его сделка — своя.
+            $this->line('  renames...');
+            CatalogStatus::step('renames');
+
+            $renamed = $renames->handle();
+            $counts['renamed'] = $renamed['renamed'];
+            $counts['renames_left'] = $renamed['skipped'];
         } catch (Throwable $e) {
             $archive->close();
             $this->error($e->getMessage());

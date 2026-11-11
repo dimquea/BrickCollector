@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Catalog\Import\CatalogArchive;
 use App\Catalog\Import\ImportCatalog;
+use App\Collection\Models\Entry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -19,6 +20,8 @@ class ImportCatalogTest extends TestCase
     use RefreshDatabase;
 
     private string $archivePath;
+
+    private string $changelog = "461584\t9/9/2026\tI\tP\tbb1388c01pb01\tP\t109758c01pb01";
 
     protected function setUp(): void
     {
@@ -157,6 +160,35 @@ class ImportCatalogTest extends TestCase
         $this->assertSame(4, DB::table('bl_inventory')->count());
     }
 
+    /**
+     * Сразу за справочником команда переводит коллекцию на его нынешние
+     * артикулы: свободная партия под старым номером получает новый.
+     */
+    public function test_the_command_renames_what_the_catalog_renamed(): void
+    {
+        // Файл состояния справочника — во временный каталог, а не в данные стенда.
+        config(['brickcollector.data_path' => sys_get_temp_dir().'/bc-import-'.uniqid()]);
+
+        $this->changelog = "461585\t9/9/2026\tI\tP\t3001old\tP\t3001";
+        $this->buildArchive($this->archivePath);
+        $this->import();
+
+        $entry = Entry::create(['item_type' => 'P', 'item_id' => '3001old', 'color_id' => 11]);
+
+        // Повторный ввоз в тесте не пройдёт: он идёт внутри транзакции
+        // RefreshDatabase, где PRAGMA foreign_keys молчаливо не действует, а
+        // коллекция уже ссылается на справочник. Справочник уже на месте —
+        // проверяем, что команда за ним делает.
+        $this->mock(ImportCatalog::class, fn ($mock) => $mock
+            ->shouldReceive('handle')->andReturn(['items' => 3])
+            ->shouldReceive('timings')->andReturn([]));
+
+        $this->artisan('catalog:import', ['--archive' => $this->archivePath])->assertSuccessful();
+
+        $this->assertSame('3001', $entry->fresh()->item_id);
+        $this->assertSame(1, DB::table('collection_renames')->count());
+    }
+
     private function buildArchive(string $path): void
     {
         $zip = new ZipArchive;
@@ -214,7 +246,7 @@ class ImportCatalogTest extends TestCase
             ."   <ITEM>\n      <ITEMTYPE>P</ITEMTYPE>\n      <ITEMID>44</ITEMID>\n"
             ."      <COLOR>Black</COLOR>\n      <CODENAME>4221514</CODENAME>\n   </ITEM>\n</CODES>\n");
 
-        $zip->addFromString('btchglog.csv', "461584\t9/9/2026\tI\tP\tbb1388c01pb01\tP\t109758c01pb01");
+        $zip->addFromString('btchglog.csv', $this->changelog);
 
         $zip->close();
     }

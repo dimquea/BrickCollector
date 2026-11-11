@@ -6,6 +6,7 @@ use App\Catalog\Images\ItemImages;
 use App\Catalog\Import\CatalogRefresh;
 use App\Catalog\Import\CatalogStatus;
 use App\Collection\Actions\RefreshInventories;
+use App\Collection\Queries\RenameReport;
 use App\Collection\Models\Link;
 use App\Collection\Models\Source;
 use App\Collection\Models\Status;
@@ -125,6 +126,10 @@ class SettingsController extends Controller
                 ? __('app.settings.inventories_orphaned', ['count' => $summary['orphaned']])
                 : null,
             'orphans' => $summary['orphans'],
+            'renamed' => $summary['renamed'] > 0
+                ? __('app.settings.inventories_renamed', ['count' => $summary['renamed']])
+                : null,
+            'catalog' => $this->catalog(),
         ]);
     }
 
@@ -162,6 +167,9 @@ class SettingsController extends Controller
             'imported_at' => $status['imported_at'],
             'items' => \App\Catalog\Models\Item::count(),
             'status' => $status,
+            // Здесь же, а не отдельным свойством: страница опрашивает это во
+            // время импорта, и отчёт появится, едва импорт закончится.
+            'renames' => RenameReport::latest(),
         ];
     }
 

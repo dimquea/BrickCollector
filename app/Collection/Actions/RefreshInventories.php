@@ -26,6 +26,12 @@ use Illuminate\Support\Facades\DB;
  *
  * Сборки и свободные партии не трогаются вовсе: их содержимое никто не
  * описывал в справочнике, оно собрано руками.
+ *
+ * Артикул в пути — тот, что был в день добавления, а справочник тем временем
+ * мог предмет переименовать. Поэтому сперва коллекция переводится на нынешние
+ * артикулы по журналу BrickLink, а то, что так перевести нельзя, — сменившие
+ * тип позиции, — переводится в старом пути при сравнении: отметка доезжает до
+ * своей строки и в новом её виде.
  */
 class RefreshInventories
 {
@@ -33,16 +39,27 @@ class RefreshInventories
         private readonly ItemInventory $inventory,
         private readonly WriteContents $contents,
         private readonly RecalculateEntryFlags $flags,
+        private readonly ApplyRenames $renames,
     ) {}
 
     /**
+     * Сменившие тип позиции: «тип/артикул» в коллекции => каким он стал.
+     *
+     * @var array<string, array{type: string, id: string}>
+     */
+    private array $moved = [];
+
+    /**
      * @return array{entries: int, changed: int, added: int, removed: int, losses: int,
-     *     orphaned: int, orphans: array<int, array<string, mixed>>}
+     *     orphaned: int, renamed: int, orphans: array<int, array<string, mixed>>}
      */
     public function handle(): array
     {
         $summary = ['entries' => 0, 'changed' => 0, 'added' => 0, 'removed' => 0, 'losses' => 0, 'orphaned' => 0];
         $orphans = [];
+
+        $renamed = $this->renames->handle(reportSkipped: false);
+        $this->moved = $renamed['left'];
 
         $entries = Entry::query()
             ->whereIn('item_type', ItemInventory::EXPANDABLE)
@@ -71,7 +88,7 @@ class RefreshInventories
             return $summary;
         });
 
-        return $summary + ['orphans' => $this->describe($orphans)];
+        return $summary + ['renamed' => $renamed['renamed'], 'orphans' => $this->describe($orphans)];
     }
 
     /**
@@ -96,7 +113,7 @@ class RefreshInventories
             return ['changed' => 0, 'added' => 0, 'removed' => 0, 'losses' => 0, 'orphaned' => 0, 'orphans' => []];
         }
 
-        $before = $this->keyed($entry);
+        $before = $this->keyed($entry, $this->moved);
         $losses = array_filter(array_map(fn (object $row) => (int) $row->lost_qty, $before));
         $notes = array_filter(array_map(fn (object $row) => $row->note, $before), fn ($note) => $note !== null);
 
@@ -239,9 +256,11 @@ class RefreshInventories
      *
      * Количество в путь не входит: именно оно и должно меняться.
      *
+     * @param  array<string, array{type: string, id: string}>  $moved  каким стал
+     *     предмет, сменивший тип, — чтобы старый путь совпал с новым
      * @return array<string, object> путь => строка
      */
-    private function keyed(Entry $entry): array
+    private function keyed(Entry $entry, array $moved = []): array
     {
         $rows = DB::table('collection_items')
             ->where('entry_id', $entry->id)
@@ -255,6 +274,12 @@ class RefreshInventories
         }
 
         $keys = [];
+
+        foreach ($rows as $row) {
+            if ($to = $moved[$row->item_type.'/'.$row->item_id] ?? null) {
+                [$row->item_type, $row->item_id] = [$to['type'], $to['id']];
+            }
+        }
 
         $walk = function (?int $parentId, string $prefix) use (&$walk, &$keys, $children): void {
             $siblings = $children[$parentId ?? 0] ?? [];
