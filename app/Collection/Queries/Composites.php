@@ -60,22 +60,28 @@ final class Composites
      */
     public static function holding(string $itemId, int $colorId): Collection
     {
-        return DB::table('collection_items as held')
-            ->join('bl_inventory as inv', fn ($join) => $join
-                ->on('inv.parent_id', '=', 'held.item_id')
-                ->where('inv.parent_type', 'P')
-                ->where('inv.child_type', 'P')
-                ->where('inv.is_alternate', 0)
-                ->where('inv.is_counterpart', 0)
-                ->where('inv.is_extra', 0))
+        // Сначала справочник, потом коллекция — и именно в таком порядке:
+        // CROSS JOIN в SQLite его закрепляет. Сам SQLite выбирал обратный —
+        // все детали коллекции, и для каждой все строки описей с этой деталью,
+        // — и у ходовой детали это десятки миллионов сравнений: 3706 в чёрном
+        // встречается в 1283 описях, страница не открывалась вовсе. А в
+        // составных из этих строк три, и по ним три обращения к коллекции.
+        return DB::table('bl_inventory as inv')
+            ->join('collection_items as held', fn ($join) => $join
+                ->on('held.item_id', '=', 'inv.parent_id')
+                ->where('held.item_type', 'P')
+                ->where('held.counts', 1), null, null, 'cross')
             ->leftJoin('bl_items as i', fn ($join) => $join
                 ->on('i.id', '=', 'held.item_id')
                 ->where('i.type', 'P'))
             ->leftJoin('bl_colors as c', 'c.id', '=', 'held.color_id')
-            ->where('held.item_type', 'P')
-            ->where('held.counts', 1)
+            ->where('inv.child_type', 'P')
             ->where('inv.child_id', $itemId)
             ->where('inv.color_id', $colorId)
+            ->where('inv.parent_type', 'P')
+            ->where('inv.is_alternate', 0)
+            ->where('inv.is_counterpart', 0)
+            ->where('inv.is_extra', 0)
             ->groupBy('held.item_id', 'held.color_id', 'inv.qty')
             ->havingRaw('SUM(held.qty - held.lost_qty) > 0')
             ->orderBy('i.name')

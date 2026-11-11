@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Collection\Models\Entry;
+use App\Collection\Queries\Composites;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -147,5 +148,25 @@ class CompositePartsTest extends TestCase
 
         $this->assertSame([], $props['composition']);
         $this->assertSame(0, $props['inside']);
+    }
+
+    /**
+     * «В составе других деталей» начинает со справочника, а не с коллекции.
+     *
+     * Наоборот — все детали коллекции, и для каждой все описи с искомой, —
+     * у ходовой детали выходили десятки миллионов сравнений: страница 3706 в
+     * чёрном (1283 описи) не открывалась вовсе. Скорость в тесте не измерить,
+     * а порядок, в котором SQLite обходит таблицы, — можно.
+     */
+    public function test_where_a_part_sits_is_looked_up_from_the_catalogue_side(): void
+    {
+        DB::enableQueryLog();
+        Composites::holding('hand', self::DARK);
+        $query = DB::getQueryLog()[0];
+
+        $plan = collect(DB::select('EXPLAIN QUERY PLAN '.$query['query'], $query['bindings']))->pluck('detail');
+
+        $this->assertStringStartsWith('SEARCH inv USING INDEX ix_inv_child', $plan->first());
+        $this->assertStringContainsString('SEARCH held USING INDEX ix_ci_item', $plan->get(1));
     }
 }
