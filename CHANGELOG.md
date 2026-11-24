@@ -3,6 +3,15 @@
 Notable changes, newest first. Versions follow [semantic versioning](https://semver.org):
 the middle number moves when something is added, the last one when something is fixed.
 
+## 1.11.1 — 2026-11-24
+
+### Fixed
+
+- **Compact, translated pagination.** The collection lists, the catalogue and its "Part of"
+  section show the first two pages, the last two and the current page with its immediate
+  neighbours. Previous and Next follow the selected language. On a phone, arrows sit beside
+  the page numbers in place of the labels.
+
 ## 1.11.0 — 2026-11-11
 
 ### Added
