@@ -16,6 +16,12 @@ return [
         'settings' => 'Settings',
     ],
 
+    'pagination' => [
+        'label' => 'Pagination',
+        'previous' => 'Previous',
+        'next' => 'Next',
+    ],
+
     'wishlist' => [
         'title' => 'Wishlist',
         'found' => '{0} nothing here|:count item|:count items',

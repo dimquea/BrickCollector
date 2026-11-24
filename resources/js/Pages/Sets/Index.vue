@@ -4,6 +4,7 @@ import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
+import Pagination from '@/Components/Pagination.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
 import SortControl from '@/Components/SortControl.vue';
@@ -311,18 +312,6 @@ const shows = (list) => list.length > 1;
             </div>
         </MasonryGrid>
 
-        <nav v-if="entries.last_page > 1" class="mt-4">
-            <ul class="pagination justify-content-center flex-wrap">
-                <li
-                    v-for="link in entries.links"
-                    :key="link.label"
-                    class="page-item"
-                    :class="{ active: link.active, disabled: !link.url }"
-                >
-                    <Link v-if="link.url" class="page-link" :href="link.url" preserve-scroll v-html="link.label" />
-                    <span v-else class="page-link" v-html="link.label" />
-                </li>
-            </ul>
-        </nav>
+        <Pagination :paginator="entries" class="mt-4" />
     </AppLayout>
 </template>

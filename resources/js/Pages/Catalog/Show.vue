@@ -5,6 +5,7 @@ import { computed, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { notify } from '@/support/toasts';
 import Link from '@/Components/AppLink.vue';
+import Pagination from '@/Components/Pagination.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import AssemblyImage from '@/Components/AssemblyImage.vue';
@@ -496,25 +497,7 @@ const ownedHref = (row) => {
                     </div>
 
                     <div v-if="parents.rows?.last_page > 1" class="card-body">
-                        <nav>
-                            <ul class="pagination pagination-sm justify-content-center flex-wrap mb-2">
-                                <li
-                                    v-for="link in parents.rows.links"
-                                    :key="link.label"
-                                    class="page-item"
-                                    :class="{ active: link.active, disabled: !link.url }"
-                                >
-                                    <Link
-                                        v-if="link.url"
-                                        class="page-link"
-                                        :href="link.url"
-                                        preserve-scroll
-                                        v-html="link.label"
-                                    />
-                                    <span v-else class="page-link" v-html="link.label" />
-                                </li>
-                            </ul>
-                        </nav>
+                        <Pagination :paginator="parents.rows" small />
                         <p class="form-text text-center mb-0">{{ t('item.appears_order') }}</p>
                     </div>
                 </div>

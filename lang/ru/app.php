@@ -16,6 +16,12 @@ return [
         'settings' => 'Настройки',
     ],
 
+    'pagination' => [
+        'label' => 'Навигация по страницам',
+        'previous' => 'Назад',
+        'next' => 'Далее',
+    ],
+
     'wishlist' => [
         'title' => 'Желаемое',
         'found' => '{0} пока пусто|:count предмет|:count предмета|:count предметов',

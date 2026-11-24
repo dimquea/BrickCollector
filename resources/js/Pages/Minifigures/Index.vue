@@ -4,6 +4,7 @@ import { url } from '@/support/base';
 import { computed, reactive, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import Link from '@/Components/AppLink.vue';
+import Pagination from '@/Components/Pagination.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ItemImage from '@/Components/ItemImage.vue';
 import SearchSelect from '@/Components/SearchSelect.vue';
@@ -307,18 +308,6 @@ const href = (figure) => `/minifigures/${encodeURIComponent(figure.item_id)}`;
             </div>
         </MasonryGrid>
 
-        <nav v-if="figures.last_page > 1" class="mt-4">
-            <ul class="pagination justify-content-center flex-wrap">
-                <li
-                    v-for="link in figures.links"
-                    :key="link.label"
-                    class="page-item"
-                    :class="{ active: link.active, disabled: !link.url }"
-                >
-                    <Link v-if="link.url" class="page-link" :href="link.url" preserve-scroll v-html="link.label" />
-                    <span v-else class="page-link" v-html="link.label" />
-                </li>
-            </ul>
-        </nav>
+        <Pagination :paginator="figures" class="mt-4" />
     </AppLayout>
 </template>
